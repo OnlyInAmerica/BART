@@ -137,33 +137,55 @@ public class TheActivity extends Activity {
     public void fillTable(){
     	etdList =  new ArrayList();
 		etdLayout.removeAllViews();
+		String lastDestination = "";
+		TableRow tr = new TableRow(c);
+		//TextView timeTv =(TextView) View.inflate(c, R.layout.tabletext, null);
+		int numAlt = 0;
 		for(int x=0;x<etdResponse.etds.size();x++){
 			if (etdResponse.etds.get(x) == null)
 				break;
-			TableRow tr = new TableRow(c);
-			TextView destinationTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-			//bullet.setWidth(200);
-			destinationTv.setTextSize(20);
-			destinationTv.setText(((etd)etdResponse.etds.get(x)).destination);
-			TextView timeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-			timeTv.setText(String.valueOf(((etd)etdResponse.etds.get(x)).minutesToArrival));
-			timeTv.setSingleLine(false);
-			timeTv.setTextSize(36);
-			timeTv.setPadding(30, 0, 0, 0);
-			//text.setWidth(120);
-			tr.addView(destinationTv);
-			tr.addView(timeTv);
-			etdLayout.addView(tr);
-			etdList.add(timeTv);
-		}
+			etd thisEtd = (etd)etdResponse.etds.get(x);
+			if (thisEtd.destination != lastDestination){ // new train destination
+				numAlt = 0;
+				tr = new TableRow(c);
+				TextView destinationTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+				//bullet.setWidth(200);
+				destinationTv.setTextSize(20);
+				destinationTv.setText(thisEtd.destination);
+				TextView timeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+				timeTv.setText(String.valueOf(thisEtd.minutesToArrival));
+				timeTv.setSingleLine(false);
+				timeTv.setTextSize(36);
+				timeTv.setPadding(30, 0, 0, 0);
+				int counterTime = thisEtd.minutesToArrival * 60*1000;
+	    		new ViewCountDownTimer(timeTv, counterTime, 60*1000).start();
+				//text.setWidth(120);
+				tr.addView(destinationTv);
+				tr.addView(timeTv);
+				etdLayout.addView(tr);
+				etdList.add(timeTv);
+			}
+			else{ // append next trains arrival time to existing destination display
+				//timeTv.append(String.valueOf(", "+thisEtd.minutesToArrival));
+				numAlt++;
+				TextView nextTimeTv =(TextView) View.inflate(c, R.layout.tabletext, null);
+				//nextTimeTv.setTextSize(36-(5*numAlt));
+				nextTimeTv.setTextSize(36);
+				nextTimeTv.setText(String.valueOf(thisEtd.minutesToArrival));
+				nextTimeTv.setPadding(30, 0, 0, 0);
+				if (numAlt == 1)	//0xFFF06D2F  C9C7C8
+					nextTimeTv.setTextColor(0xFFC9C7C8);
+				else if (numAlt == 2)
+					nextTimeTv.setTextColor(0xFFA8A7A7);
+				int counterTime = thisEtd.minutesToArrival * 60*1000;
+	    		new ViewCountDownTimer(nextTimeTv, counterTime, 60*1000).start();
+				tr.addView(nextTimeTv);
+			}
+			lastDestination = thisEtd.destination;
+		} // end for
 		//scrolly.scrollTo(0, 0);
-		setTimers();
+		//setTimers();
 	}
-    public void setTimers(){
-    	for(int x=0;x<etdList.size();x++){
-    		int counterTime = ((etd)etdResponse.etds.get(x)).minutesToArrival * 60*1000;
-    		 new ViewCountDownTimer((TextView)etdList.get(x), counterTime, 60*1000).start();
-    	}
-    }
+
     
 }
