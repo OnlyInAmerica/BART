@@ -3,5 +3,9 @@
 
     <string name="hello">Hello World, TheActivity!</string>
     <string name="app_name">Bart</string>
+    <string-array name="networkErrorDialog">
+        <item>Network Error</item>
+        <item>Check your network connection.</item>
+    </string-array>
 
 </resources>

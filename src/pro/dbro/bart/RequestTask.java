@@ -42,8 +42,10 @@ public class RequestTask extends AsyncTask<String, String, String> {
             }
         } catch (ClientProtocolException e) {
             //TODO Handle problems..
+        	return "error";
         } catch (IOException e) {
         	Log.v("RequestTask", e.toString());
+        	return "error";
             //TODO Handle problems..
         }
         return responseString;

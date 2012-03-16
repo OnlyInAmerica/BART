@@ -1,19 +1,22 @@
 package pro.dbro.bart;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
-
 import com.thebuzzmedia.sjxp.XMLParser;
 import com.thebuzzmedia.sjxp.rule.DefaultRule;
 import com.thebuzzmedia.sjxp.rule.IRule;
 import com.thebuzzmedia.sjxp.rule.IRule.Type;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -30,7 +33,10 @@ public class TheActivity extends Activity {
 	Context c;
 	LinearLayout etdLayout;
 	etdResponse etdResponse;
+	ArrayList etdList;
 	String currentStation = "dbrk";
+	int jank = 0; //I'm not proud of you, son.
+	Resources res;
 	
 	private static final String[] STATIONS = new String[] {
 		"12th St. Oakland City Center","16th St. Mission (SF)","19th St. Oakland",
@@ -68,12 +74,13 @@ public class TheActivity extends Activity {
         setContentView(R.layout.main);
         etdLayout = (LinearLayout) findViewById(R.id.etdLayout);
         c = this;
-        //new RequestTask(this).execute("http://api.bart.gov/api/etd.aspx?cmd=etd&orig=dbrk&key=MW9S-E7SL-26DU-VV8V");
+        res = getResources();
         
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, STATIONS);
         AutoCompleteTextView textView = (AutoCompleteTextView)
                 findViewById(R.id.tv);
+
         textView.setOnItemClickListener(new OnItemClickListener() {
 
 			@Override
@@ -81,9 +88,9 @@ public class TheActivity extends Activity {
 					long arg3) {
 			
 				currentStation = STATION_MAP.get(parent.getItemAtPosition(position).toString());
-				Log.v("Station",currentStation);
-				
+				arg1.clearFocus();
 				new RequestTask((Activity)c).execute("http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+currentStation+"&key=MW9S-E7SL-26DU-VV8V");
+				Log.v("BART_API","hit");
 			}
         });
         
@@ -91,8 +98,15 @@ public class TheActivity extends Activity {
     }
     
     public void parseBart(String response){
-    	
-    	new BartParser(this).execute(response);
+    	if (response=="error"){
+			new AlertDialog.Builder(c)
+	        .setTitle(res.getStringArray(R.array.networkErrorDialog)[0])
+	        .setMessage(res.getStringArray(R.array.networkErrorDialog)[1])
+	        .setPositiveButton("Bummer", null)
+	        .show();
+    	}
+    	else
+    		new BartParser(this).execute(response);
     }
     
     public void updateUI(etdResponse response){
@@ -103,23 +117,37 @@ public class TheActivity extends Activity {
     }
    
     public void fillTable(){
+    	etdList =  new ArrayList();
 		etdLayout.removeAllViews();
 		for(int x=0;x<etdResponse.etds.size();x++){
+			if (etdResponse.etds.get(x) == null)
+				break;
 			TableRow tr = new TableRow(c);
-			TextView bullet = (TextView) View.inflate(c, R.layout.tabletext, null);
+			TextView destinationTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 			//bullet.setWidth(200);
-			bullet.setTextSize(20);
-			bullet.setText(((etd)etdResponse.etds.get(x)).destination);
-			TextView text = (TextView) View.inflate(c, R.layout.tabletext, null);
-			text.setText(String.valueOf(((etd)etdResponse.etds.get(x)).minutesToArrival));
-			text.setSingleLine(false);
-			text.setTextSize(36);
+			destinationTv.setTextSize(20);
+			destinationTv.setText(((etd)etdResponse.etds.get(x)).destination);
+			TextView timeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+			timeTv.setText(String.valueOf(((etd)etdResponse.etds.get(x)).minutesToArrival));
+			timeTv.setSingleLine(false);
+			timeTv.setTextSize(36);
+			timeTv.setPadding(30, 0, 0, 0);
 			//text.setWidth(120);
-			tr.addView(bullet);
-			tr.addView(text);
+			tr.addView(destinationTv);
+			tr.addView(timeTv);
 			etdLayout.addView(tr);
+			etdList.add(timeTv);
 		}
 		//scrolly.scrollTo(0, 0);
+		setTimers();
 	}
+    public void setTimers(){
+    	for(int x=0;x<etdList.size();x++){
+    		jank = x;
+    		Log.v("jank",String.valueOf(jank));
+    		int counterTime = ((etd)etdResponse.etds.get(x)).minutesToArrival * 60*1000;
+    		 new ViewCountDownTimer((TextView)etdList.get(x), counterTime, 60*1000).start();
+    	}
+    }
     
 }
