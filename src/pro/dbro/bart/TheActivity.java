@@ -18,6 +18,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
@@ -35,7 +36,6 @@ public class TheActivity extends Activity {
 	etdResponse etdResponse;
 	ArrayList etdList;
 	String currentStation = "dbrk";
-	int jank = 0; //I'm not proud of you, son.
 	Resources res;
 	
 	private static final String[] STATIONS = new String[] {
@@ -78,24 +78,42 @@ public class TheActivity extends Activity {
         
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, STATIONS);
-        AutoCompleteTextView textView = (AutoCompleteTextView)
+        AutoCompleteTextView departureTextView = (AutoCompleteTextView)
                 findViewById(R.id.tv);
-
-        textView.setOnItemClickListener(new OnItemClickListener() {
-
+        departureTextView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View arg1, int position,
 					long arg3) {
-			
+				AutoCompleteTextView departureTextView = (AutoCompleteTextView)
+		                findViewById(R.id.tv);
+				departureTextView.setThreshold(200);
 				currentStation = STATION_MAP.get(parent.getItemAtPosition(position).toString());
-				arg1.clearFocus();
+				hideSoftKeyboard(arg1);
 				new RequestTask((Activity)c).execute("http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+currentStation+"&key=MW9S-E7SL-26DU-VV8V");
 				Log.v("BART_API","hit");
 			}
         });
         
-        textView.setAdapter(adapter);
+        departureTextView.setOnTouchListener(new OnTouchListener(){
+
+			@Override
+			public boolean onTouch(View arg0, MotionEvent arg1) {
+				AutoCompleteTextView departureTextView = (AutoCompleteTextView)
+		                findViewById(R.id.tv);
+				departureTextView.setThreshold(1);
+				departureTextView.setText("");
+				return false;
+			}
+        	
+        });
+        
+        departureTextView.setAdapter(adapter);
     }
+    
+    private void hideSoftKeyboard (View view) {
+        InputMethodManager imm = (InputMethodManager)c.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getApplicationWindowToken(), 0);
+      }
     
     public void parseBart(String response){
     	if (response=="error"){
@@ -143,8 +161,6 @@ public class TheActivity extends Activity {
 	}
     public void setTimers(){
     	for(int x=0;x<etdList.size();x++){
-    		jank = x;
-    		Log.v("jank",String.valueOf(jank));
     		int counterTime = ((etd)etdResponse.etds.get(x)).minutesToArrival * 60*1000;
     		 new ViewCountDownTimer((TextView)etdList.get(x), counterTime, 60*1000).start();
     	}
