@@ -62,7 +62,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 			}
 		};
 		// origin="DBRK" destination="WCRK" fare="3.15" origTimeMin="3:18 PM" origTimeDate="03/16/2012 " destTimeMin="3:44 PM" destTimeDate="03/16/2012"
-		IRule tripTagRule = new DefaultRule(Type.ATTRIBUTE, "/root/schedule/request/trip", new String[]{"fare", "origTimeMin","origTimeDate","desTimeMin","destTimeDate"}) {
+		IRule tripAttributeRule = new DefaultRule(Type.ATTRIBUTE, "/root/schedule/request/trip", new String[]{"fare", "origTimeMin","origTimeDate","destTimeMin","destTimeDate"}) {
 			@Override
 			public void handleParsedAttribute(XMLParser parser, int num, String value, Object userObject) {
 				
@@ -81,15 +81,40 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 				}
 				else if(num == 3){
 					routeDestinationTime = value;
+					Log.v("ROUTE_DEST_TIME",value.toString());
 				}
 				else if(num == 4){
+					Log.v("ROUTE_DEST_DATE",value.toString());
 					routeDestinationDate = value;
 				}
 				//thisRoute.fare
 			}
 		};
+		IRule tripTagRule = new DefaultRule(Type.TAG, "/root/schedule/request/trip") {
+			@Override
+			public void handleTag(XMLParser parser, boolean isStartTag, Object userObject) {
+				if (!isStartTag){
+					route thisRoute = response.getLastRoute();
+					
+					String originDateStr = routeOriginDate + " " + routeOriginTime;
+					String destinationDateStr = routeDestinationDate + " " + routeDestinationTime;
+					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a"); 
+					try {
+						thisRoute.arrivalDate = curFormater.parse(originDateStr);
+						thisRoute.departureDate = curFormater.parse(destinationDateStr);
+					} catch (ParseException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					originDateStr = "";
+					destinationDateStr = "";
+					
+				}
+
+			}
+		};
 		//
-		IRule legTagRule = new DefaultRule(Type.ATTRIBUTE, "/root/schedule/request/trip/leg", new String[]{"transfercode", "origin","destination","origTimeMin","origTimeDate","destTimeMin","destTimeDate","trainHeadStation"}) {
+		IRule legAttributeRule = new DefaultRule(Type.ATTRIBUTE, "/root/schedule/request/trip/leg", new String[]{"transfercode", "origin","destination","origTimeMin","origTimeDate","destTimeMin","destTimeDate","trainHeadStation"}) {
 			@Override
 			public void handleParsedAttribute(XMLParser parser, int num, String value, Object userObject) {
 				// TODO: Fix assumed order of XML attributes
@@ -152,7 +177,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 			}
 		};
 		
-		XMLParser parser = new XMLParser(originStationRule, destinationStationRule, timeRule, dateRule, tripTagRule, legTagRule);
+		XMLParser parser = new XMLParser(originStationRule, destinationStationRule, timeRule, dateRule, tripAttributeRule, tripTagRule, legAttributeRule);
 		parser.parse(bais);
 		//11:15:32 AM PDT
 		

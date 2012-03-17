@@ -33,10 +33,10 @@ import android.app.AlertDialog;
 public class TheActivity extends Activity {
 	Context c;
 	LinearLayout etdLayout;
-	etdResponse etdResponse;
 	String currentStation = "dbrk";
 	String lastRequest="";
 	Resources res;
+	AutoCompleteTextView destinationTextView;
 	
 	private static final String[] STATIONS = new String[] {
 		"12th St. Oakland City Center","16th St. Mission (SF)","19th St. Oakland",
@@ -78,41 +78,83 @@ public class TheActivity extends Activity {
         
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, STATIONS);
-        AutoCompleteTextView departureTextView = (AutoCompleteTextView)
-                findViewById(R.id.tv);
-        departureTextView.setOnItemClickListener(new OnItemClickListener() {
+        AutoCompleteTextView originTextView = (AutoCompleteTextView)
+                findViewById(R.id.originTv);
+        
+        destinationTextView = (AutoCompleteTextView) findViewById(R.id.destinationTv);
+        destinationTextView.setAdapter(adapter);
+        originTextView.setAdapter(adapter);
+        
+        originTextView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View arg1, int position,
 					long arg3) {
-				AutoCompleteTextView departureTextView = (AutoCompleteTextView)
-		                findViewById(R.id.tv);
-				departureTextView.setThreshold(200);
+				AutoCompleteTextView originTextView = (AutoCompleteTextView)
+		                findViewById(R.id.originTv);
+				originTextView.setThreshold(200);
 				currentStation = STATION_MAP.get(parent.getItemAtPosition(position).toString());
 				hideSoftKeyboard(arg1);
-				//lastRequest = "etd";
-				//new RequestTask((Activity)c).execute("http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+currentStation+"&key=MW9S-E7SL-26DU-VV8V");
+				lastRequest = "etd";
+				String url = "http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+currentStation+"&key=MW9S-E7SL-26DU-VV8V";
 				// TEMP: For testing route function
-				lastRequest = "route";
-				String url = "http://api.bart.gov/api/sched.aspx?cmd=depart&orig=dbrk&dest="+currentStation+"&key=MW9S-E7SL-26DU-VV8V";
+				//lastRequest = "route";
+				//String url = "http://api.bart.gov/api/sched.aspx?cmd=depart&orig=dbrk&dest="+currentStation+"&key=MW9S-E7SL-26DU-VV8V";
 				new RequestTask((Activity)c).execute(url);
 				Log.v("BART_API",url);
+				//reveal destination actv
+				
+				destinationTextView.setVisibility(0);
+
 			}
         });
         
-        departureTextView.setOnTouchListener(new OnTouchListener(){
+        originTextView.setOnTouchListener(new OnTouchListener(){
 
 			@Override
 			public boolean onTouch(View arg0, MotionEvent arg1) {
-				AutoCompleteTextView departureTextView = (AutoCompleteTextView)
-		                findViewById(R.id.tv);
-				departureTextView.setThreshold(1);
-				departureTextView.setText("");
+				AutoCompleteTextView originTextView = (AutoCompleteTextView)
+		                findViewById(R.id.originTv);
+				originTextView.setThreshold(1);
+				originTextView.setText("");
 				return false;
 			}
         	
         });
         
-        departureTextView.setAdapter(adapter);
+        destinationTextView.setOnItemClickListener(new OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> parent, View arg1, int position,
+					long arg3) {
+				AutoCompleteTextView destinationTextView = (AutoCompleteTextView)
+		                findViewById(R.id.destinationTv);
+				destinationTextView.setThreshold(200);
+				String destinationStation = STATION_MAP.get(parent.getItemAtPosition(position).toString());
+				hideSoftKeyboard(arg1);
+				lastRequest = "etd";
+				//String url = "http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+currentStation+"&key=MW9S-E7SL-26DU-VV8V";
+				// TEMP: For testing route function
+				lastRequest = "route";
+				String url = "http://api.bart.gov/api/sched.aspx?cmd=depart&orig="+currentStation+"&dest="+destinationStation+"&key=MW9S-E7SL-26DU-VV8V";
+				new RequestTask((Activity)c).execute(url);
+				Log.v("BART_API",url);
+				//reveal destination actv
+			}
+        });
+        
+        destinationTextView.setOnTouchListener(new OnTouchListener(){
+
+			@Override
+			public boolean onTouch(View arg0, MotionEvent arg1) {
+				AutoCompleteTextView originTextView = (AutoCompleteTextView)
+		                findViewById(R.id.destinationTv);
+				originTextView.setThreshold(1);
+				originTextView.setText("");
+				return false;
+			}
+        	
+        });
+        
+        
     }
     
     private void hideSoftKeyboard (View view) {
@@ -135,18 +177,40 @@ public class TheActivity extends Activity {
     }
     
     public void updateUI(Object response){
-    	TextView tv = (TextView) findViewById(R.id.tv);
+    	TextView tv = (TextView) findViewById(R.id.originTv);
     	if (response instanceof etdResponse){
-    		etdResponse = (etdResponse) response;
-    		tv.setText(response.toString());
-    		displayEtdResponse();
+    		tv.setText(((etdResponse)response).toString());
+    		displayEtdResponse((etdResponse) response);
     	}
     	else if (response instanceof routeResponse){
-    		routeResponse routeResponse = (routeResponse) response;
+    		displayRouteResponse((routeResponse) response);
+    	}
+    }
+    
+    public void displayRouteResponse(routeResponse routeResponse){
+    	etdLayout.removeAllViews();
+    	
+    	for (int x=0;x<routeResponse.routes.size();x++){
+    		TableRow tr = new TableRow(c);
+    		route thisRoute = routeResponse.routes.get(x);
+    		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
+    		tr.addView(legLayout);
+    			
+    		for(int y=0;y<thisRoute.legs.size();y++){
+    			TextView trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+    			trainTv.setText(((leg)thisRoute.legs.get(y)).trainHeadStation);
+    			legLayout.addView(trainTv);
+    		}
+    		
+    		TextView arrivalTimeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+    		arrivalTimeTv.setText(thisRoute.arrivalDate.toString());
+    		tr.addView(arrivalTimeTv);
+    		etdLayout.addView(tr);
+    		
     	}
     }
    
-    public void displayEtdResponse(){
+    public void displayEtdResponse(etdResponse etdResponse){
 		etdLayout.removeAllViews();
 		String lastDestination = "";
 		TableRow tr = new TableRow(c);
