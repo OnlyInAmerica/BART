@@ -34,8 +34,8 @@ public class TheActivity extends Activity {
 	Context c;
 	LinearLayout etdLayout;
 	etdResponse etdResponse;
-	ArrayList etdList;
 	String currentStation = "dbrk";
+	String lastRequest="";
 	Resources res;
 	
 	private static final String[] STATIONS = new String[] {
@@ -50,7 +50,7 @@ public class TheActivity extends Activity {
 		"San Leandro","South Hayward","South San Francisco","Union City","Walnut Creek","West Oakland"
     };
 	
-	private static final HashMap<String, String> STATION_MAP = new HashMap<String, String>() {
+	static final HashMap<String, String> STATION_MAP = new HashMap<String, String>() {
 		{
 		put("12th St. Oakland City Center", "12th");put("16th St. Mission (SF)", "16th");put("19th St. Oakland", "19th");
 		put("24th St. Mission (SF)", "24th");put("Ashby (Berkeley)", "ashb");put("Balboa Park (SF)", "balb");put("Bay Fair (San Leandro)", "bayf");
@@ -89,8 +89,13 @@ public class TheActivity extends Activity {
 				departureTextView.setThreshold(200);
 				currentStation = STATION_MAP.get(parent.getItemAtPosition(position).toString());
 				hideSoftKeyboard(arg1);
-				new RequestTask((Activity)c).execute("http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+currentStation+"&key=MW9S-E7SL-26DU-VV8V");
-				Log.v("BART_API","hit");
+				//lastRequest = "etd";
+				//new RequestTask((Activity)c).execute("http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+currentStation+"&key=MW9S-E7SL-26DU-VV8V");
+				// TEMP: For testing route function
+				lastRequest = "route";
+				String url = "http://api.bart.gov/api/sched.aspx?cmd=depart&orig=dbrk&dest="+currentStation+"&key=MW9S-E7SL-26DU-VV8V";
+				new RequestTask((Activity)c).execute(url);
+				Log.v("BART_API",url);
 			}
         });
         
@@ -123,19 +128,25 @@ public class TheActivity extends Activity {
 	        .setPositiveButton("Bummer", null)
 	        .show();
     	}
-    	else
-    		new BartParser(this).execute(response);
+    	else if(lastRequest == "etd")
+    		new BartStationEtdParser(this).execute(response);
+    	else if(lastRequest == "route")
+    		new BartRouteParser(this).execute(response);
     }
     
-    public void updateUI(etdResponse response){
+    public void updateUI(Object response){
     	TextView tv = (TextView) findViewById(R.id.tv);
-    	etdResponse = response;
-    	tv.setText(response.toString());
-    	fillTable();
+    	if (response instanceof etdResponse){
+    		etdResponse = (etdResponse) response;
+    		tv.setText(response.toString());
+    		displayEtdResponse();
+    	}
+    	else if (response instanceof routeResponse){
+    		routeResponse routeResponse = (routeResponse) response;
+    	}
     }
    
-    public void fillTable(){
-    	etdList =  new ArrayList();
+    public void displayEtdResponse(){
 		etdLayout.removeAllViews();
 		String lastDestination = "";
 		TableRow tr = new TableRow(c);
@@ -163,7 +174,6 @@ public class TheActivity extends Activity {
 				tr.addView(destinationTv);
 				tr.addView(timeTv);
 				etdLayout.addView(tr);
-				etdList.add(timeTv);
 			}
 			else{ // append next trains arrival time to existing destination display
 				//timeTv.append(String.valueOf(", "+thisEtd.minutesToArrival));
