@@ -6,11 +6,12 @@ import java.util.Date;
 public class routeResponse {
 	public String originStation;
 	public String destinationStation;
+	public String specialSchedule;
 	public Date date;
 	public ArrayList<route> routes;
 	
 	public routeResponse(){
-		routes = new ArrayList();
+		routes = new ArrayList(3);  // Typically three routes are returned. Let's save some trivial memory!
 	}
 	
 	public route addRoute(){

@@ -120,7 +120,14 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 					response.lastEtd().bikes = false;
 			}
 		};
-		XMLParser parser = new XMLParser(stationRule, timeRule, dateRule, estTagRule, destinationRule, minuteRule, platformRule, bikeRule);
+		IRule warningRule = new DefaultRule(Type.CHARACTER, "/root/message/warning") {
+			@Override
+			public void handleParsedCharacters(XMLParser parser, String text, Object userObject) {
+				//currentEtd.bikes = Boolean.getBoolean(text);
+				response.message = text;
+			}
+		};
+		XMLParser parser = new XMLParser(stationRule, timeRule, dateRule, estTagRule, destinationRule, minuteRule, platformRule, bikeRule, warningRule);
 		parser.parse(bais);
 		//11:15:32 AM PDT
 		

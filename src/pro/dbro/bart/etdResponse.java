@@ -9,6 +9,7 @@ public class etdResponse {
 	public String station;
 	public Date date;
 	public ArrayList etds;
+	public String message;
 	
 	public String toString(){
 		return station;

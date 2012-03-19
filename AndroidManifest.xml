@@ -12,7 +12,8 @@
         android:label="@string/app_name" >
         <activity
             android:name=".TheActivity"
-            android:label="@string/app_name" >
+            android:label="@string/app_name"
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

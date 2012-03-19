@@ -61,12 +61,18 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 				responseDate = text;
 			}
 		};
+		IRule specialScheduleRule = new DefaultRule(Type.CHARACTER, "/root/message/special_schedule") {
+			@Override
+			public void handleParsedCharacters(XMLParser parser, String text, Object userObject) {
+				response.specialSchedule = text;
+			}
+		};
 		// origin="DBRK" destination="WCRK" fare="3.15" origTimeMin="3:18 PM" origTimeDate="03/16/2012 " destTimeMin="3:44 PM" destTimeDate="03/16/2012"
 		IRule tripAttributeRule = new DefaultRule(Type.ATTRIBUTE, "/root/schedule/request/trip", new String[]{"fare", "origTimeMin","origTimeDate","destTimeMin","destTimeDate"}) {
 			@Override
 			public void handleParsedAttribute(XMLParser parser, int num, String value, Object userObject) {
 				
-				Log.v("ATTRIBUTE",String.valueOf(num)+ " - "+value);
+				//("ATTRIBUTE",String.valueOf(num)+ " - "+value);
 				if(num == 0){ // fare
 					route thisRoute = response.addRoute();
 					thisRoute.fare = Double.valueOf(value);
@@ -81,10 +87,10 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 				}
 				else if(num == 3){
 					routeDestinationTime = value;
-					Log.v("ROUTE_DEST_TIME",value.toString());
+					//("ROUTE_DEST_TIME",value.toString());
 				}
 				else if(num == 4){
-					Log.v("ROUTE_DEST_DATE",value.toString());
+					//Log.v("ROUTE_DEST_DATE",value.toString());
 					routeDestinationDate = value;
 				}
 				//thisRoute.fare
@@ -100,8 +106,8 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 					String destinationDateStr = routeDestinationDate + " " + routeDestinationTime;
 					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a"); 
 					try {
-						thisRoute.arrivalDate = curFormater.parse(originDateStr);
-						thisRoute.departureDate = curFormater.parse(destinationDateStr);
+						thisRoute.departureDate = curFormater.parse(originDateStr);
+						thisRoute.arrivalDate = curFormater.parse(destinationDateStr);
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -171,20 +177,20 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 				else if(num == 7){
 					route thisRoute = response.getLastRoute();
 					leg thisLeg = thisRoute.getLastLeg();
-					thisLeg.trainHeadStation = value;
+					thisLeg.trainHeadStation = value.toLowerCase();
 				}
 				
 			}
 		};
 		
-		XMLParser parser = new XMLParser(originStationRule, destinationStationRule, timeRule, dateRule, tripAttributeRule, tripTagRule, legAttributeRule);
+		XMLParser parser = new XMLParser(originStationRule, destinationStationRule, timeRule, dateRule, tripAttributeRule, tripTagRule, legAttributeRule, specialScheduleRule);
 		parser.parse(bais);
 		//11:15:32 AM PDT
 		
 		//String[] timesplit = time.split(" ");
 		String dateStr = responseDate + " " + responseTime;
 		//Log.v("time split", timesplit.toString());
-		Log.v("Time",dateStr);
+		//Log.v("Time",dateStr);
 		curFormater = new SimpleDateFormat("MMM dd, yyyy hh:mm a"); 
 		Date dateObj = new Date();
 		try {

@@ -32,14 +32,21 @@
     	android:layout_width="fill_parent" 
     	android:layout_height="wrap_content"
    		android:scrollbars="vertical">
-
-    <TableLayout
-            android:id="@+id/etdLayout"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center|center_horizontal"
-            android:layout_marginTop="30dp" >
-            
-    </TableLayout>
+   		
+   	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+   	    android:id="@+id/specialScheduleLayout"
+	    android:layout_width="fill_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="vertical" 
+    >
+	    <TableLayout
+	            android:id="@+id/etdLayout"
+	            android:layout_width="wrap_content"
+	            android:layout_height="fill_parent"
+	            android:layout_gravity="center|center_horizontal"
+	            android:layout_marginTop="30dp" >
+	            
+    	</TableLayout>
+    </LinearLayout>
     </ScrollView>
 </LinearLayout>

@@ -10,7 +10,7 @@ public class route {
 	public ArrayList legs;
 	
 	public route(){
-		legs = new ArrayList();
+		legs = new ArrayList(3);  // Any point-point on BART should be navigable with 3 legs
 	}
 	
 	public leg addLeg(){
