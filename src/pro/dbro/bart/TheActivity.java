@@ -186,7 +186,7 @@ public class TheActivity extends Activity {
     		url += "etd.aspx?cmd=etd&orig="+STATION_MAP.get(originTextView.getText().toString());
     	}
     	else if (lastRequest == "route"){
-    		url += "sched.aspx?cmd=depart&a=0&b=3&orig="+STATION_MAP.get(originTextView.getText().toString())+"&dest="+STATION_MAP.get(destinationTextView.getText().toString());
+    		url += "sched.aspx?cmd=depart&a=3&b=0&orig="+STATION_MAP.get(originTextView.getText().toString())+"&dest="+STATION_MAP.get(destinationTextView.getText().toString());
     	}
     	url += "&key="+BART_API_KEY;
     	Log.v("BART API",url);
