@@ -252,10 +252,9 @@ public class TheActivity extends Activity {
     	for (int x=0;x<routeResponse.routes.size();x++){
     		TableRow tr = new TableRow(c);
     		route thisRoute = routeResponse.routes.get(x);
-
+    		
     		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
-    		tr.addView(legLayout);
-    			
+				
     		for(int y=0;y<thisRoute.legs.size();y++){
     			TextView trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
     			trainTv.setPadding(0, 0, 0, 0);
@@ -267,6 +266,8 @@ public class TheActivity extends Activity {
     			
     			legLayout.addView(trainTv);
     		}
+    		
+    		tr.addView(legLayout);
     		
     		TextView arrivalTimeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
     		arrivalTimeTv.setPadding(30, 0, 0, 0);

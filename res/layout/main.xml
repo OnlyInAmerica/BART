@@ -11,6 +11,8 @@
         android:layout_gravity="center|center_horizontal"
         android:selectAllOnFocus="false"
         android:completionThreshold="1"
+        android:hint="Departure Station"
+        android:inputType="textNoSuggestions"
         android:textSize="28dp"
         android:text="" >
     </AutoCompleteTextView>
@@ -21,6 +23,8 @@
         android:layout_gravity="center|center_horizontal"
         android:selectAllOnFocus="false"
         android:completionThreshold="1"
+        android:hint="Destination Station"
+        android:inputType="textNoSuggestions"
         android:textSize="28dp"
         android:visibility="invisible"
         android:text="" >
@@ -44,6 +48,8 @@
 	            android:layout_width="wrap_content"
 	            android:layout_height="fill_parent"
 	            android:layout_gravity="center|center_horizontal"
+	            android:layout_centerHorizontal="true"
+	            android:animateLayoutChanges="true"
 	            android:layout_marginTop="30dp" >
 	            
     	</TableLayout>
