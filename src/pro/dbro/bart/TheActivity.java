@@ -56,7 +56,6 @@ public class TheActivity extends Activity {
 	Resources res;
 	AutoCompleteTextView destinationTextView;
 	AutoCompleteTextView originTextView;
-	ImageView reverse;
 	
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
@@ -148,8 +147,19 @@ public class TheActivity extends Activity {
         destinationTextView.setAdapter(adapter);
         originTextView.setAdapter(adapter);
         
-        reverse = (ImageView) findViewById(R.id.reverse);
+        ImageView map = (ImageView) findViewById(R.id.map);
+        map.setOnClickListener(new OnClickListener(){
+
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				Intent intent = new Intent(c, MapActivity.class);
+		        startActivity(intent);
+			}
+        	
+        });
         
+        ImageView reverse = (ImageView) findViewById(R.id.reverse);
         reverse.setOnClickListener(new OnClickListener(){
 
 			@Override
