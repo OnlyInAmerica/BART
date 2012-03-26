@@ -325,10 +325,10 @@ public class TheActivity extends Activity {
     		LinearLayout specialSchedule = (LinearLayout)View.inflate(c, R.layout.specialschedulelayout, null);
     		TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
     		//specialScheduleTv.setWidth(275);
-    		specialScheduleTv.setText("Route Alerts");
-    		specialScheduleTv.setTextSize(18);
-    		specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
-    		specialSchedule.addView(specialScheduleTv);
+    		//specialScheduleTv.setText("Route Alerts");
+    		//specialScheduleTv.setTextSize(18);
+    		//specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
+    		//specialSchedule.addView(specialScheduleTv);
     		specialSchedule.setTag(routeResponse.specialSchedule);
     		specialSchedule.setOnClickListener(new OnClickListener(){
 
@@ -337,6 +337,7 @@ public class TheActivity extends Activity {
 				    TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 				    specialScheduleTv.setText(Html.fromHtml(arg0.getTag().toString()));
 				    specialScheduleTv.setTextSize(16);
+				    specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
 				    new AlertDialog.Builder(c)
 			        .setTitle("Route Alerts")
 			        .setIcon(R.drawable.warning)
