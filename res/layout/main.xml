@@ -4,31 +4,53 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" 
     >
-    <AutoCompleteTextView
-        android:id="@+id/originTv"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center|center_horizontal"
-        android:selectAllOnFocus="false"
-        android:completionThreshold="1"
-        android:hint="Departure Station"
-        android:inputType="textNoSuggestions"
-        android:textSize="28dp"
-        android:text="" >
-    </AutoCompleteTextView>
-    <AutoCompleteTextView
-        android:id="@+id/destinationTv"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center|center_horizontal"
-        android:selectAllOnFocus="false"
-        android:completionThreshold="1"
-        android:hint="Destination Station"
-        android:inputType="textNoSuggestions"
-        android:textSize="28dp"
-        android:visibility="invisible"
-        android:text="" >
-    </AutoCompleteTextView>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal" 
+    android:weightSum="1.0"
+    >
+	    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	    android:layout_width="270dp"
+	    android:layout_height="wrap_content"
+	    android:orientation="vertical" 
+	    android:layout_weight=".80"
+	    >
+	    <AutoCompleteTextView
+	        android:id="@+id/originTv"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="center|center_horizontal"
+	        android:selectAllOnFocus="false"
+	        android:completionThreshold="1"
+	        android:hint="Departure Station"
+	        android:inputType="textNoSuggestions"
+	        android:textSize="24dp"
+	        android:text="" >
+	    </AutoCompleteTextView>
+	    <AutoCompleteTextView
+	        android:id="@+id/destinationTv"
+	        android:layout_width="fill_parent"
+	        android:layout_height="wrap_content"
+	        android:layout_gravity="center|center_horizontal"
+	        android:selectAllOnFocus="false"
+	        android:completionThreshold="1"
+	        android:hint="Destination Station"
+	        android:inputType="textNoSuggestions"
+	        android:textSize="24dp"
+	        android:text="" >
+	    </AutoCompleteTextView>
+	    </LinearLayout>
+	    <ImageView
+   		android:id="@+id/reverse"
+	    android:layout_width="wrap_content" 
+	    android:layout_height="wrap_content" 
+	    android:layout_marginLeft="5dp"
+	    android:layout_gravity="center"
+	    android:layout_weight=".20"
+	    android:contentDescription="reverse"
+	    android:src="@drawable/shuffle" />
+	</LinearLayout>
     <ScrollView 
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/scrollView"
@@ -38,17 +60,17 @@
    		android:scrollbars="vertical">
    		
    	<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-   	    android:id="@+id/specialScheduleLayout"
+   	    android:id="@+id/tableContainerLayout"
 	    android:layout_width="fill_parent"
 	    android:layout_height="wrap_content"
 	    android:orientation="vertical" 
+	    android:animateLayoutChanges="true"
     >
 	    <TableLayout
-	            android:id="@+id/etdLayout"
+	            android:id="@+id/tableLayout"
 	            android:layout_width="wrap_content"
 	            android:layout_height="fill_parent"
 	            android:layout_gravity="center|center_horizontal"
-	            android:layout_centerHorizontal="true"
 	            android:animateLayoutChanges="true"
 	            android:layout_marginTop="30dp" >
 	            

@@ -8,6 +8,7 @@ public class route {
 	public Date departureDate;
 	public Date arrivalDate;
 	public ArrayList legs;
+	public boolean isExpanded = false; // is corresponding view expanded?
 	
 	public route(){
 		legs = new ArrayList(3);  // Any point-point on BART should be navigable with 3 legs

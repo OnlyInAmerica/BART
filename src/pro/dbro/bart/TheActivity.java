@@ -8,11 +8,15 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.Html;
+import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
@@ -20,20 +24,24 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+// TODO: access to recent stations
 
 public class TheActivity extends Activity {
 	Context c;
-	LinearLayout etdLayout;
-	LinearLayout specialScheduleLinearLayout;
+	TableLayout tableLayout;
+	LinearLayout tableContainerLayout;
 	String lastRequest="";
 	Resources res;
 	AutoCompleteTextView destinationTextView;
 	AutoCompleteTextView originTextView;
+	ImageView reverse;
 	
 	private final String BART_API_ROOT = "http://api.bart.gov/api/";
 	private final String BART_API_KEY="MW9S-E7SL-26DU-VV8V";
@@ -92,8 +100,8 @@ public class TheActivity extends Activity {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
-        etdLayout = (LinearLayout) findViewById(R.id.etdLayout);
-        specialScheduleLinearLayout = (LinearLayout)findViewById(R.id.specialScheduleLayout);
+        tableLayout = (TableLayout) findViewById(R.id.tableLayout);
+        tableContainerLayout = (LinearLayout)findViewById(R.id.tableContainerLayout);
         c = this;
         res = getResources();
         
@@ -105,6 +113,30 @@ public class TheActivity extends Activity {
         destinationTextView = (AutoCompleteTextView) findViewById(R.id.destinationTv);
         destinationTextView.setAdapter(adapter);
         originTextView.setAdapter(adapter);
+        
+        reverse = (ImageView) findViewById(R.id.reverse);
+        
+        reverse.setOnClickListener(new OnClickListener(){
+
+			@Override
+			public void onClick(View arg0) {
+				Editable originTempText = originTextView.getText();
+				originTextView.setText(destinationTextView.getText());
+				destinationTextView.setText(originTempText);	
+				
+				if(STATION_MAP.get(originTextView.getText().toString()) != null){
+					if(STATION_MAP.get(destinationTextView.getText().toString()) != null){
+						lastRequest = "route";
+						bartApiRequest();
+					}
+					else{
+						lastRequest = "etd";
+						bartApiRequest();
+					}
+				}
+			}
+        });
+        	
         
         originTextView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
@@ -124,9 +156,9 @@ public class TheActivity extends Activity {
 				lastRequest = "etd";
 				bartApiRequest();
 				
-				//reveal destination actv
-				destinationTextView.setVisibility(0);
-
+				//reveal destination actv and reverse view
+				//destinationTextView.setVisibility(0);
+				//reverse.setVisibility(0);
 			}
         });
         
@@ -218,8 +250,8 @@ public class TheActivity extends Activity {
     //CALLS: the appropriate method to update the UI
     public void updateUI(Object response){
     	//If special messages exist from a previous request, remove them
-    	if (specialScheduleLinearLayout.getChildCount() > 1)
-    		specialScheduleLinearLayout.removeViews(1, specialScheduleLinearLayout.getChildCount()-1);
+    	if (tableContainerLayout.getChildCount() > 1)
+    		tableContainerLayout.removeViews(1, tableContainerLayout.getChildCount()-1);
     	if (response instanceof etdResponse){
     		displayEtdResponse((etdResponse) response);
     	}
@@ -231,34 +263,20 @@ public class TheActivity extends Activity {
     //CALLED-BY: updateUI()
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
-    	etdLayout.removeAllViews();
-    	//SimpleDateFormat curFormater = new SimpleDateFormat("MMM dd, yyyy hh:mm a"); 
-    	SimpleDateFormat curFormater = new SimpleDateFormat("m"); 
+    	tableLayout.removeAllViews();
     	Log.v("DATE",new Date().toString());
     	long now = new Date().getTime();
-    	
-    	if (routeResponse.specialSchedule != null){
-    		LinearLayout specialScheduleDisplay = (LinearLayout)View.inflate(c, R.layout.specialschedulelayout, null);
-    		TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-    		//specialScheduleTv.setWidth(275);
-    		specialScheduleTv.setText(Html.fromHtml(routeResponse.specialSchedule));
-    		specialScheduleTv.setTextSize(18);
-    		specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
-    		//Html.fromHtml("<h2>Title</h2><br><p>Description here</p>"));
-    		specialScheduleDisplay.addView(specialScheduleTv);
-    		specialScheduleLinearLayout.addView(specialScheduleDisplay);
-    	}
-    	
+    
     	for (int x=0;x<routeResponse.routes.size();x++){
-    		TableRow tr = new TableRow(c);
+    		TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
     		route thisRoute = routeResponse.routes.get(x);
     		
     		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
 				
     		for(int y=0;y<thisRoute.legs.size();y++){
     			TextView trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-    			trainTv.setPadding(0, 0, 0, 0);
     			trainTv.setTextSize(20);
+    			trainTv.setGravity(3); // set left gravity
     			if (y>0)
     				trainTv.setText("to "+REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
     			else
@@ -275,15 +293,86 @@ public class TheActivity extends Activity {
     		Log.v("DEPART_DATE",thisRoute.departureDate.toString());
     		arrivalTimeTv.setText(String.valueOf((thisRoute.departureDate.getTime()-now)/(1000*60)));
     		tr.addView(arrivalTimeTv);
-    		etdLayout.addView(tr);
-    		
+    		tr.setTag(thisRoute);
+    		tableLayout.addView(tr);
+    		tr.setOnClickListener(new OnClickListener(){
+
+				@Override
+				public void onClick(View arg0) {
+					int index = tableLayout.indexOfChild(arg0); // index of clicked view. Expanded view will always be +1
+					route thisRoute = (route) arg0.getTag();
+					if (!thisRoute.isExpanded){ // if route not expanded
+						thisRoute.isExpanded = true;
+						LinearLayout routeDetail = (LinearLayout) View.inflate(c, R.layout.routedetail, null);
+						TextView arrivalTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+						SimpleDateFormat curFormater = new SimpleDateFormat("hh:mm a"); 
+						arrivalTv.setTextColor(0xFFC9C7C8);
+						arrivalTv.setText("arrives "+curFormater.format(thisRoute.arrivalDate));
+						arrivalTv.setTextSize(20);
+						routeDetail.addView(arrivalTv);
+						tableLayout.addView(routeDetail, index+1);
+					}
+					else{
+						thisRoute.isExpanded = false;
+						tableLayout.removeViewAt(index+1);
+					}
+					
+				}
+    		});
     	}
+    	if (routeResponse.specialSchedule != null){
+    		String[] specialMessage = routeResponse.specialSchedule.split("<br>\n<br>\n");
+    		LinearLayout specialSchedule = (LinearLayout)View.inflate(c, R.layout.specialschedulelayout, null);
+    		TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+    		//specialScheduleTv.setWidth(275);
+    		specialScheduleTv.setText("Route Alerts");
+    		specialScheduleTv.setTextSize(18);
+    		specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
+    		specialSchedule.addView(specialScheduleTv);
+    		specialSchedule.setTag(routeResponse.specialSchedule);
+    		specialSchedule.setOnClickListener(new OnClickListener(){
+
+				@Override
+				public void onClick(View arg0) {
+				    TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+				    specialScheduleTv.setText(Html.fromHtml(arg0.getTag().toString()));
+				    specialScheduleTv.setTextSize(16);
+				    new AlertDialog.Builder(c)
+			        .setTitle("Route Alerts")
+			        .setIcon(R.drawable.warning)
+			        .setView(specialScheduleTv)
+			        .setPositiveButton("Bummer", null)
+			        .show();
+					
+				}
+    			
+    		});
+    		//tableContainerLayout.addView(specialSchedule);
+    		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
+    		/*
+    		for(int x=0;x<specialMessage.length;x++){
+    			TableRow tr = new TableRow(c);
+	    		LinearLayout specialSchedule = (LinearLayout)View.inflate(c, R.layout.specialschedulelayout, null);
+	    		TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+	    		//specialScheduleTv.setWidth(275);
+	    		specialScheduleTv.setText(Html.fromHtml(specialMessage[x]));
+	    		specialScheduleTv.setTextSize(18);
+	    		specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
+	    		//Html.fromHtml("<h2>Title</h2><br><p>Description here</p>"));
+	    		//tr.addView(specialScheduleDisplay);
+	    		//tr.addView(specialScheduleTv);
+	    		specialSchedule.addView(specialScheduleTv);
+	    		tableContainerLayout.addView(specialSchedule);
+	    		//tableLayout.addView(specialScheduleTv, tableLayout.getChildCount());
+    		}*/
+    	}
+    	//tableLayout.setColumnStretchable(1, true);
     }
     
     //CALLED-BY: updateUI()
     //Updates the UI with data from a etdResponse
     public void displayEtdResponse(etdResponse etdResponse){
-		etdLayout.removeAllViews();
+		tableLayout.removeAllViews();
 		String lastDestination = "";
 		
 		if (etdResponse.message != null){
@@ -298,10 +387,10 @@ public class TheActivity extends Activity {
     		specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
     		//Html.fromHtml("<h2>Title</h2><br><p>Description here</p>"));
     		specialScheduleDisplay.addView(specialScheduleTv);
-    		specialScheduleLinearLayout.addView(specialScheduleDisplay);
+    		tableContainerLayout.addView(specialScheduleDisplay);
     	}
 		
-		TableRow tr = new TableRow(c);
+		TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
 		//TextView timeTv =(TextView) View.inflate(c, R.layout.tabletext, null);
 		int numAlt = 0;
 		for(int x=0;x<etdResponse.etds.size();x++){
@@ -325,7 +414,7 @@ public class TheActivity extends Activity {
 				//text.setWidth(120);
 				tr.addView(destinationTv);
 				tr.addView(timeTv);
-				etdLayout.addView(tr);
+				tableLayout.addView(tr);
 			}
 			else{ // append next trains arrival time to existing destination display
 				//timeTv.append(String.valueOf(", "+thisEtd.minutesToArrival));
