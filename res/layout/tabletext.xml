@@ -3,13 +3,12 @@
 <TextView
     xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent"
-	android:layout_height="fill_parent"
+	android:layout_height="wrap_content"
+	android:paddingLeft="30dp"
 	android:singleLine="false"
 	android:scrollHorizontally="false"
 	android:layout_centerHorizontal="true"
 	android:textAppearance="?android:attr/textAppearanceLarge"
 	android:textSize="30dp"
 	android:textColor="#ffffff"
-	android:layout_gravity="bottom"
-	android:gravity="center_horizontal"
 	/>

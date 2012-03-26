@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="hello">Hello World, TheActivity!</string>
-    <string name="app_name">Bart</string>
+    <string name="app_name">Open BART</string>
     <string-array name="networkErrorDialog">
         <item>Network Error</item>
         <item>Check your network connection.</item>
+    </string-array>
+    <string name="greeting">
+        Open BART is being designed with the respect that the Android community deserves! 
+        This is OUR app, so when you find a bug or need a feature, you let me know! Go to 
+        the "About" screen in the settings menu for my contact info.<br></br>
+        Happy BARTing. May you always avoid the smelly trains!<br></br>
+        Oh, and Open BART is open-source. Check it out on github!</string>
+    <string-array name="aboutDialog">
+        <item>About Open BART</item>
+        <item>Open BART is open source software, so it belongs to all of us. Check out the code on &lt;a href="https://github.com/OnlyInAmerica/BART">github&lt;/a>.&lt;br/>&lt;br/>
+              When you find a bug or need a feature contact me at &lt;a href="mailto:davidpbrodsky@gmail.com">davidpbrodsky@gmail.com&lt;/a>.&lt;br/>&lt;br/> Let\'s make this thing better!</item>
     </string-array>
 
 </resources>

@@ -1,19 +1,33 @@
 package pro.dbro.bart;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.Editable;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,6 +40,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -42,6 +57,9 @@ public class TheActivity extends Activity {
 	AutoCompleteTextView destinationTextView;
 	AutoCompleteTextView originTextView;
 	ImageView reverse;
+	
+	private SharedPreferences prefs;
+	private SharedPreferences.Editor editor;
 	
 	private final String BART_API_ROOT = "http://api.bart.gov/api/";
 	private final String BART_API_KEY="MW9S-E7SL-26DU-VV8V";
@@ -104,6 +122,22 @@ public class TheActivity extends Activity {
         tableContainerLayout = (LinearLayout)findViewById(R.id.tableContainerLayout);
         c = this;
         res = getResources();
+        
+        prefs = getSharedPreferences("PREFS", 0);
+        editor = prefs.edit();
+        
+        
+        if(prefs.getBoolean("first_timer", true)){
+        	new AlertDialog.Builder(c)
+	        .setTitle("Welcome to Open BART")
+	        .setIcon(R.drawable.ic_launcher)
+	        .setMessage(R.string.greeting)
+	        .setPositiveButton("Right on", null)
+	        .show();
+        	
+        	editor.putBoolean("first_timer", false);
+	        editor.commit();
+        }
         
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, STATIONS);
@@ -209,7 +243,29 @@ public class TheActivity extends Activity {
 			}
         });    
     }
+    // Initialize settings menu
+    @Override public boolean onCreateOptionsMenu(Menu menu) {
+        MenuItem mi = menu.add(0,0,0,"About");
+        mi.setIcon(android.R.drawable.ic_menu_info_details);
+        return super.onCreateOptionsMenu(menu);
+    }
     
+@Override public boolean onOptionsItemSelected(MenuItem item) {
+		if(item.getItemId() == 0){
+			TextView aboutTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+			aboutTv.setText(Html.fromHtml(res.getStringArray(R.array.aboutDialog)[1]));
+			aboutTv.setTextSize(18);
+			aboutTv.setMovementMethod(LinkMovementMethod.getInstance());
+			new AlertDialog.Builder(c)
+	        .setTitle(res.getStringArray(R.array.aboutDialog)[0])
+	        .setIcon(R.drawable.ic_launcher)
+	        .setView(aboutTv)
+	        .setPositiveButton("Right on", null)
+	        .show();
+			return true;
+		}
+		return false;
+    }
     //CALLED-BY: originTextView and destinationTextView item-select listeners
     //CALLS: HTTP requester: RequestTask
     private void bartApiRequest(){
@@ -270,8 +326,12 @@ public class TheActivity extends Activity {
     	for (int x=0;x<routeResponse.routes.size();x++){
     		TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
     		route thisRoute = routeResponse.routes.get(x);
-    		
+
     		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
+    		
+    		if(thisRoute.legs.size() == 1)
+    			legLayout.setPadding(0, 0, 0, 3); // Address detination train and ETA not aligning 
+    		
 				
     		for(int y=0;y<thisRoute.legs.size();y++){
     			TextView trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
@@ -283,12 +343,13 @@ public class TheActivity extends Activity {
     				trainTv.setText(REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
     			
     			legLayout.addView(trainTv);
+
     		}
     		
     		tr.addView(legLayout);
     		
     		TextView arrivalTimeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-    		arrivalTimeTv.setPadding(30, 0, 0, 0);
+    		//arrivalTimeTv.setPadding(30, 0, 0, 0);
     		arrivalTimeTv.setTextSize(36);
     		Log.v("DEPART_DATE",thisRoute.departureDate.toString());
     		arrivalTimeTv.setText(String.valueOf((thisRoute.departureDate.getTime()-now)/(1000*60)));
@@ -321,15 +382,7 @@ public class TheActivity extends Activity {
     		});
     	}
     	if (routeResponse.specialSchedule != null){
-    		String[] specialMessage = routeResponse.specialSchedule.split("<br>\n<br>\n");
     		LinearLayout specialSchedule = (LinearLayout)View.inflate(c, R.layout.specialschedulelayout, null);
-    		TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-    		//specialScheduleTv.setWidth(275);
-    		//specialScheduleTv.setText("Route Alerts");
-    		//specialScheduleTv.setTextSize(18);
-    		//specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
-    		//specialSchedule.addView(specialScheduleTv);
-    		specialSchedule.setTag(routeResponse.specialSchedule);
     		specialSchedule.setOnClickListener(new OnClickListener(){
 
 				@Override
@@ -348,26 +401,8 @@ public class TheActivity extends Activity {
 				}
     			
     		});
-    		//tableContainerLayout.addView(specialSchedule);
     		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
-    		/*
-    		for(int x=0;x<specialMessage.length;x++){
-    			TableRow tr = new TableRow(c);
-	    		LinearLayout specialSchedule = (LinearLayout)View.inflate(c, R.layout.specialschedulelayout, null);
-	    		TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-	    		//specialScheduleTv.setWidth(275);
-	    		specialScheduleTv.setText(Html.fromHtml(specialMessage[x]));
-	    		specialScheduleTv.setTextSize(18);
-	    		specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
-	    		//Html.fromHtml("<h2>Title</h2><br><p>Description here</p>"));
-	    		//tr.addView(specialScheduleDisplay);
-	    		//tr.addView(specialScheduleTv);
-	    		specialSchedule.addView(specialScheduleTv);
-	    		tableContainerLayout.addView(specialSchedule);
-	    		//tableLayout.addView(specialScheduleTv, tableLayout.getChildCount());
-    		}*/
     	}
-    	//tableLayout.setColumnStretchable(1, true);
     }
     
     //CALLED-BY: updateUI()
@@ -403,13 +438,14 @@ public class TheActivity extends Activity {
 				tr = new TableRow(c);
 				TextView destinationTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 				//bullet.setWidth(200);
+				destinationTv.setPadding(0, 0, 0, 0);
 				destinationTv.setTextSize(20);
 				destinationTv.setText(thisEtd.destination);
 				TextView timeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 				timeTv.setText(String.valueOf(thisEtd.minutesToArrival));
 				timeTv.setSingleLine(false);
 				timeTv.setTextSize(36);
-				timeTv.setPadding(30, 0, 0, 0);
+				//timeTv.setPadding(30, 0, 0, 0);
 				int counterTime = thisEtd.minutesToArrival * 60*1000;
 	    		new ViewCountDownTimer(timeTv, counterTime, 60*1000).start();
 				//text.setWidth(120);
