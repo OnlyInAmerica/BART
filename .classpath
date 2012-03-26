@@ -4,7 +4,7 @@
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
-	<classpathentry kind="lib" path="/Users/dbro/Downloads/sjxp-2.2/sjxp-2.2.jar"/>
-	<classpathentry kind="lib" path="/Users/dbro/Downloads/sjxp-2.2/sjxp-2.2-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/sjxp-2.2-javadoc.jar"/>
+	<classpathentry kind="lib" path="lib/sjxp-2.2.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
