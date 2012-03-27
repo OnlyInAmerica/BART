@@ -35,6 +35,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnLongClickListener;
 import android.view.View.OnTouchListener;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
@@ -129,7 +130,7 @@ public class TheActivity extends Activity {
         
         prefs = getSharedPreferences("PREFS", 0);
         editor = prefs.edit();
-
+        
         if(prefs.getBoolean("first_timer", true)){
         	new AlertDialog.Builder(c)
 	        .setTitle("Welcome to Open BART")
@@ -341,7 +342,7 @@ public class TheActivity extends Activity {
     //CALLED-BY: updateUI()
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
-    	fareTv.setText("$"+String.valueOf(routeResponse.routes.get(0).fare));
+    	fareTv.setText("$"+routeResponse.routes.get(0).fare);
     	tableLayout.removeAllViews();
     	Log.v("DATE",new Date().toString());
     	long now = new Date().getTime();
@@ -351,10 +352,7 @@ public class TheActivity extends Activity {
     		route thisRoute = routeResponse.routes.get(x);
 
     		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
-    		
-    		
-    		
-				
+
     		for(int y=0;y<thisRoute.legs.size();y++){
     			TextView trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
     			trainTv.setTextSize(20);
@@ -369,7 +367,7 @@ public class TheActivity extends Activity {
     		}
     		
     		if(thisRoute.legs.size() == 1){
-    			legLayout.setPadding(0, 0, 0, 3); // Address detination train and ETA not aligning 
+    			legLayout.setPadding(0, 10, 0, 0); // Address detination train and ETA not aligning 
     		}
     		
     		tr.addView(legLayout);
@@ -382,6 +380,18 @@ public class TheActivity extends Activity {
     		tr.addView(arrivalTimeTv);
     		tr.setTag(thisRoute);
     		tableLayout.addView(tr);
+    		tr.setOnLongClickListener(new OnLongClickListener(){
+
+				@Override
+				public boolean onLongClick(View arg0) {
+					new AlertDialog.Builder(c)
+			        .setTitle("Long Click")
+			        .setPositiveButton("ok", null)
+			        .show();
+					return true; // consumed the long click
+				}
+    			
+    		});
     		tr.setOnClickListener(new OnClickListener(){
 
 				@Override
@@ -520,7 +530,7 @@ public class TheActivity extends Activity {
 				//nextTimeTv.setTextSize(36-(5*numAlt));
 				nextTimeTv.setTextSize(36);
 				nextTimeTv.setText(String.valueOf(thisEtd.minutesToArrival));
-				nextTimeTv.setPadding(30, 0, 0, 0);
+				//nextTimeTv.setPadding(30, 0, 0, 0);
 				if (numAlt == 1)	//0xFFF06D2F  C9C7C8
 					nextTimeTv.setTextColor(0xFFC9C7C8);
 				else if (numAlt == 2)

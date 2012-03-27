@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 public class route {
-	public double fare;
+	public String fare;
 	public Date departureDate;
 	public Date arrivalDate;
 	public ArrayList legs;

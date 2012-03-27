@@ -75,7 +75,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 				//("ATTRIBUTE",String.valueOf(num)+ " - "+value);
 				if(num == 0){ // fare
 					route thisRoute = response.addRoute();
-					thisRoute.fare = Double.valueOf(value);
+					thisRoute.fare = value;
 					//leg thisLeg = thisRoute.addLeg();
 					//thisLeg.disembarkStation = TheActivity.STATION_MAP.get(value);
 				}
