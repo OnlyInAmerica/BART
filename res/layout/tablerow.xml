@@ -4,5 +4,5 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="wrap_content" 
     android:layout_width="fill_parent"
-    android:gravity="bottom"
-    android:paddingTop="0dp"/>
+    android:gravity="center"
+    android:paddingTop="20dp"/>

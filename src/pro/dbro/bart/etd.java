@@ -8,6 +8,7 @@ public class etd {
 	public String direction;
 	public boolean bikes;
 	public String color;
+	public boolean isExpanded = false; // Is corresponding view expanded?
 	
 	public String toString(){
 		return destination + " in " + String.valueOf(minutesToArrival)+"m";

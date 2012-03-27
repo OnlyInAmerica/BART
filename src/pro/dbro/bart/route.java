@@ -8,6 +8,7 @@ public class route {
 	public Date departureDate;
 	public Date arrivalDate;
 	public ArrayList legs;
+	public boolean bikes = false; // if all legs allow bikes, route flagged
 	public boolean isExpanded = false; // is corresponding view expanded?
 	
 	public route(){

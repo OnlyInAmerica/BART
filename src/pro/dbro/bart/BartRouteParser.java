@@ -102,6 +102,13 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 				if (!isStartTag){
 					route thisRoute = response.getLastRoute();
 					
+					boolean bikes = true;
+					for(int x=0;x<thisRoute.legs.size();x++){
+						if(!((leg)thisRoute.legs.get(x)).bikes)
+							bikes = false;
+					}
+					thisRoute.bikes = bikes;
+					
 					String originDateStr = routeOriginDate + " " + routeOriginTime;
 					String destinationDateStr = routeDestinationDate + " " + routeDestinationTime;
 					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a"); 
@@ -120,64 +127,85 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 			}
 		};
 		//
-		IRule legAttributeRule = new DefaultRule(Type.ATTRIBUTE, "/root/schedule/request/trip/leg", new String[]{"transfercode", "origin","destination","origTimeMin","origTimeDate","destTimeMin","destTimeDate","trainHeadStation"}) {
+		IRule legAttributeRule = new DefaultRule(Type.ATTRIBUTE, "/root/schedule/request/trip/leg", new String[]{"transfercode", "origin","destination","origTimeMin","origTimeDate","destTimeMin","destTimeDate","trainHeadStation", "bikeflag"}) {
 			@Override
 			public void handleParsedAttribute(XMLParser parser, int num, String value, Object userObject) {
 				// TODO: Fix assumed order of XML attributes
-				if(num == 0){ // transfercode
-					route thisRoute = response.getLastRoute();
-					leg thisLeg = thisRoute.addLeg();
+				route thisRoute;
+				leg thisLeg;
+				String dateStr;
+				switch(num){
+				case 0:// transfercode
+					thisRoute = response.getLastRoute();
+					thisLeg = thisRoute.addLeg();
 					thisLeg.transferCode = value;
+					break;
 					//leg thisLeg = thisRoute.addLeg();
 					//thisLeg.disembarkStation = TheActivity.STATION_MAP.get(value);
-				}
-				else if(num == 1){ // orig station
-					route thisRoute = response.getLastRoute();
-					leg thisLeg = thisRoute.getLastLeg();
+				
+				case 1: // orig station
+					thisRoute = response.getLastRoute();
+					thisLeg = thisRoute.getLastLeg();
 					thisLeg.boardStation = value;
-				}
-				else if(num == 2){ // dest station
-					route thisRoute = response.getLastRoute();
-					leg thisLeg = thisRoute.getLastLeg();
+					break;
+					
+				case 2: // dest station
+					thisRoute = response.getLastRoute();
+					thisLeg = thisRoute.getLastLeg();
 					thisLeg.disembarkStation = value;
-				}
-				else if(num == 3){ // board time
+					break;
+				
+				case 3: // board time
 					legTime = value;
-				}
-				else if(num == 4){ // board date
+					break;
+				
+				case 4: // board date
 					legDate = value;
-					String dateStr = legDate + " " + legTime;
+					dateStr = legDate + " " + legTime;
 					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a"); 
-					route thisRoute = response.getLastRoute();
-					leg thisLeg = thisRoute.getLastLeg();
+					thisRoute = response.getLastRoute();
+					thisLeg = thisRoute.getLastLeg();
 					try {
 						thisLeg.boardTime = curFormater.parse(dateStr);
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				}
-				else if(num == 5){ // board time
+					break;
+				
+				case 5: // board time
 					legTime = value;
-				}
-				else if(num == 6){ // board date
+					break;
+				
+				case 6: // board date
 					legDate = value;
 					//assume date always follows time:
-					String dateStr = legDate + " " + legTime;
+					dateStr = legDate + " " + legTime;
 					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a"); 
-					route thisRoute = response.getLastRoute();
-					leg thisLeg = thisRoute.getLastLeg();
+					thisRoute = response.getLastRoute();
+					thisLeg = thisRoute.getLastLeg();
 					try {
 						thisLeg.disembarkTime = curFormater.parse(dateStr);
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				}
-				else if(num == 7){
-					route thisRoute = response.getLastRoute();
-					leg thisLeg = thisRoute.getLastLeg();
+					break;
+				
+				case 7: // train head station
+					thisRoute = response.getLastRoute();
+					thisLeg = thisRoute.getLastLeg();
 					thisLeg.trainHeadStation = value.toLowerCase();
+					break;
+				
+				case 8:  // bikeFlag
+					thisRoute = response.getLastRoute();
+					thisLeg = thisRoute.getLastLeg();
+					if(value.equals("1"))
+						thisLeg.bikes = true;
+					else
+						thisLeg.bikes = false;
+					break;
 				}
 				
 			}

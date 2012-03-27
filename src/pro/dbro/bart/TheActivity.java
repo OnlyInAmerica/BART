@@ -8,6 +8,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Set;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -17,6 +19,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.text.Editable;
@@ -27,6 +30,7 @@ import android.text.util.Linkify;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -56,6 +60,7 @@ public class TheActivity extends Activity {
 	Resources res;
 	AutoCompleteTextView destinationTextView;
 	AutoCompleteTextView originTextView;
+	TextView fareTv;
 	
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
@@ -124,8 +129,7 @@ public class TheActivity extends Activity {
         
         prefs = getSharedPreferences("PREFS", 0);
         editor = prefs.edit();
-        
-        
+
         if(prefs.getBoolean("first_timer", true)){
         	new AlertDialog.Builder(c)
 	        .setTitle("Welcome to Open BART")
@@ -143,9 +147,18 @@ public class TheActivity extends Activity {
         originTextView = (AutoCompleteTextView)
                 findViewById(R.id.originTv);
         
+        fareTv = (TextView) findViewById(R.id.fareTv);
         destinationTextView = (AutoCompleteTextView) findViewById(R.id.destinationTv);
         destinationTextView.setAdapter(adapter);
         originTextView.setAdapter(adapter);
+        
+        if(prefs.contains("state")){
+        	//state= originTextView | destinationTextView
+        	String[] s = prefs.getString("state", "|").split("|");
+        	originTextView.setText(s[0]);
+        	destinationTextView.setText(s[1]);
+        	validateInputAndDoRequest();
+        }
         
         ImageView map = (ImageView) findViewById(R.id.map);
         map.setOnClickListener(new OnClickListener(){
@@ -168,16 +181,7 @@ public class TheActivity extends Activity {
 				originTextView.setText(destinationTextView.getText());
 				destinationTextView.setText(originTempText);	
 				
-				if(STATION_MAP.get(originTextView.getText().toString()) != null){
-					if(STATION_MAP.get(destinationTextView.getText().toString()) != null){
-						lastRequest = "route";
-						bartApiRequest();
-					}
-					else{
-						lastRequest = "etd";
-						bartApiRequest();
-					}
-				}
+				validateInputAndDoRequest();
 			}
         });
         	
@@ -192,13 +196,14 @@ public class TheActivity extends Activity {
 				hideSoftKeyboard(arg1);
 				
 				// If a valid destination is entered, treat origin change as a request for new route
-				if(STATION_MAP.get(destinationTextView.getText().toString()) != null){
+				/*if(STATION_MAP.get(destinationTextView.getText().toString()) != null){
 					lastRequest = "route";
 					bartApiRequest();
 					return;
 				}
 				lastRequest = "etd";
-				bartApiRequest();
+				bartApiRequest();*/
+				validateInputAndDoRequest();
 				
 				//reveal destination actv and reverse view
 				//destinationTextView.setVisibility(0);
@@ -233,11 +238,12 @@ public class TheActivity extends Activity {
 		                findViewById(R.id.destinationTv);
 				destinationTextView.setThreshold(200);
 				hideSoftKeyboard(arg1);
+				validateInputAndDoRequest();
 				//lastRequest = "etd";
 				//String url = "http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+originStation+"&key=MW9S-E7SL-26DU-VV8V";
 				// TEMP: For testing route function
-				lastRequest = "route";
-				bartApiRequest();
+				//lastRequest = "route";
+				//bartApiRequest();
 			}
         });
         
@@ -255,8 +261,14 @@ public class TheActivity extends Activity {
     }
     // Initialize settings menu
     @Override public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem mi = menu.add(0,0,0,"About");
-        mi.setIcon(android.R.drawable.ic_menu_info_details);
+    	if(Integer.parseInt(Build.VERSION.SDK) < 14){
+	        MenuItem mi = menu.add(0,0,0,"About");
+	        mi.setIcon(android.R.drawable.ic_menu_info_details);
+    	}
+    	else{
+    		MenuInflater inflater = getMenuInflater();
+    	    inflater.inflate(R.layout.actionitem, menu);
+    	}
         return super.onCreateOptionsMenu(menu);
     }
     
@@ -329,6 +341,7 @@ public class TheActivity extends Activity {
     //CALLED-BY: updateUI()
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
+    	fareTv.setText("$"+String.valueOf(routeResponse.routes.get(0).fare));
     	tableLayout.removeAllViews();
     	Log.v("DATE",new Date().toString());
     	long now = new Date().getTime();
@@ -339,8 +352,7 @@ public class TheActivity extends Activity {
 
     		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
     		
-    		if(thisRoute.legs.size() == 1)
-    			legLayout.setPadding(0, 0, 0, 3); // Address detination train and ETA not aligning 
+    		
     		
 				
     		for(int y=0;y<thisRoute.legs.size();y++){
@@ -354,6 +366,10 @@ public class TheActivity extends Activity {
     			
     			legLayout.addView(trainTv);
 
+    		}
+    		
+    		if(thisRoute.legs.size() == 1){
+    			legLayout.setPadding(0, 0, 0, 3); // Address detination train and ETA not aligning 
     		}
     		
     		tr.addView(legLayout);
@@ -376,11 +392,15 @@ public class TheActivity extends Activity {
 						thisRoute.isExpanded = true;
 						LinearLayout routeDetail = (LinearLayout) View.inflate(c, R.layout.routedetail, null);
 						TextView arrivalTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-						SimpleDateFormat curFormater = new SimpleDateFormat("hh:mm a"); 
+						SimpleDateFormat curFormater = new SimpleDateFormat("h:mm a"); 
 						arrivalTv.setTextColor(0xFFC9C7C8);
 						arrivalTv.setText("arrives "+curFormater.format(thisRoute.arrivalDate));
 						arrivalTv.setTextSize(20);
 						routeDetail.addView(arrivalTv);
+						if(thisRoute.bikes){
+							ImageView bikeIv = (ImageView) View.inflate(c, R.layout.bikeimage, null);
+							routeDetail.addView(bikeIv);
+						}
 						tableLayout.addView(routeDetail, index+1);
 					}
 					else{
@@ -418,6 +438,7 @@ public class TheActivity extends Activity {
     //CALLED-BY: updateUI()
     //Updates the UI with data from a etdResponse
     public void displayEtdResponse(etdResponse etdResponse){
+    	fareTv.setText("");
 		tableLayout.removeAllViews();
 		String lastDestination = "";
 		
@@ -461,7 +482,36 @@ public class TheActivity extends Activity {
 				//text.setWidth(120);
 				tr.addView(destinationTv);
 				tr.addView(timeTv);
+				tr.setTag(thisEtd);
 				tableLayout.addView(tr);
+				tr.setOnClickListener(new OnClickListener(){
+
+					@Override
+					public void onClick(View arg0) {
+						int index = tableLayout.indexOfChild(arg0); // index of clicked view. Expanded view will always be +1
+						etd thisEtd = (etd) arg0.getTag();
+						if (!thisEtd.isExpanded){ // if route not expanded
+							thisEtd.isExpanded = true;
+							LinearLayout routeDetail = (LinearLayout) View.inflate(c, R.layout.routedetail, null);
+							TextView platformTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+							platformTv.setTextColor(0xFFC9C7C8);
+							platformTv.setPadding(0, 0, 0, 0);
+							platformTv.setText("platform "+thisEtd.platform);
+							platformTv.setTextSize(20);
+							routeDetail.addView(platformTv);
+							if(thisEtd.bikes){
+								ImageView bikeIv = (ImageView) View.inflate(c, R.layout.bikeimage, null);
+								routeDetail.addView(bikeIv);
+							}
+							tableLayout.addView(routeDetail, index+1);
+						}
+						else{
+							thisEtd.isExpanded = false;
+							tableLayout.removeViewAt(index+1);
+						}
+						
+					}
+	    		});
 			}
 			else{ // append next trains arrival time to existing destination display
 				//timeTv.append(String.valueOf(", "+thisEtd.minutesToArrival));
@@ -484,4 +534,23 @@ public class TheActivity extends Activity {
 		//scrolly.scrollTo(0, 0);
 		//setTimers();
 	} 
+    
+    private void validateInputAndDoRequest(){
+    	if(STATION_MAP.get(originTextView.getText().toString()) != null){
+			if(STATION_MAP.get(destinationTextView.getText().toString()) != null){
+				lastRequest = "route";
+				bartApiRequest();
+			}
+			else{
+				lastRequest = "etd";
+				bartApiRequest();
+			}
+		}
+    }
+    
+    @Override
+    public void onPause(){
+    	super.onPause();
+    	editor.putString("state", (originTextView.getText() + "|" + destinationTextView.getText()).toString());
+    }
 }

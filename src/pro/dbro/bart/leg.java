@@ -9,4 +9,5 @@ public class leg {
 	public String disembarkStation;
 	public String trainHeadStation;
 	public String transferCode;
+	public boolean bikes;
 }
