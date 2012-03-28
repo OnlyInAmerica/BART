@@ -27,6 +27,13 @@
         <activity 
             android:name=".MapActivity"
             android:screenOrientation="portrait" />
+        <service
+			android:name="UsherService"
+			android:process=":userProcess" 
+			android:icon="@drawable/ic_launcher"
+			android:label="Open BART Usher"
+			>
+</service>
     </application>
 
 </manifest>

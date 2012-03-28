@@ -17,5 +17,12 @@
         <item>Open BART is open source software, so it belongs to all of us. Check out the code on &lt;a href="https://github.com/OnlyInAmerica/BART">github&lt;/a>.&lt;br/>&lt;br/>
               When you find a bug or need a feature contact me at &lt;a href="mailto:davidpbrodsky@gmail.com">davidpbrodsky@gmail.com&lt;/a>.&lt;br/>&lt;br/> Let\'s make this thing better!</item>
     </string-array>
+    <string name="local_service_started">trip usher at work</string>
+    <string name="local_service_stopped">trip usher off</string>
+    <string name="local_service_label">I\'ll vibrate when you need to move</string>
+    <string name="local_service_connected">trip usher at work</string>
+    <string name="local_service_disconnected">trip usher off</string>
+    <string name="service_prompt">Shall I guide you on this route? I\'ll vibrate your phone when your transfer or destination station is approaching! </string>
+    <string name="service_start_button">Guide Me!</string>
 
 </resources>

@@ -1,34 +1,25 @@
 package pro.dbro.bart;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Set;
-
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
+import android.os.IBinder;
 import android.text.Editable;
 import android.text.Html;
-import android.text.SpannableString;
 import android.text.method.LinkMovementMethod;
-import android.text.util.Linkify;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -45,11 +36,10 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 // TODO: access to recent stations
 
@@ -65,6 +55,9 @@ public class TheActivity extends Activity {
 	
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
+	
+	private UsherService mBoundService;
+	private boolean mIsBound;
 	
 	private final String BART_API_ROOT = "http://api.bart.gov/api/";
 	private final String BART_API_KEY="MW9S-E7SL-26DU-VV8V";
@@ -385,9 +378,18 @@ public class TheActivity extends Activity {
 				@Override
 				public boolean onLongClick(View arg0) {
 					new AlertDialog.Builder(c)
-			        .setTitle("Long Click")
-			        .setPositiveButton("ok", null)
-			        .show();
+	                .setTitle("Route Guidance")
+	                .setMessage(getString(R.string.service_prompt))
+	                .setPositiveButton(R.string.service_start_button, new DialogInterface.OnClickListener() {
+	                    
+	                    public void onClick(DialogInterface dialog, int which) {
+	                    	//startService(new Intent(this,
+	                       // UsherService.class));
+	                    }
+
+					 })
+	                .setNeutralButton("Cancel", null)
+	                .show();
 					return true; // consumed the long click
 				}
     			
@@ -563,4 +565,65 @@ public class TheActivity extends Activity {
     	super.onPause();
     	editor.putString("state", (originTextView.getText() + "|" + destinationTextView.getText()).toString());
     }
+    
+    private ServiceConnection mConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            // This is called when the connection with the service has been
+            // established, giving us the service object we can use to
+            // interact with the service.  Because we have bound to a explicit
+            // service that we know is running in our own process, we can
+            // cast its IBinder to a concrete class and directly access it.
+            mBoundService = ((UsherService.LocalBinder)service).getService();
+
+            // Tell the user about this for our demo.
+            Toast.makeText(c, R.string.local_service_connected,
+                    Toast.LENGTH_SHORT).show();
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            // This is called when the connection with the service has been
+            // unexpectedly disconnected -- that is, its process crashed.
+            // Because it is running in our same process, we should never
+            // see this happen.
+            mBoundService = null;
+            Toast.makeText(c, R.string.local_service_disconnected,
+                    Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    void doBindService() {
+        // Establish a connection with the service.  We use an explicit
+        // class name because we want a specific service implementation that
+        // we know will be running in our own process (and thus won't be
+        // supporting component replacement by other applications).
+        bindService(new Intent(this, 
+                UsherService.class), mConnection, Context.BIND_AUTO_CREATE);
+        mIsBound = true;
+    }
+
+    void doUnbindService() {
+        if (mIsBound) {
+            // Detach our existing connection.
+            unbindService(mConnection);
+            mIsBound = false;
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        doUnbindService();
+    }
+    
+    private OnClickListener mBindListener = new OnClickListener() {
+        public void onClick(View v) {
+            doBindService();
+        }
+    };
+
+    private OnClickListener mUnbindListener = new OnClickListener() {
+        public void onClick(View v) {
+            doUnbindService();
+        }
+    };
 }
