@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<TableRow 
+<TextView 
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_height="wrap_content" 
     android:layout_width="fill_parent"
-    android:gravity="center"
-    android:layout_gravity="center"
-    android:paddingTop="0dp"/>
+    android:gravity="center_horizontal"
+    android:layout_span="3"
+    android:textColor="#ffffff"
+    android:paddingTop="20dp"/>

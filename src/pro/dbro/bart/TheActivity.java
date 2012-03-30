@@ -347,6 +347,7 @@ public class TheActivity extends Activity {
     		
     		route thisRoute = routeResponse.routes.get(x);
         	TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
+        	tr.setPadding(0, 20, 0, 0);
     		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
 
     		for(int y=0;y<thisRoute.legs.size();y++){
@@ -486,7 +487,8 @@ public class TheActivity extends Activity {
     		tableContainerLayout.addView(specialScheduleDisplay);
     	}
 		
-		TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
+		TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow_right, null);
+		LinearLayout destinationRow = (LinearLayout) View.inflate(c, R.layout.destination_row, null);
 		//TextView timeTv =(TextView) View.inflate(c, R.layout.tabletext, null);
 		int numAlt = 0;
 		for(int x=0;x<etdResponse.etds.size();x++){
@@ -495,11 +497,15 @@ public class TheActivity extends Activity {
 			etd thisEtd = (etd)etdResponse.etds.get(x);
 			if (thisEtd.destination != lastDestination){ // new train destination
 				numAlt = 0;
-				tr = new TableRow(c);
-				TextView destinationTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+				tr = (TableRow) View.inflate(c, R.layout.tablerow_right, null);
+				tr.setPadding(0, 0, 10, 0);
+				destinationRow = (LinearLayout) View.inflate(c, R.layout.destination_row, null);
+				TextView destinationTv = (TextView) View.inflate(c, R.layout.destinationlayout, null);
+				if(x==0)
+					destinationTv.setPadding(0, 0, 0, 0);
 				//bullet.setWidth(200);
-				destinationTv.setPadding(0, 0, 0, 0);
-				destinationTv.setTextSize(20);
+				//destinationTv.setPadding(0, 0, 0, 0);
+				destinationTv.setTextSize(28);
 				destinationTv.setText(thisEtd.destination);
 				TextView timeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 				timeTv.setText(String.valueOf(thisEtd.minutesToArrival));
@@ -509,9 +515,11 @@ public class TheActivity extends Activity {
 				int counterTime = thisEtd.minutesToArrival * 60*1000;
 	    		new ViewCountDownTimer(timeTv, counterTime, 60*1000).start();
 				//text.setWidth(120);
-				tr.addView(destinationTv);
+	    		destinationRow.addView(destinationTv);
+				//tr.addView(destinationTv);
 				tr.addView(timeTv);
 				tr.setTag(thisEtd);
+				tableLayout.addView(destinationRow);
 				tableLayout.addView(tr);
 				tr.setOnClickListener(new OnClickListener(){
 
