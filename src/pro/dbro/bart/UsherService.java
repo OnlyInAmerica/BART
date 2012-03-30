@@ -26,6 +26,8 @@ public class UsherService extends Service {
     private Notification notification; // keep an instance of the notification to update time text
     
     private int currentLeg; // keep track of which leg of the route we're currently on
+    private CountDownTimer timer; // keep track of current countdown for cancelling if new request comes
+    							  // else we can get errors related to a timer expecting previous route
 
     // Unique Identification Number for the Notification.
     // We use it on Notification start, and to cancel it.
@@ -53,7 +55,8 @@ public class UsherService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("UsherService", "Received start id " + startId + ": " + intent);
-        
+        if(timer != null)
+        	timer.cancel();
         //departureStation = ((leg)usherRoute.legs.get(0)).boardStation;
 
         /*
@@ -74,7 +77,7 @@ public class UsherService extends Service {
         mNM.cancel(NOTIFICATION);
 
         // Tell the user we stopped.
-        Toast.makeText(this, R.string.local_service_stopped, Toast.LENGTH_SHORT).show();
+        //Toast.makeText(this, R.string.local_service_stopped, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -127,6 +130,7 @@ public class UsherService extends Service {
         		nextStep, contentIntent);
 
         // Send the notification.
+
         mNM.notify(NOTIFICATION, notification);
     }
     
@@ -151,18 +155,23 @@ public class UsherService extends Service {
     }
     
     private void makeLegCountdownTimer(long msUntilNext){
-    	new CountDownTimer(msUntilNext, 60000){
+    	timer = new CountDownTimer(msUntilNext, 60000){
             //new CountDownTimer(5000, 1000){
 
     			@Override
     			public void onFinish() {
     				// TODO Auto-generated method stub
     				Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
-    				long[] vPattern = {0,200,100,200};
+    				long[] vPattern = {0,200,100,200,50,100,50,100};
     				v.vibrate(vPattern,-1);
     				currentLeg ++;
     				if (TheActivity.usherRoute.legs.size() == currentLeg){
     					//We have arrived at the destination
+    					notification = new Notification(R.drawable.ic_launcher, "This is your stop! Take care!",
+    			                System.currentTimeMillis());
+    					notification.setLatestEventInfo(c, "You're here",
+    			        		"Take it easy", contentIntent);
+    			        mNM.notify(NOTIFICATION, notification);
     					onDestroy(); // Is this the proper way to suicide a service?
     				}
     				else{

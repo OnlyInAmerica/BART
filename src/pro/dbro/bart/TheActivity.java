@@ -584,6 +584,7 @@ public class TheActivity extends Activity {
     }
     
     public void onResume(){
+    	super.onResume();
     	if(prefs.contains("state")){
         	//state= originTextView | destinationTextView
         	String[] s = prefs.getString("state", "|").split("|");
