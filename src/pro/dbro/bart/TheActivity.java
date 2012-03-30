@@ -384,6 +384,7 @@ public class TheActivity extends Activity {
         	}
         		
     		arrivalTimeTv.setText(String.valueOf(eta/(1000*60)));
+    		new ViewCountDownTimer(arrivalTimeTv, eta, 60*1000).start();
     		tr.addView(arrivalTimeTv);
     		tr.setTag(thisRoute);
     		tableLayout.addView(tr);
@@ -423,7 +424,7 @@ public class TheActivity extends Activity {
 						LinearLayout routeDetail = (LinearLayout) View.inflate(c, R.layout.routedetail, null);
 						TextView arrivalTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 						SimpleDateFormat curFormater = new SimpleDateFormat("h:mm a"); 
-						arrivalTv.setTextColor(0xFFC9C7C8);
+						//arrivalTv.setTextColor(0xFFC9C7C8);
 						arrivalTv.setText("arrives "+curFormater.format(thisRoute.arrivalDate));
 						arrivalTv.setTextSize(20);
 						routeDetail.addView(arrivalTv);
@@ -531,7 +532,6 @@ public class TheActivity extends Activity {
 							thisEtd.isExpanded = true;
 							LinearLayout routeDetail = (LinearLayout) View.inflate(c, R.layout.routedetail, null);
 							TextView platformTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-							platformTv.setTextColor(0xFFC9C7C8);
 							platformTv.setPadding(0, 0, 0, 0);
 							platformTv.setText("platform "+thisEtd.platform);
 							platformTv.setTextSize(20);

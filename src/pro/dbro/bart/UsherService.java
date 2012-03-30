@@ -26,6 +26,7 @@ public class UsherService extends Service {
     private Notification notification; // keep an instance of the notification to update time text
     
     private int currentLeg; // keep track of which leg of the route we're currently on
+    private boolean didBoard; // keep track of whether we've boarded the current leg, or are waiting for it to arrive
     private CountDownTimer timer; // keep track of current countdown for cancelling if new request comes
     							  // else we can get errors related to a timer expecting previous route
 
@@ -99,6 +100,7 @@ public class UsherService extends Service {
     
     	String destinationStation = ((leg)usherRoute.legs.get(usherRoute.legs.size()-1)).disembarkStation;
     	currentLeg = 0;
+    	didBoard = false;
     	CharSequence text = "Guiding to " + TheActivity.REVERSE_STATION_MAP.get(destinationStation.toLowerCase());
         // Set the icon, scrolling text and timestamp
         notification = new Notification(R.drawable.ic_launcher, text,
@@ -137,9 +139,18 @@ public class UsherService extends Service {
     private void updateNotification(){
     	route usherRoute = TheActivity.usherRoute;
     	Date now = new Date();
-        long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime())/(1000*60));
+    	CharSequence nextStep ="";
+    	if(didBoard){
+    		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime())/(1000*60));
+    		if(currentLeg == usherRoute.legs.size())
+    		nextStep = "Get off at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+    	}
+    	else{
+    		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime())/(1000*60));
+    		nextStep = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+    	}
         CharSequence currentStationText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase());
-        CharSequence nextStep = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+        
         /*
         if(usherRoute.legs.size()>1){
         	nextStep = "Transfer at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " in "+((leg)usherRoute.legs.get(0)).disembarkTime.toString();
@@ -164,26 +175,33 @@ public class UsherService extends Service {
     				Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
     				long[] vPattern = {0,200,100,200,50,100,50,100};
     				v.vibrate(vPattern,-1);
-    				currentLeg ++;
-    				if (TheActivity.usherRoute.legs.size() == currentLeg){
-    					//We have arrived at the destination
-    					notification = new Notification(R.drawable.ic_launcher, "This is your stop! Take care!",
+    				//if(didBoard) // if we've boarded, we're handling the last leg
+    				//	currentLeg ++;
+    				didBoard = !didBoard;
+    				
+    				if ((TheActivity.usherRoute.legs.size() == currentLeg+1) && !didBoard){
+    					notification = new Notification(R.drawable.ic_launcher, "This is your stop! Take Care!",
     			                System.currentTimeMillis());
     					notification.setLatestEventInfo(c, "You're here",
     			        		"Take it easy", contentIntent);
     			        mNM.notify(NOTIFICATION, notification);
     					onDestroy(); // Is this the proper way to suicide a service?
     				}
-    				else{
+    				else if(didBoard){ //Set timer for this leg's disembark time
     					Date now = new Date();
-    			        long minutesUntilNext = ((((leg)TheActivity.usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime()));
-    					makeLegCountdownTimer(minutesUntilNext);
+    			        long msUntilNext = ((((leg)TheActivity.usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime()));
+    					makeLegCountdownTimer(msUntilNext);
     					updateNotification();
     				}
-    				/*
-    				if (v.hasVibrator()){
-    					v.vibrate(vPattern, -1);
-    				}*/
+    				else{ // Set timer for next leg's board time
+    					currentLeg ++;
+    					Date now = new Date();
+    			        long msUntilNext = ((((leg)TheActivity.usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime()));
+    					makeLegCountdownTimer(msUntilNext);
+    					updateNotification();
+    						
+    						
+    				}
     				
     			}
 
