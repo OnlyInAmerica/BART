@@ -10,6 +10,7 @@
         	  android:targetSdkVersion="14" />
     
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE"  />
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -29,11 +30,10 @@
             android:screenOrientation="portrait" />
         <service
 			android:name="UsherService"
-			android:process=":userProcess" 
 			android:icon="@drawable/ic_launcher"
 			android:label="Open BART Usher"
 			>
-</service>
+		</service>
     </application>
 
 </manifest>

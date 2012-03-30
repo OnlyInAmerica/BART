@@ -53,6 +53,9 @@ public class TheActivity extends Activity {
 	AutoCompleteTextView originTextView;
 	TextView fareTv;
 	
+	// route that the usher service should access
+	public static route usherRoute; 
+	
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
 	
@@ -341,9 +344,9 @@ public class TheActivity extends Activity {
     	long now = new Date().getTime();
     
     	for (int x=0;x<routeResponse.routes.size();x++){
-    		TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
+    		
     		route thisRoute = routeResponse.routes.get(x);
-
+        	TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
     		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
 
     		for(int y=0;y<thisRoute.legs.size();y++){
@@ -369,7 +372,17 @@ public class TheActivity extends Activity {
     		//arrivalTimeTv.setPadding(30, 0, 0, 0);
     		arrivalTimeTv.setTextSize(36);
     		Log.v("DEPART_DATE",thisRoute.departureDate.toString());
-    		arrivalTimeTv.setText(String.valueOf((thisRoute.departureDate.getTime()-now)/(1000*60)));
+    		
+    		// Don't report a train that may JUST be leaving with a negative ETA
+    		long eta;
+        	if(thisRoute.departureDate.getTime()-now < 0){
+        		eta = 0;
+        	}
+        	else{
+        		eta = thisRoute.departureDate.getTime()-now;
+        	}
+        		
+    		arrivalTimeTv.setText(String.valueOf(eta/(1000*60)));
     		tr.addView(arrivalTimeTv);
     		tr.setTag(thisRoute);
     		tableLayout.addView(tr);
@@ -377,14 +390,18 @@ public class TheActivity extends Activity {
 
 				@Override
 				public boolean onLongClick(View arg0) {
+					usherRoute = (route)arg0.getTag();
 					new AlertDialog.Builder(c)
 	                .setTitle("Route Guidance")
 	                .setMessage(getString(R.string.service_prompt))
 	                .setPositiveButton(R.string.service_start_button, new DialogInterface.OnClickListener() {
 	                    
 	                    public void onClick(DialogInterface dialog, int which) {
-	                    	//startService(new Intent(this,
-	                       // UsherService.class));
+	                    	Intent i = new Intent(c, UsherService.class);
+	                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
+	                    	Log.v("SERVICE","Starting");
+	                    	startService(i);
+	                    
 	                    }
 
 					 })
@@ -566,64 +583,14 @@ public class TheActivity extends Activity {
     	editor.putString("state", (originTextView.getText() + "|" + destinationTextView.getText()).toString());
     }
     
-    private ServiceConnection mConnection = new ServiceConnection() {
-        public void onServiceConnected(ComponentName className, IBinder service) {
-            // This is called when the connection with the service has been
-            // established, giving us the service object we can use to
-            // interact with the service.  Because we have bound to a explicit
-            // service that we know is running in our own process, we can
-            // cast its IBinder to a concrete class and directly access it.
-            mBoundService = ((UsherService.LocalBinder)service).getService();
-
-            // Tell the user about this for our demo.
-            Toast.makeText(c, R.string.local_service_connected,
-                    Toast.LENGTH_SHORT).show();
+    public void onResume(){
+    	if(prefs.contains("state")){
+        	//state= originTextView | destinationTextView
+        	String[] s = prefs.getString("state", "|").split("|");
+        	originTextView.setText(s[0]);
+        	destinationTextView.setText(s[1]);
+        	validateInputAndDoRequest();
         }
-
-        public void onServiceDisconnected(ComponentName className) {
-            // This is called when the connection with the service has been
-            // unexpectedly disconnected -- that is, its process crashed.
-            // Because it is running in our same process, we should never
-            // see this happen.
-            mBoundService = null;
-            Toast.makeText(c, R.string.local_service_disconnected,
-                    Toast.LENGTH_SHORT).show();
-        }
-    };
-
-    void doBindService() {
-        // Establish a connection with the service.  We use an explicit
-        // class name because we want a specific service implementation that
-        // we know will be running in our own process (and thus won't be
-        // supporting component replacement by other applications).
-        bindService(new Intent(this, 
-                UsherService.class), mConnection, Context.BIND_AUTO_CREATE);
-        mIsBound = true;
-    }
-
-    void doUnbindService() {
-        if (mIsBound) {
-            // Detach our existing connection.
-            unbindService(mConnection);
-            mIsBound = false;
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        doUnbindService();
     }
     
-    private OnClickListener mBindListener = new OnClickListener() {
-        public void onClick(View v) {
-            doBindService();
-        }
-    };
-
-    private OnClickListener mUnbindListener = new OnClickListener() {
-        public void onClick(View v) {
-            doUnbindService();
-        }
-    };
 }
