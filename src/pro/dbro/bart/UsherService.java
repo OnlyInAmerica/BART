@@ -142,8 +142,12 @@ public class UsherService extends Service {
     	CharSequence nextStep ="";
     	if(didBoard){
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime())/(1000*60));
-    		if(currentLeg == usherRoute.legs.size())
-    		nextStep = "Get off at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+    		if(currentLeg+1 == usherRoute.legs.size()){
+    			nextStep = "Get off at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + String.valueOf(minutesUntilNext) + "m";
+    		}
+    		else{
+    			nextStep = "Transfer at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + String.valueOf(minutesUntilNext) + "m";
+    		}
     	}
     	else{
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime())/(1000*60));
