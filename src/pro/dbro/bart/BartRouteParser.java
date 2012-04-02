@@ -225,7 +225,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 			dateObj = curFormater.parse(dateStr);
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
-			Log.v("XMLParse", "date formatting error");
+			//Log.v("XMLParse", "date formatting error");
 			e.printStackTrace();
 		} 
 		response.date = dateObj;

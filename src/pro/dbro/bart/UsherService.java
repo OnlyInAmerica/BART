@@ -141,10 +141,13 @@ public class UsherService extends Service {
         mNM.notify(NOTIFICATION, notification);
     }
     
-    private void updateNotification(){
+    //if newNotification is true, generate new notification with scroller text
+    //else, simply update menu item text
+    private void updateNotification(boolean newNotification){
     	route usherRoute = TheActivity.usherRoute;
     	Date now = new Date();
     	CharSequence nextStep ="";
+    	
     	if(didBoard){
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime())/(1000*60));
     		if(currentLeg+1 == usherRoute.legs.size()){
@@ -168,6 +171,11 @@ public class UsherService extends Service {
         	nextStep = "Arriving at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " at "+ ((leg)usherRoute.legs.get(0)).disembarkTime.toString();
         }
         */
+        
+        if(newNotification){
+    		notification = new Notification(R.drawable.ic_launcher, nextStep,
+	                System.currentTimeMillis());
+    	}
 
         notification.setLatestEventInfo(this, currentStationText,
         		nextStep, contentIntent);
@@ -182,7 +190,7 @@ public class UsherService extends Service {
     			public void onFinish() {
     				// TODO Auto-generated method stub
     				Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
-    				long[] vPattern = {0,200,100,200,50,100,50,100};
+    				long[] vPattern = {0,200,100,200,100,100,100,100};
     				v.vibrate(vPattern,-1);
     				//if(didBoard) // if we've boarded, we're handling the last leg
     				//	currentLeg ++;
@@ -200,14 +208,14 @@ public class UsherService extends Service {
     					Date now = new Date();
     			        long msUntilNext = ((((leg)TheActivity.usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime()));
     					makeLegCountdownTimer(msUntilNext);
-    					updateNotification();
+    					updateNotification(true);
     				}
     				else{ // Set timer for next leg's board time
     					currentLeg ++;
     					Date now = new Date();
     			        long msUntilNext = ((((leg)TheActivity.usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime()));
     					makeLegCountdownTimer(msUntilNext);
-    					updateNotification();
+    					updateNotification(true);
     						
     						
     				}
@@ -216,7 +224,7 @@ public class UsherService extends Service {
 
     			@Override
     			public void onTick(long arg0) {
-    				updateNotification();				
+    				updateNotification(false);				
     			}
             	
             }.start();

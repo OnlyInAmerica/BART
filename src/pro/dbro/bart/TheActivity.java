@@ -369,7 +369,7 @@ public class TheActivity extends Activity {
     public void displayRouteResponse(routeResponse routeResponse){
     	fareTv.setText("$"+routeResponse.routes.get(0).fare);
     	tableLayout.removeAllViews();
-    	Log.v("DATE",new Date().toString());
+    	//Log.v("DATE",new Date().toString());
     	long now = new Date().getTime();
     
     	for (int x=0;x<routeResponse.routes.size();x++){
@@ -381,12 +381,22 @@ public class TheActivity extends Activity {
 
     		for(int y=0;y<thisRoute.legs.size();y++){
     			TextView trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+    			trainTv.setPadding(0, 0, 0, 0);
     			trainTv.setTextSize(20);
     			trainTv.setGravity(3); // set left gravity
-    			if (y>0)
-    				trainTv.setText("to "+REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
+    			if (y>0){
+    				trainTv.setText("transfer at "+ REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y-1)).disembarkStation.toLowerCase()));
+    				trainTv.setPadding(0, 0, 0, 0);
+    				legLayout.addView(trainTv);
+    				trainTv.setTextSize(14);
+    				trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+    				trainTv.setPadding(0, 0, 0, 0);
+    				trainTv.setTextSize(20);
+        			trainTv.setGravity(3); // set left gravity
+    				trainTv.setText("to "+REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation.toLowerCase()));
+    			}
     			else
-    				trainTv.setText(REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
+    				trainTv.setText("take " +REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
     			
     			legLayout.addView(trainTv);
 
@@ -401,7 +411,7 @@ public class TheActivity extends Activity {
     		TextView arrivalTimeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
     		//arrivalTimeTv.setPadding(30, 0, 0, 0);
     		arrivalTimeTv.setTextSize(36);
-    		Log.v("DEPART_DATE",thisRoute.departureDate.toString());
+    		//Log.v("DEPART_DATE",thisRoute.departureDate.toString());
     		
     		// Don't report a train that may JUST be leaving with a negative ETA
     		long eta;
@@ -430,8 +440,24 @@ public class TheActivity extends Activity {
 	                    public void onClick(DialogInterface dialog, int which) {
 	                    	Intent i = new Intent(c, UsherService.class);
 	                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
-	                    	Log.v("SERVICE","Starting");
+	                    	//Log.v("SERVICE","Starting");
 	                    	startService(i);
+	                    	
+	                    	TextView stopServiceTv = (TextView) findViewById(R.id.stopServiceTv);
+	                    	stopServiceTv.setVisibility(0);
+	                    	stopServiceTv.setOnClickListener(new OnClickListener(){
+
+	            				@Override
+	            				public void onClick(View v) {
+	            					Intent i = new Intent(c, UsherService.class);
+	                            	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
+	                            	//Log.v("SERVICE","Stopping");
+	                            	stopService(i);
+	                            	v.setVisibility(View.GONE);
+	                            	
+	            				}
+	                    		
+	                    	});
 
 	                    }
 
@@ -507,6 +533,7 @@ public class TheActivity extends Activity {
 		if (etdResponse.message != null){
     		LinearLayout specialScheduleDisplay = (LinearLayout)View.inflate(c, R.layout.specialschedulelayout, null);
     		TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+    		specialScheduleTv.setPadding(0, 0, 0, 0);
     		//specialScheduleTv.setWidth(275);
     		if(etdResponse.message.contains("No data matched your criteria."))
     			specialScheduleTv.setText("This station is closed for tonight.");
@@ -632,20 +659,19 @@ public class TheActivity extends Activity {
         	validateInputAndDoRequest();
         }
     }
-
+/*
     @Override
     public void onNewIntent(Intent intent){        
         if(intent.hasExtra("Service")){
-        	TextView stopServiceTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-        	stopServiceTv.setText("Touch to stop service");
-         	infoLayout.addView(stopServiceTv);
+        	TextView stopServiceTv = (TextView) findViewById(R.id.stopServiceTv);
+        	stopServiceTv.setVisibility(0);
         	stopServiceTv.setOnClickListener(new OnClickListener(){
 
 				@Override
 				public void onClick(View v) {
 					Intent i = new Intent(c, UsherService.class);
                 	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
-                	Log.v("SERVICE","Stopping");
+                	//Log.v("SERVICE","Stopping");
                 	stopService(i);
                 	v.setVisibility(View.GONE);
                 	
@@ -653,6 +679,6 @@ public class TheActivity extends Activity {
         		
         	});
         }
-    }
+    }*/
     
 }

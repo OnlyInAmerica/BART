@@ -59,11 +59,11 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 			public void handleTag(XMLParser parser, boolean isStartTag, Object userObject) {
 				//not yet used
 				if (isStartTag){
-					Log.v("XMLParse", "etd start");
+					//Log.v("XMLParse", "etd start");
 					//response.addEtd();
 				}
 				else{
-					Log.v("XMLParse", "etd end");
+					//Log.v("XMLParse", "etd end");
 					//response.etds.add(currentEtd);
 				}
 			}
@@ -72,12 +72,12 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 			@Override
 			public void handleTag(XMLParser parser, boolean isStartTag, Object userObject) {
 				if (isStartTag){
-					Log.v("XMLParse", "etd start");
+					//Log.v("XMLParse", "etd start");
 					etd newGuy = response.addEtd();
 					newGuy.destination = response.tmpDestination;
 				}
 				else{
-					Log.v("XMLParse", "etd end");
+					//Log.v("XMLParse", "etd end");
 					//response.etds.add(currentEtd);
 				}
 			}
@@ -134,14 +134,14 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 		//String[] timesplit = time.split(" ");
 		String dateStr = date + " " + time;
 		//Log.v("time split", timesplit.toString());
-		Log.v("Time",dateStr);
+		//Log.v("Time",dateStr);
 		SimpleDateFormat curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a"); 
 		Date dateObj = new Date();
 		try {
 			dateObj = curFormater.parse(dateStr);
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
-			Log.v("XMLParse", "date formatting error");
+			//Log.v("XMLParse", "date formatting error");
 			e.printStackTrace();
 		} 
 		response.date = dateObj;
