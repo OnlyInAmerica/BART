@@ -62,8 +62,12 @@ public class UsherService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i("UsherService", "Received start id " + startId + ": " + intent);
-        if(timer != null)
+        if(timer != null){
         	timer.cancel();
+        }
+        if(reminderTimer != null){
+        	reminderTimer.cancel();
+        }
         //departureStation = ((leg)usherRoute.legs.get(0)).boardStation;
 
         /*
@@ -81,7 +85,10 @@ public class UsherService extends Service {
     @Override
     public void onDestroy() {
         // Cancel the persistent notification.
-    	timer.cancel();
+    	if(timer != null)
+    		timer.cancel();
+    	if(reminderTimer != null)
+    		reminderTimer.cancel();
         mNM.cancel(NOTIFICATION);
 
         // Tell the user we stopped.
@@ -231,23 +238,25 @@ public class UsherService extends Service {
     			}
             	
             }.start();
-            reminderTimer = new CountDownTimer(msUntilNext - REMINDER_PADDING, msUntilNext - REMINDER_PADDING){
-
-				@Override
-				public void onFinish() {
-					// TODO Auto-generated method stub
-					Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
-    				long[] vPattern = {0,300,300,300};
-    				v.vibrate(vPattern,-1);
-					
-				}
-
-				@Override
-				public void onTick(long millisUntilFinished) {
-					// TODO Auto-generated method stub
-					
-				}
-            }.start();
+            if(msUntilNext > (REMINDER_PADDING+30*1000)){ // if next event is more than 30 seconds + REMINDER_PADDING out, set reminder
+	            reminderTimer = new CountDownTimer(msUntilNext - REMINDER_PADDING, msUntilNext - REMINDER_PADDING){
+	
+					@Override
+					public void onFinish() {
+						// TODO Auto-generated method stub
+						Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
+	    				long[] vPattern = {0,300,300,300};
+	    				v.vibrate(vPattern,-1);
+						
+					}
+	
+					@Override
+					public void onTick(long millisUntilFinished) {
+						// TODO Auto-generated method stub
+						
+					}
+	            }.start();
+            }
          }
     }
 
