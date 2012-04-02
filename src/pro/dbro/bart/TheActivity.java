@@ -52,6 +52,7 @@ public class TheActivity extends Activity {
 	AutoCompleteTextView destinationTextView;
 	AutoCompleteTextView originTextView;
 	TextView fareTv;
+	LinearLayout infoLayout;
 	
 	// route that the usher service should access
 	public static route usherRoute; 
@@ -117,13 +118,15 @@ public class TheActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        if(Integer.parseInt(Build.VERSION.SDK) < 11){
+        	//If API 14+, The ActionBar will be hidden with this call
+        	this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        }
         setContentView(R.layout.main);
         tableLayout = (TableLayout) findViewById(R.id.tableLayout);
         tableContainerLayout = (LinearLayout)findViewById(R.id.tableContainerLayout);
         c = this;
         res = getResources();
-        
         prefs = getSharedPreferences("PREFS", 0);
         editor = prefs.edit();
         
@@ -139,12 +142,34 @@ public class TheActivity extends Activity {
 	        editor.commit();
         }
         
+        infoLayout = (LinearLayout) findViewById(R.id.infoLayout);
+        
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, STATIONS);
         originTextView = (AutoCompleteTextView)
                 findViewById(R.id.originTv);
         
         fareTv = (TextView) findViewById(R.id.fareTv);
+        /*
+        Intent i = this.getIntent();
+        if(i.hasExtra("Service")){
+        	fareTv.setText("touch to stop service");
+        	fareTv.setOnClickListener(new OnClickListener(){
+
+				@Override
+				public void onClick(View v) {
+					Intent i = new Intent(c, UsherService.class);
+                	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
+                	Log.v("SERVICE","Stopping");
+                	stopService(i);
+                	fareTv.setText("");
+                	fareTv.setOnClickListener(null);
+					
+				}
+        		
+        		
+        	});
+        }*/
         destinationTextView = (AutoCompleteTextView) findViewById(R.id.destinationTv);
         destinationTextView.setAdapter(adapter);
         originTextView.setAdapter(adapter);
@@ -258,21 +283,25 @@ public class TheActivity extends Activity {
     }
     // Initialize settings menu
     @Override public boolean onCreateOptionsMenu(Menu menu) {
-    	if(Integer.parseInt(Build.VERSION.SDK) < 14){
+    	//Use setting-button context menu OR Action bar
+    	if(Integer.parseInt(Build.VERSION.SDK) < 11){
 	        MenuItem mi = menu.add(0,0,0,"About");
 	        mi.setIcon(android.R.drawable.ic_menu_info_details);
     	}
     	else{
     		MenuInflater inflater = getMenuInflater();
     	    inflater.inflate(R.layout.actionitem, menu);
+    	    //return true;
     	}
         return super.onCreateOptionsMenu(menu);
     }
     
 @Override public boolean onOptionsItemSelected(MenuItem item) {
-		if(item.getItemId() == 0){
+		//settings context menu ID pre API 11 and action bar item post API 11
+		if(item.getItemId() == 0 || item.getItemId() == R.id.menu_about){
 			TextView aboutTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 			aboutTv.setText(Html.fromHtml(res.getStringArray(R.array.aboutDialog)[1]));
+			aboutTv.setPadding(0, 0, 0, 0);
 			aboutTv.setTextSize(18);
 			aboutTv.setMovementMethod(LinkMovementMethod.getInstance());
 			new AlertDialog.Builder(c)
@@ -403,7 +432,7 @@ public class TheActivity extends Activity {
 	                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
 	                    	Log.v("SERVICE","Starting");
 	                    	startService(i);
-	                    
+
 	                    }
 
 					 })
@@ -443,12 +472,14 @@ public class TheActivity extends Activity {
     		});
     	}
     	if (routeResponse.specialSchedule != null){
-    		LinearLayout specialSchedule = (LinearLayout)View.inflate(c, R.layout.specialschedulelayout, null);
+    		ImageView specialSchedule = (ImageView)View.inflate(c, R.layout.specialschedulelayout, null);
+    		specialSchedule.setTag(routeResponse.specialSchedule);
     		specialSchedule.setOnClickListener(new OnClickListener(){
 
 				@Override
 				public void onClick(View arg0) {
 				    TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+				    specialScheduleTv.setPadding(0, 0, 0, 0);
 				    specialScheduleTv.setText(Html.fromHtml(arg0.getTag().toString()));
 				    specialScheduleTv.setTextSize(16);
 				    specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
@@ -599,6 +630,28 @@ public class TheActivity extends Activity {
         	originTextView.setText(s[0]);
         	destinationTextView.setText(s[1]);
         	validateInputAndDoRequest();
+        }
+    }
+
+    @Override
+    public void onNewIntent(Intent intent){        
+        if(intent.hasExtra("Service")){
+        	TextView stopServiceTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+        	stopServiceTv.setText("Touch to stop service");
+         	infoLayout.addView(stopServiceTv);
+        	stopServiceTv.setOnClickListener(new OnClickListener(){
+
+				@Override
+				public void onClick(View v) {
+					Intent i = new Intent(c, UsherService.class);
+                	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
+                	Log.v("SERVICE","Stopping");
+                	stopService(i);
+                	v.setVisibility(View.GONE);
+                	
+				}
+        		
+        	});
         }
     }
     

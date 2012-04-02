@@ -6,7 +6,7 @@
 	    android:layout_height="wrap_content" 
 	    android:layout_marginRight="10dp"
 	    android:layout_marginLeft="10dp"
-	    android:layout_gravity="top"
+	    android:layout_gravity="center"
 	    android:paddingTop="10dp"
 	    android:contentDescription="warning"
 	    android:src="@drawable/warning" />

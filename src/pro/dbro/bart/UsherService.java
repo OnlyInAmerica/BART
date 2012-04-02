@@ -75,6 +75,7 @@ public class UsherService extends Service {
     @Override
     public void onDestroy() {
         // Cancel the persistent notification.
+    	timer.cancel();
         mNM.cancel(NOTIFICATION);
 
         // Tell the user we stopped.
@@ -107,8 +108,12 @@ public class UsherService extends Service {
                 System.currentTimeMillis());
 
         // The PendingIntent to launch our activity if the user selects this notification
+        Intent i = new Intent(this, TheActivity.class);
+        i.putExtra("Service", true);
+        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         contentIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, TheActivity.class), 0);
+                i, PendingIntent.FLAG_CANCEL_CURRENT);
 
         // Set the info for the views that show in the notification panel.
         Date now = new Date();

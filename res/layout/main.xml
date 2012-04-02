@@ -61,6 +61,7 @@
 	    android:contentDescription="reverse"
 	    android:src="@drawable/shuffle" />
 	</LinearLayout>
+
 	<TextView
    		    android:id="@+id/fareTv"
    		    android:layout_width="match_parent"
@@ -69,6 +70,7 @@
    		    android:textSize="25dp" >
 
    	</TextView>
+
     <ScrollView 
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/scrollView"
@@ -98,6 +100,13 @@
 	            android:layout_marginTop="30dp" >
 	            
     	</TableLayout>
+    		<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+			android:id="@+id/infoLayout"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:orientation="vertical" 
+		    android:gravity="center"
+		    />
     </LinearLayout>
     </ScrollView>
 </LinearLayout>
