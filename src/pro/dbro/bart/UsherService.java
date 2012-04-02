@@ -16,6 +16,9 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.widget.Toast;
 
+// TODO: Change NOTIFY-PADDING to affect a pre-event timer (like the vibration). 
+//		 Have the status notification change on exact estimated time
+
 public class UsherService extends Service {
     private NotificationManager mNM;
     
@@ -29,6 +32,9 @@ public class UsherService extends Service {
     private boolean didBoard; // keep track of whether we've boarded the current leg, or are waiting for it to arrive
     private CountDownTimer timer; // keep track of current countdown for cancelling if new request comes
     							  // else we can get errors related to a timer expecting previous route
+    private CountDownTimer reminderTimer; // timer separated from actual timer by REMINDER_PADDING
+    
+    private long REMINDER_PADDING = 30*1000; // ms before an event (board, disembark) the usher should issue a reminder
 
     // Unique Identification Number for the Notification.
     // We use it on Notification start, and to cancel it.
@@ -121,7 +127,7 @@ public class UsherService extends Service {
         //minutesUntilNext is, for this brief moment, actually milliseconds. 
         makeLegCountdownTimer(minutesUntilNext);
         // back to minutes
-        minutesUntilNext = minutesUntilNext/(1000*60);
+        minutesUntilNext = (minutesUntilNext)/(1000*60);
         
         CharSequence currentStationText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).boardStation.toLowerCase());
         CharSequence nextStep = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
@@ -190,7 +196,7 @@ public class UsherService extends Service {
     			public void onFinish() {
     				// TODO Auto-generated method stub
     				Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
-    				long[] vPattern = {0,200,100,200,100,100,100,100};
+    				long[] vPattern = {0,200,200,200,200,200,200,200};
     				v.vibrate(vPattern,-1);
     				//if(didBoard) // if we've boarded, we're handling the last leg
     				//	currentLeg ++;
@@ -216,17 +222,32 @@ public class UsherService extends Service {
     			        long msUntilNext = ((((leg)TheActivity.usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime()));
     					makeLegCountdownTimer(msUntilNext);
     					updateNotification(true);
-    						
-    						
     				}
-    				
     			}
-
+    			
     			@Override
     			public void onTick(long arg0) {
     				updateNotification(false);				
     			}
             	
             }.start();
+            reminderTimer = new CountDownTimer(msUntilNext - REMINDER_PADDING, msUntilNext - REMINDER_PADDING){
+
+				@Override
+				public void onFinish() {
+					// TODO Auto-generated method stub
+					Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
+    				long[] vPattern = {0,300,300,300};
+    				v.vibrate(vPattern,-1);
+					
+				}
+
+				@Override
+				public void onTick(long millisUntilFinished) {
+					// TODO Auto-generated method stub
+					
+				}
+            }.start();
+         }
     }
-}
+

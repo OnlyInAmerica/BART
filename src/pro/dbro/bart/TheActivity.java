@@ -2,6 +2,7 @@ package pro.dbro.bart;
 
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import android.app.Activity;
@@ -15,6 +16,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.text.Editable;
 import android.text.Html;
@@ -42,6 +44,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 // TODO: access to recent stations
+//		 modify CountDownTimer to operate on an array of views and only use ONE to avoid memory leaks
+//		 test usher. RELEASE 
 
 public class TheActivity extends Activity {
 	Context c;
@@ -54,14 +58,15 @@ public class TheActivity extends Activity {
 	TextView fareTv;
 	LinearLayout infoLayout;
 	
+	ArrayList timerViews = new ArrayList();
+	CountDownTimer timer;
+	long maxTimer = 0;
+	
 	// route that the usher service should access
 	public static route usherRoute; 
 	
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
-	
-	private UsherService mBoundService;
-	private boolean mIsBound;
 	
 	private final String BART_API_ROOT = "http://api.bart.gov/api/";
 	private final String BART_API_KEY="MW9S-E7SL-26DU-VV8V";
@@ -129,6 +134,7 @@ public class TheActivity extends Activity {
         res = getResources();
         prefs = getSharedPreferences("PREFS", 0);
         editor = prefs.edit();
+       
         
         if(prefs.getBoolean("first_timer", true)){
         	new AlertDialog.Builder(c)
@@ -150,36 +156,23 @@ public class TheActivity extends Activity {
                 findViewById(R.id.originTv);
         
         fareTv = (TextView) findViewById(R.id.fareTv);
-        /*
-        Intent i = this.getIntent();
-        if(i.hasExtra("Service")){
-        	fareTv.setText("touch to stop service");
-        	fareTv.setOnClickListener(new OnClickListener(){
 
-				@Override
-				public void onClick(View v) {
-					Intent i = new Intent(c, UsherService.class);
-                	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
-                	Log.v("SERVICE","Stopping");
-                	stopService(i);
-                	fareTv.setText("");
-                	fareTv.setOnClickListener(null);
-					
-				}
-        		
-        		
-        	});
-        }*/
         destinationTextView = (AutoCompleteTextView) findViewById(R.id.destinationTv);
         destinationTextView.setAdapter(adapter);
         originTextView.setAdapter(adapter);
         
-        if(prefs.contains("state")){
-        	//state= originTextView | destinationTextView
-        	String[] s = prefs.getString("state", "|").split("|");
-        	originTextView.setText(s[0]);
-        	destinationTextView.setText(s[1]);
-        	validateInputAndDoRequest();
+        if(prefs.contains("origin") && prefs.contains("destination")){
+        	//state= originTextView,destinationTextView
+        	String origin = prefs.getString("origin", "");
+        	String destination = prefs.getString("destination", "");
+        	if(origin.compareTo("")!= 0)
+        		originTextView.setThreshold(200); // disable auto-complete until new text entered
+        	if(destination.compareTo("")!= 0)
+        		destinationTextView.setThreshold(200); // disable auto-complete until new text entered
+        	
+    		originTextView.setText(origin);
+    		destinationTextView.setText(destination);
+    		validateInputAndDoRequest();
         }
         
         ImageView map = (ImageView) findViewById(R.id.map);
@@ -367,6 +360,11 @@ public class TheActivity extends Activity {
     //CALLED-BY: updateUI()
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
+    	if(timer != null)
+    		timer.cancel(); // cancel previous timer
+    	timerViews = new ArrayList(); // release old ETA text views
+    	maxTimer = 0;
+    	
     	fareTv.setText("$"+routeResponse.routes.get(0).fare);
     	tableLayout.removeAllViews();
     	//Log.v("DATE",new Date().toString());
@@ -421,9 +419,13 @@ public class TheActivity extends Activity {
         	else{
         		eta = thisRoute.departureDate.getTime()-now;
         	}
-        		
-    		arrivalTimeTv.setText(String.valueOf(eta/(1000*60)));
-    		new ViewCountDownTimer(arrivalTimeTv, eta, 60*1000).start();
+        	timerViews.add(arrivalTimeTv);
+        	if(eta > maxTimer){
+        		maxTimer = eta;
+        	}
+        	arrivalTimeTv.setTag(thisRoute.departureDate.getTime());
+    		arrivalTimeTv.setText(String.valueOf(eta/(1000*60))); // TODO - remove this? Does countdown tick on start
+    		//new ViewCountDownTimer(arrivalTimeTv, eta, 60*1000).start();
     		tr.addView(arrivalTimeTv);
     		tr.setTag(thisRoute);
     		tableLayout.addView(tr);
@@ -434,6 +436,7 @@ public class TheActivity extends Activity {
 					usherRoute = (route)arg0.getTag();
 					new AlertDialog.Builder(c)
 	                .setTitle("Route Guidance")
+	                .setIcon(R.drawable.ic_launcher)
 	                .setMessage(getString(R.string.service_prompt))
 	                .setPositiveButton(R.string.service_start_button, new DialogInterface.OnClickListener() {
 	                    
@@ -521,11 +524,17 @@ public class TheActivity extends Activity {
     		});
     		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
     	}
+    	new ViewCountDownTimer(timerViews, maxTimer, 60*1000).start();
     }
     
     //CALLED-BY: updateUI()
     //Updates the UI with data from a etdResponse
     public void displayEtdResponse(etdResponse etdResponse){
+    	if(timer != null)
+    		timer.cancel(); // cancel previous timer
+    	long now = new Date().getTime();
+    	timerViews = new ArrayList(); // release old ETA text views
+    	maxTimer = 0; // reset maxTimer
     	fareTv.setText("");
 		tableLayout.removeAllViews();
 		String lastDestination = "";
@@ -571,8 +580,13 @@ public class TheActivity extends Activity {
 				timeTv.setSingleLine(false);
 				timeTv.setTextSize(36);
 				//timeTv.setPadding(30, 0, 0, 0);
-				int counterTime = thisEtd.minutesToArrival * 60*1000;
-	    		new ViewCountDownTimer(timeTv, counterTime, 60*1000).start();
+				long counterTime = thisEtd.minutesToArrival * 60*1000;
+				if (counterTime > maxTimer){
+					maxTimer = counterTime;
+				}
+				timeTv.setTag(counterTime+now);
+				timerViews.add(timeTv);
+	    		//new ViewCountDownTimer(timeTv, counterTime, 60*1000).start();
 				//text.setWidth(120);
 	    		destinationRow.addView(destinationTv);
 				//tr.addView(destinationTv);
@@ -620,14 +634,20 @@ public class TheActivity extends Activity {
 					nextTimeTv.setTextColor(0xFFC9C7C8);
 				else if (numAlt == 2)
 					nextTimeTv.setTextColor(0xFFA8A7A7);
-				int counterTime = thisEtd.minutesToArrival * 60*1000;
-	    		new ViewCountDownTimer(nextTimeTv, counterTime, 60*1000).start();
+				long counterTime = thisEtd.minutesToArrival * 60*1000;
+				nextTimeTv.setTag(counterTime+now);
+				if (counterTime > maxTimer){
+					maxTimer = counterTime;
+				}
+				timerViews.add(nextTimeTv);
+
+	    		//new ViewCountDownTimer(nextTimeTv, counterTime, 60*1000).start();
 				tr.addView(nextTimeTv);
 			}
 			lastDestination = thisEtd.destination;
 		} // end for
 		//scrolly.scrollTo(0, 0);
-		//setTimers();
+		new ViewCountDownTimer(timerViews, maxTimer, 60*1000).start();
 	} 
     
     private void validateInputAndDoRequest(){
@@ -646,19 +666,11 @@ public class TheActivity extends Activity {
     @Override
     public void onPause(){
     	super.onPause();
-    	editor.putString("state", (originTextView.getText() + "|" + destinationTextView.getText()).toString());
+    	editor.putString("origin", originTextView.getText().toString());
+    	editor.putString("destination",destinationTextView.getText().toString());
+    	editor.commit();
     }
-    
-    public void onResume(){
-    	super.onResume();
-    	if(prefs.contains("state")){
-        	//state= originTextView | destinationTextView
-        	String[] s = prefs.getString("state", "|").split("|");
-        	originTextView.setText(s[0]);
-        	destinationTextView.setText(s[1]);
-        	validateInputAndDoRequest();
-        }
-    }
+
 /*
     @Override
     public void onNewIntent(Intent intent){        
