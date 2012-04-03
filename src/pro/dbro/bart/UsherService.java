@@ -13,11 +13,13 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
-// TODO: Change NOTIFY-PADDING to affect a pre-event timer (like the vibration). 
-//		 Have the status notification change on exact estimated time
+// TODO: Look at Intent to send on notification click to ENSURE stop service label is created in TheActivity
+//		 Set up local broadcast receiver to notify Activity of service completion to remove stop service label
 
 public class UsherService extends Service {
     private NotificationManager mNM;
@@ -61,6 +63,7 @@ public class UsherService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+    	sendMessage(1); // send service-start message
         Log.i("UsherService", "Received start id " + startId + ": " + intent);
         if(timer != null){
         	timer.cancel();
@@ -84,11 +87,13 @@ public class UsherService extends Service {
 
     @Override
     public void onDestroy() {
-        // Cancel the persistent notification.
+    	sendMessage(0); // send service-stopped message
+        
     	if(timer != null)
     		timer.cancel();
     	if(reminderTimer != null)
     		reminderTimer.cancel();
+    	// Cancel the persistent notification.
         mNM.cancel(NOTIFICATION);
 
         // Tell the user we stopped.
@@ -217,6 +222,7 @@ public class UsherService extends Service {
     					notification.setLatestEventInfo(c, "You're here",
     			        		"Take it easy", contentIntent);
     			        mNM.notify(NOTIFICATION, notification);
+    			        //TheActivity.removeStopServiceText();
     					onDestroy(); // Is this the proper way to suicide a service?
     				}
     				else if(didBoard){ //Set timer for this leg's disembark time
@@ -260,5 +266,13 @@ public class UsherService extends Service {
 	            }.start();
             }
          }
+    
+    private void sendMessage(int status) { // 0 = service stopped , 1 = service started
+    	  Log.d("sender", "Broadcasting message");
+    	  Intent intent = new Intent("service_status_change");
+    	  // You can also include some extra data.
+    	  intent.putExtra("status", status);
+    	  LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    	}
     }
 

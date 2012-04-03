@@ -7,10 +7,12 @@ import java.util.Date;
 import java.util.HashMap;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -18,6 +20,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
@@ -56,6 +59,7 @@ public class TheActivity extends Activity {
 	AutoCompleteTextView destinationTextView;
 	AutoCompleteTextView originTextView;
 	TextView fareTv;
+	TextView stopServiceTv;
 	LinearLayout infoLayout;
 	
 	ArrayList timerViews = new ArrayList();
@@ -146,12 +150,15 @@ public class TheActivity extends Activity {
 	        .setTitle("Welcome to Open BART")
 	        .setIcon(R.drawable.ic_launcher)
 	        .setView(greetingTv)
-	        .setPositiveButton("Right on", null)
+	        .setPositiveButton("Okay!", null)
 	        .show();
         	
         	editor.putBoolean("first_timer", false);
 	        editor.commit();
         }
+        // LocalBroadCast Stuff
+        LocalBroadcastManager.getInstance(this).registerReceiver(serviceStateMessageReceiver,
+        	      new IntentFilter("service_status_change"));
         
         infoLayout = (LinearLayout) findViewById(R.id.infoLayout);
         
@@ -161,6 +168,7 @@ public class TheActivity extends Activity {
                 findViewById(R.id.originTv);
         
         fareTv = (TextView) findViewById(R.id.fareTv);
+        stopServiceTv = (TextView) findViewById(R.id.stopServiceTv);
 
         destinationTextView = (AutoCompleteTextView) findViewById(R.id.destinationTv);
         destinationTextView.setAdapter(adapter);
@@ -306,7 +314,7 @@ public class TheActivity extends Activity {
 	        .setTitle(res.getStringArray(R.array.aboutDialog)[0])
 	        .setIcon(R.drawable.ic_launcher)
 	        .setView(aboutTv)
-	        .setPositiveButton("Right on", null)
+	        .setPositiveButton("Word", null)
 	        .show();
 			return true;
 		}
@@ -455,23 +463,6 @@ public class TheActivity extends Activity {
 		                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
 		                    	//Log.v("SERVICE","Starting");
 		                    	startService(i);
-		                    	
-		                    	TextView stopServiceTv = (TextView) findViewById(R.id.stopServiceTv);
-		                    	stopServiceTv.setVisibility(0);
-		                    	stopServiceTv.setOnClickListener(new OnClickListener(){
-	
-		            				@Override
-		            				public void onClick(View v) {
-		            					Intent i = new Intent(c, UsherService.class);
-		                            	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
-		                            	//Log.v("SERVICE","Stopping");
-		                            	stopService(i);
-		                            	v.setVisibility(View.GONE);
-		                            	
-		            				}
-		                    		
-		                    	});
-	
 		                    }
 	
 						 })
@@ -685,6 +676,44 @@ public class TheActivity extends Activity {
     	editor.putString("destination",destinationTextView.getText().toString());
     	editor.commit();
     }
+    
+    // Called when guidance is completed
+    private BroadcastReceiver serviceStateMessageReceiver = new BroadcastReceiver() {
+    	  @Override
+    	  public void onReceive(Context context, Intent intent) {
+    	    // Get extra data included in the Intent
+    		stopServiceTv.setVisibility(View.GONE);
+    	    int status = intent.getIntExtra("status", -1);
+    	    if(status == 0){ // service stopped
+    	    	stopServiceTv.setVisibility(View.GONE);
+    	    }
+    	    else if(status == 1){ // service started
+    	    	stopServiceTv.setVisibility(0);
+            	stopServiceTv.setOnClickListener(new OnClickListener(){
+
+    				@Override
+    				public void onClick(View v) {
+    					Intent i = new Intent(c, UsherService.class);
+                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
+                    	//Log.v("SERVICE","Stopping");
+                    	stopService(i);
+                    	v.setVisibility(View.GONE);
+                    	
+    				}
+            		
+            	});
+    	    
+    	    }
+    	    Log.d("receiver", "Got message: " + status);
+    	  }
+    	};
+    	
+    	@Override
+    	protected void onDestroy() {
+    	  // Unregister since the activity is about to be closed.
+    	  LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceStateMessageReceiver);
+    	  super.onDestroy();
+    	}
 
 /*
     @Override
