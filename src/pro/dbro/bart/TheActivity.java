@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -47,11 +49,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 // TODO: access to recent stations
-//		 modify CountDownTimer to operate on an array of views and only use ONE to avoid memory leaks
-//		 test usher. RELEASE 
+
 
 public class TheActivity extends Activity {
-	Context c;
+	static Context c;
 	TableLayout tableLayout;
 	LinearLayout tableContainerLayout;
 	String lastRequest="";
@@ -677,7 +678,7 @@ public class TheActivity extends Activity {
     	editor.commit();
     }
     
-    // Called when guidance is completed
+    // Called when guidance service begins or completes
     private BroadcastReceiver serviceStateMessageReceiver = new BroadcastReceiver() {
     	  @Override
     	  public void onReceive(Context context, Intent intent) {
@@ -697,22 +698,59 @@ public class TheActivity extends Activity {
                     	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
                     	//Log.v("SERVICE","Stopping");
                     	stopService(i);
-                    	v.setVisibility(View.GONE);
-                    	
+                    	v.setVisibility(View.GONE);	
     				}
-            		
             	});
-    	    
+    	    }
+    	    else if(status == 2){//temporarily test this as avenue for countdowntimer to signal views need refreshing
+    	    	bartApiRequest();
     	    }
     	    Log.d("receiver", "Got message: " + status);
     	  }
     	};
     	
     	@Override
+    	protected void onResume() {
+    	  // Unregister since the activity is about to be closed.
+    		Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
+    		if(usherServiceIsRunning()){
+    			stopServiceTv.setVisibility(0);
+            	stopServiceTv.setOnClickListener(new OnClickListener(){
+
+    				@Override
+    				public void onClick(View v) {
+    					Intent i = new Intent(c, UsherService.class);
+                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
+                    	//Log.v("SERVICE","Stopping");
+                    	stopService(i);
+                    	v.setVisibility(View.GONE);
+                    	
+    				}
+            		
+            	});
+    		}
+    		else{
+    			Log.v("WTF","FUCKERS");
+    		}
+    	  super.onResume();
+    	}
+    	
+    	@Override
     	protected void onDestroy() {
     	  // Unregister since the activity is about to be closed.
     	  LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceStateMessageReceiver);
     	  super.onDestroy();
+    	}
+    	
+    	// Called in onResume() to ensure stop service button available as necessary
+    	private boolean usherServiceIsRunning() {
+    	    ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+    	    for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+    	        if ("pro.dbro.bart.UsherService".equals(service.service.getClassName())) {
+    	            return true;
+    	        }
+    	    }
+    	    return false;
     	}
 
 /*

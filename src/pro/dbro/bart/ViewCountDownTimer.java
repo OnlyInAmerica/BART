@@ -2,8 +2,10 @@ package pro.dbro.bart;
 
 import java.util.ArrayList;
 import java.util.Date;
-
+import android.content.Intent;
 import android.os.CountDownTimer;
+import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.widget.TextView;
 
 public class ViewCountDownTimer extends CountDownTimer {
@@ -23,9 +25,8 @@ public class ViewCountDownTimer extends CountDownTimer {
 	@Override
 	public void onFinish() {
 		// TODO Auto-generated method stub
-		for(int x=0;x<timerViews.size();x++){
-			((TextView)timerViews.get(x)).setText("0");
-		}
+
+		sendMessage(2);
 	}
 
 	@Override
@@ -45,5 +46,13 @@ public class ViewCountDownTimer extends CountDownTimer {
 			((TextView)timerViews.get(x)).setText(String.valueOf((eta) / ( 1000 *60)));
 		}
 	}
+	
+	private void sendMessage(int status) { // 0 = service stopped , 1 = service started, 2 = refresh view with call to bartApiRequest()
+  	  Log.d("sender", "View countdown expired");
+  	  Intent intent = new Intent("service_status_change");
+  	  // You can also include some extra data.
+  	  intent.putExtra("status", status);
+  	  LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
+  	}
 
 }

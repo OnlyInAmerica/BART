@@ -19,7 +19,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 // TODO: Look at Intent to send on notification click to ENSURE stop service label is created in TheActivity
-//		 Set up local broadcast receiver to notify Activity of service completion to remove stop service label
 
 public class UsherService extends Service {
     private NotificationManager mNM;
@@ -71,13 +70,6 @@ public class UsherService extends Service {
         if(reminderTimer != null){
         	reminderTimer.cancel();
         }
-        //departureStation = ((leg)usherRoute.legs.get(0)).boardStation;
-
-        /*
-        if (intent !=null && intent.getExtras()!=null){
-             //departureStation = intent.getExtras().getString("departure");
-        }
-        */
         
         // We want this service to continue running until it is explicitly
         // stopped, so return sticky.
@@ -110,7 +102,7 @@ public class UsherService extends Service {
     private final IBinder mBinder = new LocalBinder();
 
     /**
-     * Show a notification while this service is running.
+     * Initialize first guidance timer and send initial notification
      */
     private void showNotification() {
         // In this sample, we'll use the same text for the ticker and the expanded notification

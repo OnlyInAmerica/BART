@@ -14,8 +14,8 @@ public class MapActivity extends Activity {
 		
 		WebView webview = new WebView(this);
 		webview.getSettings().setBuiltInZoomControls(true);
-		setContentView(webview);
 		webview.loadUrl("file:///android_asset/bart_map.html");
-		webview.scrollTo(500, 500);
+		setContentView(webview);
+		
 	}
 } 
