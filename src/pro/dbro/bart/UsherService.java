@@ -136,18 +136,18 @@ public class UsherService extends Service {
         // back to minutes
         minutesUntilNext = (minutesUntilNext)/(1000*60);
         
-        CharSequence currentStationText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).boardStation.toLowerCase());
-        CharSequence nextStep = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+        CharSequence currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).boardStation.toLowerCase());
+        CharSequence nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
         /*
         if(usherRoute.legs.size()>1){
-        	nextStep = "Transfer at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " in "+((leg)usherRoute.legs.get(0)).disembarkTime.toString();
+        	nextStepText = "Transfer at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " in "+((leg)usherRoute.legs.get(0)).disembarkTime.toString();
         }
         else{
-        	nextStep = "Arriving at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " at "+ ((leg)usherRoute.legs.get(0)).disembarkTime.toString();
+        	nextStepText = "Arriving at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " at "+ ((leg)usherRoute.legs.get(0)).disembarkTime.toString();
         }
         */
-        notification.setLatestEventInfo(this, currentStationText,
-        		nextStep, contentIntent);
+        notification.setLatestEventInfo(this, currentStepText,
+        		nextStepText, contentIntent);
 
         // Send the notification.
 
@@ -159,39 +159,41 @@ public class UsherService extends Service {
     private void updateNotification(boolean newNotification){
     	route usherRoute = TheActivity.usherRoute;
     	Date now = new Date();
-    	CharSequence nextStep ="";
-    	
+    	CharSequence nextStepText ="";
+    	CharSequence currentStepText = "";
     	if(didBoard){
+    		currentStepText = "On " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase())+ " train";
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime())/(1000*60));
     		if(currentLeg+1 == usherRoute.legs.size()){
-    			nextStep = "Get off at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + String.valueOf(minutesUntilNext) + "m";
+    			nextStepText = "Get off at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + String.valueOf(minutesUntilNext) + "m";
     		}
     		else{
-    			nextStep = "Transfer at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + String.valueOf(minutesUntilNext) + "m";
+    			nextStepText = "Transfer at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + String.valueOf(minutesUntilNext) + "m";
     		}
     	}
     	else{
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime())/(1000*60));
-    		nextStep = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+    		nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+    		currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase());
     	}
-        CharSequence currentStationText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase());
+        
         
         /*
         if(usherRoute.legs.size()>1){
-        	nextStep = "Transfer at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " in "+((leg)usherRoute.legs.get(0)).disembarkTime.toString();
+        	nextStepText = "Transfer at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " in "+((leg)usherRoute.legs.get(0)).disembarkTime.toString();
         }
         else{
-        	nextStep = "Arriving at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " at "+ ((leg)usherRoute.legs.get(0)).disembarkTime.toString();
+        	nextStepText = "Arriving at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " at "+ ((leg)usherRoute.legs.get(0)).disembarkTime.toString();
         }
         */
         
         if(newNotification){
-    		notification = new Notification(R.drawable.ic_launcher_notification, nextStep,
+    		notification = new Notification(R.drawable.ic_launcher_notification, nextStepText,
 	                System.currentTimeMillis());
     	}
 
-        notification.setLatestEventInfo(this, currentStationText,
-        		nextStep, contentIntent);
+        notification.setLatestEventInfo(this, currentStepText,
+        		nextStepText, contentIntent);
         mNM.notify(NOTIFICATION, notification);
     }
     
