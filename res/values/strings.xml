@@ -7,11 +7,11 @@
         <item>Check your network connection.</item>
     </string-array>
     <string name="greeting">
-        Open BART is being designed with the respect that the Android community deserves! 
-        This is OUR app, so when you find a bug or need a feature, you let me know! Go to 
-        the "About" screen in the settings menu for my contact info.<br></br>
-        Happy BARTing. May you always avoid the smelly trains!<br></br>
-        Oh, and Open BART is open-source. Check it out on github!</string>
+        Open BART is a lean, mean transit companion! 
+        This is OUR app, so when you find a bug or need a feature, let us know! Go to 
+        the "About" screen in the settings menu (or the info icon in Android 3.0+) to contact us.&lt;br>&lt;/br>
+        Happy BARTing. May you always avoid the smelly trains!&lt;br>&lt;/br>
+        Oh, and Open BART is open-source. Check it out on &lt;a href="https://github.com/OnlyInAmerica/BART">github!&lt;/a></string>
     <string-array name="aboutDialog">
         <item>About Open BART</item>
         <item>Open BART is open source software, so it belongs to all of us. Check out the code on &lt;a href="https://github.com/OnlyInAmerica/BART">github&lt;/a>.&lt;br/>&lt;br/>
@@ -22,7 +22,7 @@
     <string name="local_service_label">I\'ll vibrate when you need to move</string>
     <string name="local_service_connected">trip usher at work</string>
     <string name="local_service_disconnected">trip usher off</string>
-    <string name="service_prompt">Shall I guide you on this route? I\'ll vibrate your phone when your transfer or destination station is approaching! </string>
+    <string name="service_prompt">I can vibrate your phone when your stops are approaching! You can also check the notification bar at any time to see your next move.&lt;br/>&lt;br/>This is an &lt;b>experimental&lt;/b> feature.</string>
     <string name="service_start_button">Guide Me!</string>
 
 </resources>

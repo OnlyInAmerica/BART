@@ -117,7 +117,7 @@ public class UsherService extends Service {
     	didBoard = false;
     	CharSequence text = "Guiding to " + TheActivity.REVERSE_STATION_MAP.get(destinationStation.toLowerCase());
         // Set the icon, scrolling text and timestamp
-        notification = new Notification(R.drawable.ic_launcher, text,
+        notification = new Notification(R.drawable.ic_launcher_notification, text,
                 System.currentTimeMillis());
 
         // The PendingIntent to launch our activity if the user selects this notification
@@ -186,7 +186,7 @@ public class UsherService extends Service {
         */
         
         if(newNotification){
-    		notification = new Notification(R.drawable.ic_launcher, nextStep,
+    		notification = new Notification(R.drawable.ic_launcher_notification, nextStep,
 	                System.currentTimeMillis());
     	}
 
@@ -210,7 +210,7 @@ public class UsherService extends Service {
     				didBoard = !didBoard;
     				
     				if ((TheActivity.usherRoute.legs.size() == currentLeg+1) && !didBoard){
-    					notification = new Notification(R.drawable.ic_launcher, "This is your stop! Take Care!",
+    					notification = new Notification(R.drawable.ic_launcher_notification, "This is your stop! Take Care!",
     			                System.currentTimeMillis());
     					notification.setLatestEventInfo(c, "You're here",
     			        		"Take it easy", contentIntent);

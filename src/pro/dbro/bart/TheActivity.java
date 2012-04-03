@@ -137,10 +137,15 @@ public class TheActivity extends Activity {
        
         
         if(prefs.getBoolean("first_timer", true)){
+        	TextView greetingTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+			greetingTv.setText(Html.fromHtml(getString(R.string.greeting)));
+			greetingTv.setTextSize(18);
+			greetingTv.setPadding(0, 0, 0, 0);
+			greetingTv.setMovementMethod(LinkMovementMethod.getInstance());
         	new AlertDialog.Builder(c)
 	        .setTitle("Welcome to Open BART")
 	        .setIcon(R.drawable.ic_launcher)
-	        .setMessage(R.string.greeting)
+	        .setView(greetingTv)
 	        .setPositiveButton("Right on", null)
 	        .show();
         	
@@ -364,167 +369,176 @@ public class TheActivity extends Activity {
     		timer.cancel(); // cancel previous timer
     	timerViews = new ArrayList(); // release old ETA text views
     	maxTimer = 0;
-    	
-    	fareTv.setText("$"+routeResponse.routes.get(0).fare);
-    	tableLayout.removeAllViews();
-    	//Log.v("DATE",new Date().toString());
-    	long now = new Date().getTime();
-    
-    	for (int x=0;x<routeResponse.routes.size();x++){
-    		
-    		route thisRoute = routeResponse.routes.get(x);
-        	TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
-        	tr.setPadding(0, 20, 0, 0);
-    		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
-
-    		for(int y=0;y<thisRoute.legs.size();y++){
-    			TextView trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-    			trainTv.setPadding(0, 0, 0, 0);
-    			trainTv.setTextSize(20);
-    			trainTv.setGravity(3); // set left gravity
-    			if (y>0){
-    				trainTv.setText("transfer at "+ REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y-1)).disembarkStation.toLowerCase()));
-    				trainTv.setPadding(0, 0, 0, 0);
-    				legLayout.addView(trainTv);
-    				trainTv.setTextSize(14);
-    				trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-    				trainTv.setPadding(0, 0, 0, 0);
-    				trainTv.setTextSize(20);
-        			trainTv.setGravity(3); // set left gravity
-    				trainTv.setText("to "+REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation.toLowerCase()));
-    			}
-    			else
-    				trainTv.setText("take " +REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
-    			
-    			legLayout.addView(trainTv);
-
-    		}
-    		
-    		if(thisRoute.legs.size() == 1){
-    			legLayout.setPadding(0, 10, 0, 0); // Address detination train and ETA not aligning 
-    		}
-    		
-    		tr.addView(legLayout);
-    		
-    		TextView arrivalTimeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-    		//arrivalTimeTv.setPadding(30, 0, 0, 0);
-    		arrivalTimeTv.setTextSize(36);
-    		//Log.v("DEPART_DATE",thisRoute.departureDate.toString());
-    		
-    		// Don't report a train that may JUST be leaving with a negative ETA
-    		long eta;
-        	if(thisRoute.departureDate.getTime()-now < 0){
-        		eta = 0;
-        	}
-        	else{
-        		eta = thisRoute.departureDate.getTime()-now;
-        	}
-        	timerViews.add(arrivalTimeTv);
-        	if(eta > maxTimer){
-        		maxTimer = eta;
-        	}
-        	arrivalTimeTv.setTag(thisRoute.departureDate.getTime());
-    		arrivalTimeTv.setText(String.valueOf(eta/(1000*60))); // TODO - remove this? Does countdown tick on start
-    		//new ViewCountDownTimer(arrivalTimeTv, eta, 60*1000).start();
-    		tr.addView(arrivalTimeTv);
-    		tr.setTag(thisRoute);
-    		tableLayout.addView(tr);
-    		tr.setOnLongClickListener(new OnLongClickListener(){
-
-				@Override
-				public boolean onLongClick(View arg0) {
-					usherRoute = (route)arg0.getTag();
-					new AlertDialog.Builder(c)
-	                .setTitle("Route Guidance")
-	                .setIcon(R.drawable.ic_launcher)
-	                .setMessage(getString(R.string.service_prompt))
-	                .setPositiveButton(R.string.service_start_button, new DialogInterface.OnClickListener() {
-	                    
-	                    public void onClick(DialogInterface dialog, int which) {
-	                    	Intent i = new Intent(c, UsherService.class);
-	                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
-	                    	//Log.v("SERVICE","Starting");
-	                    	startService(i);
-	                    	
-	                    	TextView stopServiceTv = (TextView) findViewById(R.id.stopServiceTv);
-	                    	stopServiceTv.setVisibility(0);
-	                    	stopServiceTv.setOnClickListener(new OnClickListener(){
-
-	            				@Override
-	            				public void onClick(View v) {
-	            					Intent i = new Intent(c, UsherService.class);
-	                            	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
-	                            	//Log.v("SERVICE","Stopping");
-	                            	stopService(i);
-	                            	v.setVisibility(View.GONE);
-	                            	
-	            				}
-	                    		
-	                    	});
-
-	                    }
-
-					 })
-	                .setNeutralButton("Cancel", null)
-	                .show();
-					return true; // consumed the long click
-				}
-    			
-    		});
-    		tr.setOnClickListener(new OnClickListener(){
-
-				@Override
-				public void onClick(View arg0) {
-					int index = tableLayout.indexOfChild(arg0); // index of clicked view. Expanded view will always be +1
-					route thisRoute = (route) arg0.getTag();
-					if (!thisRoute.isExpanded){ // if route not expanded
-						thisRoute.isExpanded = true;
-						LinearLayout routeDetail = (LinearLayout) View.inflate(c, R.layout.routedetail, null);
-						TextView arrivalTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-						SimpleDateFormat curFormater = new SimpleDateFormat("h:mm a"); 
-						//arrivalTv.setTextColor(0xFFC9C7C8);
-						arrivalTv.setText("arrives "+curFormater.format(thisRoute.arrivalDate));
-						arrivalTv.setTextSize(20);
-						routeDetail.addView(arrivalTv);
-						if(thisRoute.bikes){
-							ImageView bikeIv = (ImageView) View.inflate(c, R.layout.bikeimage, null);
-							routeDetail.addView(bikeIv);
+    	try{
+	    	fareTv.setVisibility(0);
+	    	fareTv.setText("$"+routeResponse.routes.get(0).fare);
+	    	tableLayout.removeAllViews();
+	    	//Log.v("DATE",new Date().toString());
+	    	long now = new Date().getTime();
+	    
+	    	for (int x=0;x<routeResponse.routes.size();x++){
+	    		
+	    		route thisRoute = routeResponse.routes.get(x);
+	        	TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
+	        	tr.setPadding(0, 20, 0, 0);
+	    		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
+	
+	    		for(int y=0;y<thisRoute.legs.size();y++){
+	    			TextView trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+	    			trainTv.setPadding(0, 0, 0, 0);
+	    			trainTv.setTextSize(20);
+	    			trainTv.setGravity(3); // set left gravity
+	    			if (y>0){
+	    				trainTv.setText("transfer at "+ REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y-1)).disembarkStation.toLowerCase()));
+	    				trainTv.setPadding(0, 0, 0, 0);
+	    				legLayout.addView(trainTv);
+	    				trainTv.setTextSize(14);
+	    				trainTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+	    				trainTv.setPadding(0, 0, 0, 0);
+	    				trainTv.setTextSize(20);
+	        			trainTv.setGravity(3); // set left gravity
+	    				trainTv.setText("to "+REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation.toLowerCase()));
+	    			}
+	    			else
+	    				trainTv.setText("take " +REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
+	    			
+	    			legLayout.addView(trainTv);
+	
+	    		}
+	    		
+	    		if(thisRoute.legs.size() == 1){
+	    			legLayout.setPadding(0, 10, 0, 0); // Address detination train and ETA not aligning 
+	    		}
+	    		
+	    		tr.addView(legLayout);
+	    		
+	    		TextView arrivalTimeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+	    		arrivalTimeTv.setPadding(10, 0, 0, 0);
+	    		arrivalTimeTv.setTextSize(36);
+	    		//Log.v("DEPART_DATE",thisRoute.departureDate.toString());
+	    		
+	    		// Don't report a train that may JUST be leaving with a negative ETA
+	    		long eta;
+	        	if(thisRoute.departureDate.getTime()-now < 0){
+	        		eta = 0;
+	        	}
+	        	else{
+	        		eta = thisRoute.departureDate.getTime()-now;
+	        	}
+	        	timerViews.add(arrivalTimeTv);
+	        	if(eta > maxTimer){
+	        		maxTimer = eta;
+	        	}
+	        	arrivalTimeTv.setTag(thisRoute.departureDate.getTime());
+	    		arrivalTimeTv.setText(String.valueOf(eta/(1000*60))); // TODO - remove this? Does countdown tick on start
+	    		//new ViewCountDownTimer(arrivalTimeTv, eta, 60*1000).start();
+	    		tr.addView(arrivalTimeTv);
+	    		tr.setTag(thisRoute);
+	    		tableLayout.addView(tr);
+	    		tr.setOnLongClickListener(new OnLongClickListener(){
+	
+					@Override
+					public boolean onLongClick(View arg0) {
+						usherRoute = (route)arg0.getTag();
+						TextView guidanceTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+						guidanceTv.setText(Html.fromHtml(getString(R.string.service_prompt)));
+						guidanceTv.setTextSize(18);
+						guidanceTv.setPadding(0, 0, 0, 0);
+						new AlertDialog.Builder(c)
+		                .setTitle("Route Guidance")
+		                .setIcon(R.drawable.ic_launcher)
+		                .setView(guidanceTv)
+		                .setPositiveButton(R.string.service_start_button, new DialogInterface.OnClickListener() {
+		                    
+		                    public void onClick(DialogInterface dialog, int which) {
+		                    	Intent i = new Intent(c, UsherService.class);
+		                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
+		                    	//Log.v("SERVICE","Starting");
+		                    	startService(i);
+		                    	
+		                    	TextView stopServiceTv = (TextView) findViewById(R.id.stopServiceTv);
+		                    	stopServiceTv.setVisibility(0);
+		                    	stopServiceTv.setOnClickListener(new OnClickListener(){
+	
+		            				@Override
+		            				public void onClick(View v) {
+		            					Intent i = new Intent(c, UsherService.class);
+		                            	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
+		                            	//Log.v("SERVICE","Stopping");
+		                            	stopService(i);
+		                            	v.setVisibility(View.GONE);
+		                            	
+		            				}
+		                    		
+		                    	});
+	
+		                    }
+	
+						 })
+		                .setNeutralButton("Cancel", null)
+		                .show();
+						return true; // consumed the long click
+					}
+	    			
+	    		});
+	    		tr.setOnClickListener(new OnClickListener(){
+	
+					@Override
+					public void onClick(View arg0) {
+						int index = tableLayout.indexOfChild(arg0); // index of clicked view. Expanded view will always be +1
+						route thisRoute = (route) arg0.getTag();
+						if (!thisRoute.isExpanded){ // if route not expanded
+							thisRoute.isExpanded = true;
+							LinearLayout routeDetail = (LinearLayout) View.inflate(c, R.layout.routedetail, null);
+							TextView arrivalTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+							SimpleDateFormat curFormater = new SimpleDateFormat("h:mm a"); 
+							//arrivalTv.setTextColor(0xFFC9C7C8);
+							arrivalTv.setText("arrives "+curFormater.format(thisRoute.arrivalDate));
+							arrivalTv.setTextSize(20);
+							routeDetail.addView(arrivalTv);
+							if(thisRoute.bikes){
+								ImageView bikeIv = (ImageView) View.inflate(c, R.layout.bikeimage, null);
+								routeDetail.addView(bikeIv);
+							}
+							tableLayout.addView(routeDetail, index+1);
 						}
-						tableLayout.addView(routeDetail, index+1);
+						else{
+							thisRoute.isExpanded = false;
+							tableLayout.removeViewAt(index+1);
+						}
+						
 					}
-					else{
-						thisRoute.isExpanded = false;
-						tableLayout.removeViewAt(index+1);
+	    		});
+	    	}
+	    	if (routeResponse.specialSchedule != null){
+	    		ImageView specialSchedule = (ImageView)View.inflate(c, R.layout.specialschedulelayout, null);
+	    		specialSchedule.setTag(routeResponse.specialSchedule);
+	    		specialSchedule.setOnClickListener(new OnClickListener(){
+	
+					@Override
+					public void onClick(View arg0) {
+					    TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+					    specialScheduleTv.setPadding(0, 0, 0, 0);
+					    specialScheduleTv.setText(Html.fromHtml(arg0.getTag().toString()));
+					    specialScheduleTv.setTextSize(16);
+					    specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
+					    new AlertDialog.Builder(c)
+				        .setTitle("Route Alerts")
+				        .setIcon(R.drawable.warning)
+				        .setView(specialScheduleTv)
+				        .setPositiveButton("Bummer", null)
+				        .show();
+						
 					}
-					
-				}
-    		});
+	    			
+	    		});
+	    		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
+	    	}
+	    	new ViewCountDownTimer(timerViews, maxTimer, 60*1000).start();
+    	}catch(Throwable t){
+    		Log.v("WTF",t.getStackTrace().toString());
+    		
     	}
-    	if (routeResponse.specialSchedule != null){
-    		ImageView specialSchedule = (ImageView)View.inflate(c, R.layout.specialschedulelayout, null);
-    		specialSchedule.setTag(routeResponse.specialSchedule);
-    		specialSchedule.setOnClickListener(new OnClickListener(){
-
-				@Override
-				public void onClick(View arg0) {
-				    TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-				    specialScheduleTv.setPadding(0, 0, 0, 0);
-				    specialScheduleTv.setText(Html.fromHtml(arg0.getTag().toString()));
-				    specialScheduleTv.setTextSize(16);
-				    specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
-				    new AlertDialog.Builder(c)
-			        .setTitle("Route Alerts")
-			        .setIcon(R.drawable.warning)
-			        .setView(specialScheduleTv)
-			        .setPositiveButton("Bummer", null)
-			        .show();
-					
-				}
-    			
-    		});
-    		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
-    	}
-    	new ViewCountDownTimer(timerViews, maxTimer, 60*1000).start();
     }
     
     //CALLED-BY: updateUI()
@@ -536,6 +550,7 @@ public class TheActivity extends Activity {
     	timerViews = new ArrayList(); // release old ETA text views
     	maxTimer = 0; // reset maxTimer
     	fareTv.setText("");
+    	fareTv.setVisibility(View.GONE);
 		tableLayout.removeAllViews();
 		String lastDestination = "";
 		
