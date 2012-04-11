@@ -152,7 +152,7 @@ public class UsherService extends Service {
         */
         notification.setLatestEventInfo(this, currentStepText,
         		nextStepText, contentIntent);
-
+        notification.flags |= Notification.FLAG_ONGOING_EVENT;
         // Send the notification.
 
         mNM.notify(NOTIFICATION, notification);
@@ -200,6 +200,7 @@ public class UsherService extends Service {
         if(newNotification){
     		notification = new Notification(R.drawable.ic_launcher_notification, nextStepText,
 	                System.currentTimeMillis());
+    		notification.flags |= Notification.FLAG_ONGOING_EVENT;
     	}
 
         notification.setLatestEventInfo(this, currentStepText,
