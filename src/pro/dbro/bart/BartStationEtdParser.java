@@ -23,10 +23,12 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 	//we combine them into one Java Date
 	private String date = new String();
 	private String time = new String();
+	boolean updateUI;
 	
 	Activity caller;
-	BartStationEtdParser(Activity caller) {
+	BartStationEtdParser(Activity caller, boolean updateUI) {
         this.caller = caller;
+        this.updateUI = updateUI;
     }
 
 	@Override
@@ -151,7 +153,7 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 	
 	@Override
     protected void onPostExecute(etdResponse result) {
-		((TheActivity) caller).handleResponse(result);
+		((TheActivity) caller).handleResponse(result, updateUI);
         super.onPostExecute(result);
     }
 

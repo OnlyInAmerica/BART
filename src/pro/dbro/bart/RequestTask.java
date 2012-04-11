@@ -17,9 +17,13 @@ import android.util.Log;
 
 public class RequestTask extends AsyncTask<String, String, String> {
 	//allow data passing to calling activity
+	String request;
+	boolean updateUI;
 	Activity caller;
-	RequestTask(Activity caller) {
+	RequestTask(Activity caller, String request, boolean updateUI) {
+		this.request = request;
         this.caller = caller;
+        this.updateUI = updateUI;
     }
 	@Override
 	protected String doInBackground(String... uri) {
@@ -53,8 +57,7 @@ public class RequestTask extends AsyncTask<String, String, String> {
 	
 	@Override
     protected void onPostExecute(String result) {
-		((TheActivity) caller).parseBart(result);
+		((TheActivity) caller).parseBart(result, request, updateUI);
         super.onPostExecute(result);
     }
-
 }

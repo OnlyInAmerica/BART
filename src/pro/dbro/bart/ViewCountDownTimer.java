@@ -13,7 +13,11 @@ import android.widget.TextView;
 
 public class ViewCountDownTimer extends CountDownTimer {
 	
+	// views to be counted down by timer
 	ArrayList timerViews;
+	// type of request: "etd" or "route" This reveals the format of views within timerViews
+	String request;
+	
 	static final long DEPARTING_TRAIN_PADDING_MS = 15*1000; // how long after departure should we display train?
 															  // since timer polls only once per minute setting <60s
 															  // only effectively removes trains leaving when request is first sent
@@ -25,10 +29,11 @@ public class ViewCountDownTimer extends CountDownTimer {
 		super(millisInFuture, countDownInterval);
 		// TODO Auto-generated constructor stub
 	}
-	public ViewCountDownTimer(ArrayList tViews, long millisInFuture, long countDownInterval) {
+	public ViewCountDownTimer(ArrayList tViews, String request, long millisInFuture, long countDownInterval) {
 		super(millisInFuture, countDownInterval);
 		COUNTDOWN_TIME_MS = millisInFuture;
 		timerViews = tViews;
+		this.request = request;
 		
 	}
 
@@ -54,7 +59,7 @@ public class ViewCountDownTimer extends CountDownTimer {
 				//eta = 0;
 				//eta TextView inside TableRow inside TableLayout
 				try{
-					if(TheActivity.lastRequest == "route"){
+					if(request.compareTo("route") == 0){
 	
 						View parent = ((View) ((TextView)timerViews.get(x)).getParent());
 						route thisRoute = (route)parent.getTag();
@@ -66,7 +71,7 @@ public class ViewCountDownTimer extends CountDownTimer {
 						}
 						//tableLayout.removeView((View)((View)timerViews.get(x)).getParent());
 					}
-					else if(TheActivity.lastRequest == "etd"){
+					else if(request.compareTo("etd") == 0){
 						((TextView)timerViews.get(x)).setVisibility(View.GONE);
 					}
 				}catch(Throwable t){
@@ -90,6 +95,7 @@ public class ViewCountDownTimer extends CountDownTimer {
   	  Intent intent = new Intent("service_status_change");
   	  // You can also include some extra data.
   	  intent.putExtra("status", status);
+  	  intent.putExtra("request", request);
   	  LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
   	}
 

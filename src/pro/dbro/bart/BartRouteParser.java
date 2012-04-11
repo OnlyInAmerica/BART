@@ -25,10 +25,12 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 	String legDate;
 	SimpleDateFormat curFormater;
 	Date dateObj;
+	boolean updateUI;
 	
 	Activity caller;
-	BartRouteParser(Activity caller) {
+	BartRouteParser(Activity caller, boolean updateUI) {
         this.caller = caller;
+        this.updateUI = updateUI;
     }
 
 	@Override
@@ -235,7 +237,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 	
 	@Override
     protected void onPostExecute(routeResponse result) {
-		((TheActivity) caller).handleResponse(result);
+		((TheActivity) caller).handleResponse(result, updateUI);
         super.onPostExecute(result);
     }
 

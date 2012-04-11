@@ -74,11 +74,14 @@ public class TheActivity extends Activity {
 	// freshness of response is available in currentEtdResponse.Date
 	public static etdResponse currentEtdResponse;
 	
+	// time in ms to allow a currentEtdResponse to be considered 'fresh'
+	private final long CURRENT_ETD_RESPONSE_FRESH_MS = 30*1000;
+	
 	// determines whether UI is automatically updated after api request by handleResponse(response)
 	// set to false in events where a routeResponse is displayed BEFORE an etdresponse was cached
 	// in currentEtdResponse.
 	// etdResponse has the real-time station info, while routeResponse is based on the BART schedule
-	private boolean updateUIOnResponse = true;
+	// private boolean updateUIOnResponse = true;
 	
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
@@ -321,17 +324,17 @@ public class TheActivity extends Activity {
     }
     //CALLED-BY: originTextView and destinationTextView item-select listeners
     //CALLS: HTTP requester: RequestTask
-    public void bartApiRequest(){
+    public void bartApiRequest(String request, boolean updateUI){
     	String url = BART_API_ROOT;
-    	if (lastRequest == "etd"){
+    	if (request.compareTo("etd") == 0){
     		url += "etd.aspx?cmd=etd&orig="+STATION_MAP.get(originTextView.getText().toString());
     	}
-    	else if (lastRequest == "route"){
+    	else if (request.compareTo("route") == 0){
     		url += "sched.aspx?cmd=depart&a=3&b=0&orig="+STATION_MAP.get(originTextView.getText().toString())+"&dest="+STATION_MAP.get(destinationTextView.getText().toString());
     	}
     	url += "&key="+BART_API_KEY;
     	Log.v("BART API",url);
-    	new RequestTask((Activity)c).execute(url);
+    	new RequestTask((Activity)c, request, updateUI).execute(url);
     }
     
     private void hideSoftKeyboard (View view) {
@@ -341,7 +344,7 @@ public class TheActivity extends Activity {
     
     //CALLED-BY: HTTP requester: RequestTask
     //CALLS: Bart API XML response parsers
-    public void parseBart(String response){
+    public void parseBart(String response, String request, boolean updateUI){
     	if (response=="error"){
 			new AlertDialog.Builder(c)
 	        .setTitle(res.getStringArray(R.array.networkErrorDialog)[0])
@@ -349,17 +352,17 @@ public class TheActivity extends Activity {
 	        .setPositiveButton("Bummer", null)
 	        .show();
     	}
-    	else if(lastRequest == "etd")
-    		new BartStationEtdParser(this).execute(response);
-    	else if(lastRequest == "route")
-    		new BartRouteParser(this).execute(response);
+    	else if(request.compareTo("etd") == 0)
+    		new BartStationEtdParser(this, updateUI).execute(response);
+    	else if(request.compareTo("route") == 0)
+    		new BartRouteParser(this, updateUI).execute(response);
     }
     
     //CALLED-BY: Bart API XML response parsers: BartRouteParser, BartEtdParser
     //CALLS: the appropriate method to update the UI
-    public void handleResponse(Object response){
-    	//If special messages exist from a previous request, remove them
-    	if (updateUIOnResponse){
+    public void handleResponse(Object response, boolean updateUI){
+    	if(updateUI){
+			//If special messages exist from a previous request, remove them
 	    	if (tableContainerLayout.getChildCount() > 1)
 	    		tableContainerLayout.removeViews(1, tableContainerLayout.getChildCount()-1);
 	    	if (response instanceof etdResponse){
@@ -381,7 +384,7 @@ public class TheActivity extends Activity {
     	}
     }
 
-    //CALLED-BY: updateUI()
+    //CALLED-BY: handleResponse() if updateUIOnResponse is true
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
     	if(timer != null)
@@ -536,14 +539,14 @@ public class TheActivity extends Activity {
 	    		});
 	    		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
 	    	}
-	    	new ViewCountDownTimer(timerViews, maxTimer, 60*1000).start();
+	    	new ViewCountDownTimer(timerViews, "route", maxTimer, 60*1000).start();
     	}catch(Throwable t){
     		Log.v("WTF",t.getStackTrace().toString());
     		
     	}
     }
     
-    //CALLED-BY: updateUI()
+    //CALLED-BY: handleResponse() if updateUIOnResponse is true
     //Updates the UI with data from a etdResponse
     public void displayEtdResponse(etdResponse etdResponse){
     	if(timer != null)
@@ -664,18 +667,27 @@ public class TheActivity extends Activity {
 			lastDestination = thisEtd.destination;
 		} // end for
 		//scrolly.scrollTo(0, 0);
-		new ViewCountDownTimer(timerViews, maxTimer, 60*1000).start();
+		new ViewCountDownTimer(timerViews, "etd", maxTimer, 60*1000).start();
 	} 
     
     private void validateInputAndDoRequest(){
+    	long now = new Date().getTime();
     	if(STATION_MAP.get(originTextView.getText().toString()) != null){
 			if(STATION_MAP.get(destinationTextView.getText().toString()) != null){
-				lastRequest = "route";
-				bartApiRequest();
+				//if an etd response is cached, is fresh, and is for the route departure station:
+				if(currentEtdResponse != null && 
+						(now - currentEtdResponse.date.getTime() < CURRENT_ETD_RESPONSE_FRESH_MS) && 
+							(currentEtdResponse.station.compareTo(originTextView.getText().toString()) == 0 )){
+					bartApiRequest("route", true);
+				}
+				// if an appropriate etd cache is not available, fetch it now
+				else{
+					// TODO: fetch etd cache
+					bartApiRequest("route", true);
+				}
 			}
 			else{
-				lastRequest = "etd";
-				bartApiRequest();
+				bartApiRequest("etd", true);
 			}
 		}
     }
@@ -713,7 +725,7 @@ public class TheActivity extends Activity {
             	});
     	    }
     	    else if(status == 2){//temporarily test this as avenue for countdowntimer to signal views need refreshing
-    	    	bartApiRequest();
+    	    	bartApiRequest(intent.getStringExtra("request"), true);
     	    }
     	    Log.d("receiver", "Got message: " + status);
     	  }
