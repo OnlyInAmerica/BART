@@ -75,7 +75,7 @@ public class TheActivity extends Activity {
 	public static etdResponse currentEtdResponse;
 	
 	// time in ms to allow a currentEtdResponse to be considered 'fresh'
-	private final long CURRENT_ETD_RESPONSE_FRESH_MS = 30*1000;
+	private final long CURRENT_ETD_RESPONSE_FRESH_MS = 60*1000;
 	
 	// determines whether UI is automatically updated after api request by handleResponse(response)
 	// set to false in events where a routeResponse is displayed BEFORE an etdresponse was cached
@@ -675,14 +675,24 @@ public class TheActivity extends Activity {
     	if(STATION_MAP.get(originTextView.getText().toString()) != null){
 			if(STATION_MAP.get(destinationTextView.getText().toString()) != null){
 				//if an etd response is cached, is fresh, and is for the route departure station:
+				//temp testing
+				if(currentEtdResponse != null){
+					long timeCheck = (now - currentEtdResponse.date.getTime());
+					boolean stationCheck = (currentEtdResponse.station.compareTo(originTextView.getText().toString()) == 0 );
+				
+					Log.v("CACHE_CHECK",String.valueOf(timeCheck) + " " + String.valueOf(stationCheck)+ " " + currentEtdResponse.date.toString());
+				}
 				if(currentEtdResponse != null && 
 						(now - currentEtdResponse.date.getTime() < CURRENT_ETD_RESPONSE_FRESH_MS) && 
 							(currentEtdResponse.station.compareTo(originTextView.getText().toString()) == 0 )){
+					
+					Log.v("ETD_CACHE","Cache found");
 					bartApiRequest("route", true);
 				}
 				// if an appropriate etd cache is not available, fetch it now
 				else{
-					// TODO: fetch etd cache
+					Log.v("ETD_CACHE","Cache ETD and display ROUTE");
+					bartApiRequest("etd",false);
 					bartApiRequest("route", true);
 				}
 			}
