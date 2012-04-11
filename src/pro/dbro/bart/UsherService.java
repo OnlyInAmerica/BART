@@ -117,8 +117,7 @@ public class UsherService extends Service {
     	didBoard = false;
     	CharSequence text = "Guiding to " + TheActivity.REVERSE_STATION_MAP.get(destinationStation.toLowerCase());
         // Set the icon, scrolling text and timestamp
-        notification = new Notification(R.drawable.ic_launcher_notification, text,
-                System.currentTimeMillis());
+        notification = new Notification(R.drawable.ic_launcher_notification, text,0);
 
         // The PendingIntent to launch our activity if the user selects this notification
         Intent i = new Intent(this, TheActivity.class);
@@ -198,8 +197,7 @@ public class UsherService extends Service {
         */
         
         if(newNotification){
-    		notification = new Notification(R.drawable.ic_launcher_notification, nextStepText,
-	                System.currentTimeMillis());
+    		notification = new Notification(R.drawable.ic_launcher_notification, nextStepText,0);
     		notification.flags |= Notification.FLAG_ONGOING_EVENT;
     	}
 
