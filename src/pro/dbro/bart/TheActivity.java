@@ -723,14 +723,9 @@ public class TheActivity extends Activity {
                     	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
                     	//Log.v("SERVICE","Stopping");
                     	stopService(i);
-                    	v.setVisibility(View.GONE);
-                    	
+                    	v.setVisibility(View.GONE);	
     				}
-            		
             	});
-    		}
-    		else{
-    			Log.v("WTF","FUCKERS");
     		}
     	  super.onResume();
     	}
@@ -752,27 +747,5 @@ public class TheActivity extends Activity {
     	    }
     	    return false;
     	}
-
-/*
-    @Override
-    public void onNewIntent(Intent intent){        
-        if(intent.hasExtra("Service")){
-        	TextView stopServiceTv = (TextView) findViewById(R.id.stopServiceTv);
-        	stopServiceTv.setVisibility(0);
-        	stopServiceTv.setOnClickListener(new OnClickListener(){
-
-				@Override
-				public void onClick(View v) {
-					Intent i = new Intent(c, UsherService.class);
-                	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
-                	//Log.v("SERVICE","Stopping");
-                	stopService(i);
-                	v.setVisibility(View.GONE);
-                	
-				}
-        		
-        	});
-        }
-    }*/
     
 }

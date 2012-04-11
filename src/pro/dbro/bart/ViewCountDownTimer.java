@@ -53,20 +53,27 @@ public class ViewCountDownTimer extends CountDownTimer {
 			if((eta + DEPARTING_TRAIN_PADDING_MS - now ) < 0){
 				//eta = 0;
 				//eta TextView inside TableRow inside TableLayout
-				if(TheActivity.lastRequest == "route"){
-					View parent = ((View) ((TextView)timerViews.get(x)).getParent());
-					route thisRoute = (route)parent.getTag();
-					parent.setVisibility(View.GONE);
-					if (thisRoute.isExpanded){
-						ViewGroup grandparent = (ViewGroup) parent.getParent();
-						//if route view is expanded, the next row in Table will be route detail
-						grandparent.getChildAt((grandparent.indexOfChild(parent)+1)).setVisibility(View.GONE);
+				try{
+					if(TheActivity.lastRequest == "route"){
+	
+						View parent = ((View) ((TextView)timerViews.get(x)).getParent());
+						route thisRoute = (route)parent.getTag();
+						parent.setVisibility(View.GONE);
+						if (thisRoute.isExpanded){
+							ViewGroup grandparent = (ViewGroup) parent.getParent();
+							//if route view is expanded, the next row in Table will be route detail
+							grandparent.getChildAt((grandparent.indexOfChild(parent)+1)).setVisibility(View.GONE);
+						}
+						//tableLayout.removeView((View)((View)timerViews.get(x)).getParent());
 					}
-					//tableLayout.removeView((View)((View)timerViews.get(x)).getParent());
+					else if(TheActivity.lastRequest == "etd"){
+						((TextView)timerViews.get(x)).setVisibility(View.GONE);
+					}
+				}catch(Throwable t){
+					// removing departed trains is a 'garnish' so let's not 
+					// worry TOO much if some weird casting exception crops up
 				}
-				else if(TheActivity.lastRequest == "etd"){
-					((TextView)timerViews.get(x)).setVisibility(View.GONE);
-				}
+				
 			}
 			else if((eta - now ) < 0){
 				eta = 0;
