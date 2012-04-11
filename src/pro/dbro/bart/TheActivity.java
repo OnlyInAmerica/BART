@@ -69,6 +69,16 @@ public class TheActivity extends Activity {
 	
 	// route that the usher service should access
 	public static route usherRoute; 
+	// real time info for current station of interest in route
+	// set on completion of etdresponse
+	// freshness of response is available in currentEtdResponse.Date
+	public static etdResponse currentEtdResponse;
+	
+	// determines whether UI is automatically updated after api request by handleResponse(response)
+	// set to false in events where a routeResponse is displayed BEFORE an etdresponse was cached
+	// in currentEtdResponse.
+	// etdResponse has the real-time station info, while routeResponse is based on the BART schedule
+	private boolean updateUIOnResponse = true;
 	
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
@@ -223,20 +233,8 @@ public class TheActivity extends Activity {
 		                findViewById(R.id.originTv);
 				originTextView.setThreshold(200);
 				hideSoftKeyboard(arg1);
-				
-				// If a valid destination is entered, treat origin change as a request for new route
-				/*if(STATION_MAP.get(destinationTextView.getText().toString()) != null){
-					lastRequest = "route";
-					bartApiRequest();
-					return;
-				}
-				lastRequest = "etd";
-				bartApiRequest();*/
+
 				validateInputAndDoRequest();
-				
-				//reveal destination actv and reverse view
-				//destinationTextView.setVisibility(0);
-				//reverse.setVisibility(0);
 			}
         });
         
@@ -323,7 +321,7 @@ public class TheActivity extends Activity {
     }
     //CALLED-BY: originTextView and destinationTextView item-select listeners
     //CALLS: HTTP requester: RequestTask
-    private void bartApiRequest(){
+    public void bartApiRequest(){
     	String url = BART_API_ROOT;
     	if (lastRequest == "etd"){
     		url += "etd.aspx?cmd=etd&orig="+STATION_MAP.get(originTextView.getText().toString());
@@ -359,15 +357,27 @@ public class TheActivity extends Activity {
     
     //CALLED-BY: Bart API XML response parsers: BartRouteParser, BartEtdParser
     //CALLS: the appropriate method to update the UI
-    public void updateUI(Object response){
+    public void handleResponse(Object response){
     	//If special messages exist from a previous request, remove them
-    	if (tableContainerLayout.getChildCount() > 1)
-    		tableContainerLayout.removeViews(1, tableContainerLayout.getChildCount()-1);
-    	if (response instanceof etdResponse){
-    		displayEtdResponse((etdResponse) response);
+    	if (updateUIOnResponse){
+	    	if (tableContainerLayout.getChildCount() > 1)
+	    		tableContainerLayout.removeViews(1, tableContainerLayout.getChildCount()-1);
+	    	if (response instanceof etdResponse){
+	    		currentEtdResponse = (etdResponse) response;
+	    		Log.v("ETD_CACHE","ETD SAVED");
+	    		displayEtdResponse((etdResponse) response);
+	    	}
+	    	else if (response instanceof routeResponse){
+	    		Log.v("ETD_CACHE","ETD ROUTE DISPLAY");
+	    		displayRouteResponse((routeResponse) response);
+	    	}
     	}
-    	else if (response instanceof routeResponse){
-    		displayRouteResponse((routeResponse) response);
+    	else{
+    		// if response is not being displayed cache it if it's real-time info
+    		if (response instanceof etdResponse){
+    			currentEtdResponse = (etdResponse) response;
+    			Log.v("ETD_CACHE","ETD SAVED");
+    		}
     	}
     }
 

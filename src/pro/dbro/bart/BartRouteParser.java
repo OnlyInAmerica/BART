@@ -235,7 +235,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 	
 	@Override
     protected void onPostExecute(routeResponse result) {
-		((TheActivity) caller).updateUI(result);
+		((TheActivity) caller).handleResponse(result);
         super.onPostExecute(result);
     }
 

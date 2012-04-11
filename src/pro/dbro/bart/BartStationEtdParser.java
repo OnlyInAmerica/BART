@@ -151,7 +151,7 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 	
 	@Override
     protected void onPostExecute(etdResponse result) {
-		((TheActivity) caller).updateUI(result);
+		((TheActivity) caller).handleResponse(result);
         super.onPostExecute(result);
     }
 
