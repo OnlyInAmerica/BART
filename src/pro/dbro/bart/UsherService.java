@@ -78,8 +78,10 @@ public class UsherService extends Service {
     }
 
     @Override
-    public void onDestroy() {
+    public void onDestroy(){
+    	super.onDestroy();
     	sendMessage(0); // send service-stopped message
+        Log.d("onDestroy","called");
         
     	if(timer != null)
     		timer.cancel();
@@ -90,6 +92,7 @@ public class UsherService extends Service {
 
         // Tell the user we stopped.
         //Toast.makeText(this, R.string.local_service_stopped, Toast.LENGTH_SHORT).show();
+        
     }
 
     @Override
@@ -132,6 +135,10 @@ public class UsherService extends Service {
         makeLegCountdownTimer(minutesUntilNext);
         // back to minutes
         minutesUntilNext = (minutesUntilNext)/(1000*60);
+        //catch negative time state
+        if(minutesUntilNext < 0){
+        	Log.v("Negative ETA", "Catch me");
+        }
         
         CharSequence currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).boardStation.toLowerCase());
         CharSequence nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
@@ -161,6 +168,9 @@ public class UsherService extends Service {
     	if(didBoard){
     		currentStepText = "On " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase())+ " train";
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime())/(1000*60));
+    		if(minutesUntilNext < 0){
+            	Log.v("Negative ETA", "Catch me");
+            }
     		if(currentLeg+1 == usherRoute.legs.size()){
     			nextStepText = "Get off at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + String.valueOf(minutesUntilNext) + "m";
     		}
@@ -170,6 +180,9 @@ public class UsherService extends Service {
     	}
     	else{
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime())/(1000*60));
+    		if(minutesUntilNext < 0){
+            	Log.v("Negative ETA", "Catch me");
+            }
     		nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
     		currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase());
     	}
@@ -215,7 +228,7 @@ public class UsherService extends Service {
     			        		"Take it easy", contentIntent);
     			        mNM.notify(NOTIFICATION, notification);
     			        //TheActivity.removeStopServiceText();
-    					onDestroy(); // Is this the proper way to suicide a service?
+    			        stopSelf();
     				}
     				else if(didBoard){ //Set timer for this leg's disembark time
     					Date now = new Date();

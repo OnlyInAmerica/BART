@@ -55,7 +55,7 @@ public class TheActivity extends Activity {
 	static Context c;
 	TableLayout tableLayout;
 	LinearLayout tableContainerLayout;
-	String lastRequest="";
+	static String lastRequest="";
 	Resources res;
 	AutoCompleteTextView destinationTextView;
 	AutoCompleteTextView originTextView;
