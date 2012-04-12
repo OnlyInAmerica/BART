@@ -374,7 +374,8 @@ public class TheActivity extends Activity {
 	    	}
 	    	else if (response instanceof routeResponse){
 	    		Log.v("ETD_CACHE","ETD ROUTE DISPLAY");
-	    		displayRouteResponse((routeResponse) response);
+	    		
+	    		displayRouteResponse(updateRouteResponseWithEtd((routeResponse)response));
 	    	}
     	}
     	else{
@@ -547,6 +548,39 @@ public class TheActivity extends Activity {
     		Log.v("WTF",t.getStackTrace().toString());
     		
     	}
+    }
+    
+    private routeResponse updateRouteResponseWithEtd(routeResponse input){
+    	//TODO: Confirm that currentEtdResponse has all ready been verified fresh
+    	if(currentEtdResponse == null)
+    		return input;
+    	long now = new Date().getTime();
+    	//find proper destination etds in currentEtdResponse
+    	//match times in routeResponse to times in proper etds
+    	
+    	//for every train arriving at currrent station
+    	ArrayList etdsToUpdateWith = new ArrayList();
+    	for(int x=0;x<currentEtdResponse.etds.size();x++){
+    		// for every first leg train of each route
+    		ArrayList routesToUpdate = new ArrayList();
+    		for(int y=0;y<input.routes.size();y++){
+    			// if the etd train matches the first leg of this route, update it's departureTime with etd value
+	    		if (STATION_MAP.get(((etd)currentEtdResponse.etds.get(x)).destination).compareTo(((leg)((route)input.routes.get(y)).legs.get(0)).trainHeadStation) == 0 ){
+	    			routesToUpdate.add(y);
+	    			if (!etdsToUpdateWith.contains(x))
+	    				etdsToUpdateWith.add(x);
+	    		}
+    		}
+    		for(int y=0;y<routesToUpdate.size();y++){
+    			if(y==etdsToUpdateWith.size())
+    				break;
+    			//TODO: verify boardTime is what routeResponse timer views are set by
+    			((route)input.routes.get((Integer) routesToUpdate.get(y))).departureDate = new Date(now + ((etd)currentEtdResponse.etds.get((Integer) etdsToUpdateWith.get(y))).minutesToArrival*60*1000);
+    			//TODO: evaluate whether the first leg boardTime also needs to be updated. I think it does for UsherService
+    			((leg)((route)input.routes.get((Integer) routesToUpdate.get(y))).legs.get(0)).boardTime = new Date(now + ((etd)currentEtdResponse.etds.get((Integer) etdsToUpdateWith.get(y))).minutesToArrival*60*1000);
+    		}
+    	}
+    	return input;
     }
     
     //CALLED-BY: handleResponse() if updateUIOnResponse is true
