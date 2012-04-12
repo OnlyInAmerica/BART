@@ -1,9 +1,10 @@
 package pro.dbro.bart;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 
-public class routeResponse {
+public class routeResponse implements Serializable{
 	public String originStation;
 	public String destinationStation;
 	public String specialSchedule;

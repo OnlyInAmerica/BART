@@ -1,9 +1,11 @@
 package pro.dbro.bart;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 
-public class etdResponse {
+//Serializable so it can be sent via broadcast messenger
+public class etdResponse implements Serializable{
 	
 	public String tmpDestination;  //hacky - temp store destination for following estimates
 	public String station;

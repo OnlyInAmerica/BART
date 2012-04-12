@@ -1,6 +1,7 @@
 package pro.dbro.bart;
 
 import java.io.ByteArrayInputStream;
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,7 +15,9 @@ import com.thebuzzmedia.sjxp.rule.IRule;
 import com.thebuzzmedia.sjxp.rule.IRule.Type;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 
@@ -25,9 +28,7 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 	private String time = new String();
 	boolean updateUI;
 	
-	Activity caller;
-	BartStationEtdParser(Activity caller, boolean updateUI) {
-        this.caller = caller;
+	BartStationEtdParser(boolean updateUI) {
         this.updateUI = updateUI;
     }
 
@@ -153,8 +154,21 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 	
 	@Override
     protected void onPostExecute(etdResponse result) {
-		((TheActivity) caller).handleResponse(result, updateUI);
+		//((TheActivity) caller).handleResponse(result, updateUI);
+		sendMessage(result);
         super.onPostExecute(result);
     }
+	
+	private void sendMessage(etdResponse result) { // 0 = service stopped , 1 = service started, 2 = refresh view with call to bartApiRequest(), 3 = 
+		  int status = 4; // hardcode status for calling TheActivity.handleResponse
+		  //Log.d("sender", "Sending AsyncTask message");
+	  	  Intent intent = new Intent("service_status_change");
+	  	  // You can also include some extra data.
+	  	  intent.putExtra("status", status);
+	  	  intent.putExtra("result", (Serializable) result);
+	  	  //intent.putExtra("result",(CharSequence)result);
+	  	  intent.putExtra("updateUI", updateUI);
+	  	  LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
+	  	}
 
 }

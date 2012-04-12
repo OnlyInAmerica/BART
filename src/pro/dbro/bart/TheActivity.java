@@ -1,6 +1,7 @@
 package pro.dbro.bart;
 
 
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -86,8 +87,8 @@ public class TheActivity extends Activity {
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
 	
-	private final String BART_API_ROOT = "http://api.bart.gov/api/";
-	private final String BART_API_KEY="MW9S-E7SL-26DU-VV8V";
+	public final static String BART_API_ROOT = "http://api.bart.gov/api/";
+	public final static String BART_API_KEY="MW9S-E7SL-26DU-VV8V";
 	
 	//AutoComplete behavior on origin/destination inputs matches against these strings
 	private static final String[] STATIONS = new String[] {
@@ -334,7 +335,7 @@ public class TheActivity extends Activity {
     	}
     	url += "&key="+BART_API_KEY;
     	Log.v("BART API",url);
-    	new RequestTask((Activity)c, request, updateUI).execute(url);
+    	new RequestTask(request, updateUI).execute(url);
     }
     
     private void hideSoftKeyboard (View view) {
@@ -353,13 +354,14 @@ public class TheActivity extends Activity {
 	        .show();
     	}
     	else if(request.compareTo("etd") == 0)
-    		new BartStationEtdParser(this, updateUI).execute(response);
+    		new BartStationEtdParser(updateUI).execute(response);
     	else if(request.compareTo("route") == 0)
-    		new BartRouteParser(this, updateUI).execute(response);
+    		new BartRouteParser(updateUI).execute(response);
     }
     
     //CALLED-BY: Bart API XML response parsers: BartRouteParser, BartEtdParser
-    //CALLS: the appropriate method to update the UI
+    //CALLS: the appropriate method to update the UI if updateUI is true
+    //		 else cache the response (if it includes realtime info)
     public void handleResponse(Object response, boolean updateUI){
     	if(updateUI){
 			//If special messages exist from a previous request, remove them
@@ -379,6 +381,7 @@ public class TheActivity extends Activity {
     		// if response is not being displayed cache it if it's real-time info
     		if (response instanceof etdResponse){
     			currentEtdResponse = (etdResponse) response;
+    			sendEtdResponseToService();
     			Log.v("ETD_CACHE","ETD SAVED");
     		}
     	}
@@ -710,7 +713,7 @@ public class TheActivity extends Activity {
     	editor.commit();
     }
     
-    // Called when guidance service begins or completes
+    // Called when message received
     private BroadcastReceiver serviceStateMessageReceiver = new BroadcastReceiver() {
     	  @Override
     	  public void onReceive(Context context, Intent intent) {
@@ -737,47 +740,66 @@ public class TheActivity extends Activity {
     	    else if(status == 2){//temporarily test this as avenue for countdowntimer to signal views need refreshing
     	    	bartApiRequest(intent.getStringExtra("request"), true);
     	    }
+    	    else if(status == 3){
+    	    	parseBart(intent.getStringExtra("result"), intent.getStringExtra("request"), intent.getBooleanExtra("updateUI",true));
+    	    }
+    	    else if(status == 4){
+    	    	// I'm amazed that the result's Class (etdResponse, routeResponse) can be introspected from the Serializable!
+    	    	// Watch how handleResponse operates as intended!
+    	    	handleResponse(intent.getSerializableExtra("result"), intent.getBooleanExtra("updateUI", true));
+    	    }
     	    Log.d("receiver", "Got message: " + status);
     	  }
     	};
     	
-    	@Override
-    	protected void onResume() {
-    	  // Unregister since the activity is about to be closed.
-    		Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
-    		if(usherServiceIsRunning()){
-    			stopServiceTv.setVisibility(0);
-            	stopServiceTv.setOnClickListener(new OnClickListener(){
+	@Override
+	protected void onResume() {
+	  // Unregister since the activity is about to be closed.
+		Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
+		if(usherServiceIsRunning()){
+			stopServiceTv.setVisibility(0);
+        	stopServiceTv.setOnClickListener(new OnClickListener(){
 
-    				@Override
-    				public void onClick(View v) {
-    					Intent i = new Intent(c, UsherService.class);
-                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
-                    	//Log.v("SERVICE","Stopping");
-                    	stopService(i);
-                    	v.setVisibility(View.GONE);	
-    				}
-            	});
-    		}
-    	  super.onResume();
-    	}
-    	
-    	@Override
-    	protected void onDestroy() {
-    	  // Unregister since the activity is about to be closed.
-    	  LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceStateMessageReceiver);
-    	  super.onDestroy();
-    	}
-    	
-    	// Called in onResume() to ensure stop service button available as necessary
-    	private boolean usherServiceIsRunning() {
-    	    ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-    	    for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-    	        if ("pro.dbro.bart.UsherService".equals(service.service.getClassName())) {
-    	            return true;
-    	        }
-    	    }
-    	    return false;
-    	}
+				@Override
+				public void onClick(View v) {
+					Intent i = new Intent(c, UsherService.class);
+                	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
+                	//Log.v("SERVICE","Stopping");
+                	stopService(i);
+                	v.setVisibility(View.GONE);	
+				}
+        	});
+		}
+	  super.onResume();
+	}
+	
+	@Override
+	protected void onDestroy() {
+	  // Unregister since the activity is about to be closed.
+	  LocalBroadcastManager.getInstance(this).unregisterReceiver(serviceStateMessageReceiver);
+	  super.onDestroy();
+	}
+	
+	// Called in onResume() to ensure stop service button available as necessary
+	private boolean usherServiceIsRunning() {
+	    ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+	    for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+	        if ("pro.dbro.bart.UsherService".equals(service.service.getClassName())) {
+	            return true;
+	        }
+	    }
+	    return false;
+	}
+    
+	//Sends message to service with etd data
+	private void sendEtdResponseToService() { // 0 = service stopped , 1 = service started, 2 = refresh view with call to bartApiRequest(), 3 = 
+		  int status = 5; // hardcode status for calling UsherService with new etdResponse
+		  //Log.d("sender", "Sending AsyncTask message");
+	  	  Intent intent = new Intent("service_status_change");
+	  	  // You can also include some extra data.
+	  	  intent.putExtra("status", status);
+	  	  intent.putExtra("etdResponse", (Serializable) currentEtdResponse);
+	  	  LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
+	  	}
     
 }

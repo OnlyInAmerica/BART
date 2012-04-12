@@ -6,8 +6,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -15,6 +17,8 @@ import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +38,7 @@ public class UsherService extends Service {
     private CountDownTimer timer; // keep track of current countdown for cancelling if new request comes
     							  // else we can get errors related to a timer expecting previous route
     private CountDownTimer reminderTimer; // timer separated from actual timer by REMINDER_PADDING
+    private route usherRoute;	// the route to guide along. Updated with etd data
     
     private long REMINDER_PADDING = 30*1000; // ms before an event (board, disembark) the usher should issue a reminder
 
@@ -56,13 +61,19 @@ public class UsherService extends Service {
     public void onCreate() {
     	c = this;
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        
+     // LocalBroadCast Stuff
+        LocalBroadcastManager.getInstance(this).registerReceiver(serviceDataMessageReceiver,
+        	      new IntentFilter("service_status_change"));
         // Display a notification about us starting.  We put an icon in the status bar.
         
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+    	//TODO: Check if service-start should be sent OnCreate
     	sendMessage(1); // send service-start message
+    	usherRoute = TheActivity.usherRoute;
         Log.i("UsherService", "Received start id " + startId + ": " + intent);
         if(timer != null){
         	timer.cancel();
@@ -110,7 +121,6 @@ public class UsherService extends Service {
     private void showNotification() {
         // In this sample, we'll use the same text for the ticker and the expanded notification
         //CharSequence text = getText(R.string.local_service_started);
-    	route usherRoute = TheActivity.usherRoute;
     
     	String destinationStation = ((leg)usherRoute.legs.get(usherRoute.legs.size()-1)).disembarkStation;
     	currentLeg = 0;
@@ -160,7 +170,6 @@ public class UsherService extends Service {
     //if newNotification is true, generate new notification with scroller text
     //else, simply update menu item text
     private void updateNotification(boolean newNotification){
-    	route usherRoute = TheActivity.usherRoute;
     	Date now = new Date();
     	CharSequence nextStepText ="";
     	CharSequence currentStepText = "";
@@ -204,6 +213,9 @@ public class UsherService extends Service {
         notification.setLatestEventInfo(this, currentStepText,
         		nextStepText, contentIntent);
         mNM.notify(NOTIFICATION, notification);
+        
+        // TODO: Delete this. For testing only
+        
     }
     
     private void makeLegCountdownTimer(long msUntilNext){
@@ -220,7 +232,7 @@ public class UsherService extends Service {
     				//	currentLeg ++;
     				didBoard = !didBoard;
     				
-    				if ((TheActivity.usherRoute.legs.size() == currentLeg+1) && !didBoard){
+    				if ((usherRoute.legs.size() == currentLeg+1) && !didBoard){
     					notification = new Notification(R.drawable.ic_launcher_notification, "This is your stop! Take Care!",
     			                System.currentTimeMillis());
     					notification.setLatestEventInfo(c, "You're here",
@@ -231,14 +243,14 @@ public class UsherService extends Service {
     				}
     				else if(didBoard){ //Set timer for this leg's disembark time
     					Date now = new Date();
-    			        long msUntilNext = ((((leg)TheActivity.usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime()));
+    			        long msUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime()));
     					makeLegCountdownTimer(msUntilNext);
     					updateNotification(true);
     				}
     				else{ // Set timer for next leg's board time
     					currentLeg ++;
     					Date now = new Date();
-    			        long msUntilNext = ((((leg)TheActivity.usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime()));
+    			        long msUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime()));
     					makeLegCountdownTimer(msUntilNext);
     					updateNotification(true);
     				}
@@ -255,7 +267,9 @@ public class UsherService extends Service {
 	
 					@Override
 					public void onFinish() {
-						// TODO Auto-generated method stub
+						// TODO: Is this a good time for updating?
+						requestDataUpdate();
+						
 						Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
 	    				long[] vPattern = {0,300,300,300};
 	    				v.vibrate(vPattern,-1);
@@ -277,6 +291,68 @@ public class UsherService extends Service {
     	  // You can also include some extra data.
     	  intent.putExtra("status", status);
     	  LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
-    	}
     }
+    
+    private BroadcastReceiver serviceDataMessageReceiver = new BroadcastReceiver() {
+  	  @Override
+  	  public void onReceive(Context context, Intent intent) {
+  	    // Get extra data included in the Intent
+  	    int status = intent.getIntExtra("status", -1);
+  	    if(status == 5){ // service stopped
+  	    	//update timers with fresh data
+  	    	updateTimersWithEtdResponse((etdResponse)intent.getSerializableExtra("etdResponse"));
+  	    }
+  	  }
+  	};
+  	
+  	private void requestDataUpdate(){
+  		String curStation;
+  		if( didBoard){
+  			curStation = ((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase();
+  		}
+  		else{
+  			curStation = ((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase();
+  		}
+
+  		new RequestTask("etd", false).execute(TheActivity.BART_API_ROOT+"etd.aspx?cmd=etd&orig="+curStation+"&key="+TheActivity.BART_API_KEY);
+  	}
+  	// TODO: I've gotten NullPointerException pointed here ?
+  	//04-11 18:24:42.420: E/AndroidRuntime(6698): java.lang.NullPointerException
+  	//04-11 18:24:42.420: E/AndroidRuntime(6698): 	at pro.dbro.bart.UsherService.updateTimersWithEtdResponse(UsherService.java:319)
+
+  	private void updateTimersWithEtdResponse(etdResponse response){
+  		leg curLeg = (leg)usherRoute.legs.get(currentLeg);
+  		long curTargetTime; // time until next move according to schedule
+  		int etd = -1;
+  		for(int x=0;x<response.etds.size();x++){
+  			//find the etd of response which matches current train
+  			if(curLeg.trainHeadStation.compareTo(TheActivity.STATION_MAP.get(((etd)response.etds.get(x)).destination)) == 0){
+  				etd = x;
+  				break;
+  			}
+  		}
+  		//something went wrong
+  		if(etd == -1)
+  			return;
+  		long etdTargetTime = ((etd)response.etds.get(etd)).minutesToArrival*60*1000;
+  		
+  		
+  		Date now = new Date();
+  		if(didBoard){
+  			curTargetTime = curLeg.disembarkTime.getTime(); // for debug only
+  			// update the usherRoute disembarkTime by adding minutesToArrival to new Date()
+  			curLeg.disembarkTime = new Date(now.getTime() + ((etd)response.etds.get(etd)).minutesToArrival*60*1000);
+  			makeLegCountdownTimer(curLeg.disembarkTime.getTime());
+  		}
+  		else{
+  			curTargetTime = curLeg.boardTime.getTime(); // for debug only
+  			// update the usherRoute boardTime by adding minutesToArrival to new Date()
+  			curLeg.boardTime = new Date(now.getTime() + ((etd)response.etds.get(etd)).minutesToArrival*60*1000);
+  			makeLegCountdownTimer(curLeg.boardTime.getTime());
+  		}
+  		
+  		Log.v("USHER SYNC",String.valueOf((etdTargetTime-curTargetTime)/1000)); // s diff b/t current and etd
+  		
+  	}
+}
 

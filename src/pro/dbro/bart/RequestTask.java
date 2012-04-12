@@ -12,17 +12,18 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 public class RequestTask extends AsyncTask<String, String, String> {
 	//allow data passing to calling activity
 	String request;
 	boolean updateUI;
-	Activity caller;
-	RequestTask(Activity caller, String request, boolean updateUI) {
+	
+	RequestTask(String request, boolean updateUI) {
 		this.request = request;
-        this.caller = caller;
         this.updateUI = updateUI;
     }
 	@Override
@@ -57,7 +58,19 @@ public class RequestTask extends AsyncTask<String, String, String> {
 	
 	@Override
     protected void onPostExecute(String result) {
-		((TheActivity) caller).parseBart(result, request, updateUI);
+		sendMessage(result);
         super.onPostExecute(result);
     }
+	
+	private void sendMessage(String result) { // 0 = service stopped , 1 = service started, 2 = refresh view with call to bartApiRequest(), 3 = 
+	  	  int status = 3; // hardcode status for calling TheActivity.parseBart
+		  Log.d("sender", "Sending AsyncTask message");
+	  	  Intent intent = new Intent("service_status_change");
+	  	  // You can also include some extra data.
+	  	  intent.putExtra("status", status);
+	  	  intent.putExtra("result", result);
+	  	  intent.putExtra("request", request);
+	  	  intent.putExtra("updateUI", updateUI);
+	  	  LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
+	  	}
 }
