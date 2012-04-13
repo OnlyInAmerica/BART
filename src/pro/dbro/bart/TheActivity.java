@@ -480,6 +480,9 @@ public class TheActivity extends Activity {
 		                    	Intent i = new Intent(c, UsherService.class);
 		                    	//i.putExtra("departure", ((leg)usherRoute.legs.get(0)).boardStation);
 		                    	//Log.v("SERVICE","Starting");
+		                    	if(usherServiceIsRunning()){
+		                        	stopService(i);
+		                    	}
 		                    	startService(i);
 		                    }
 	
@@ -555,6 +558,8 @@ public class TheActivity extends Activity {
     	if(currentEtdResponse == null)
     		return input;
     	long now = new Date().getTime();
+    	int numRoutes = input.routes.size();
+    	int lastLeg;
     	//find proper destination etds in currentEtdResponse
     	//match times in routeResponse to times in proper etds
     	
@@ -563,9 +568,16 @@ public class TheActivity extends Activity {
     	for(int x=0;x<currentEtdResponse.etds.size();x++){
     		// for every first leg train of each route
     		ArrayList routesToUpdate = new ArrayList();
-    		for(int y=0;y<input.routes.size();y++){
+    		for(int y=0;y<numRoutes;y++){
     			// if the etd train matches the first leg of this route, update it's departureTime with etd value
+    			// OR if the etd train matches the last leg of this route, update with first leg
+    			lastLeg = ((route)input.routes.get(y)).legs.size()-1;
 	    		if (STATION_MAP.get(((etd)currentEtdResponse.etds.get(x)).destination).compareTo(((leg)((route)input.routes.get(y)).legs.get(0)).trainHeadStation) == 0 ){
+	    			routesToUpdate.add(y);
+	    			if (!etdsToUpdateWith.contains(x))
+	    				etdsToUpdateWith.add(x);
+	    		}
+	    		else if (STATION_MAP.get(((etd)currentEtdResponse.etds.get(x)).destination).compareTo(((leg)((route)input.routes.get(y)).legs.get(lastLeg)).trainHeadStation) == 0 ){
 	    			routesToUpdate.add(y);
 	    			if (!etdsToUpdateWith.contains(x))
 	    				etdsToUpdateWith.add(x);
@@ -752,7 +764,6 @@ public class TheActivity extends Activity {
     	  @Override
     	  public void onReceive(Context context, Intent intent) {
     	    // Get extra data included in the Intent
-    		stopServiceTv.setVisibility(View.GONE);
     	    int status = intent.getIntExtra("status", -1);
     	    if(status == 0){ // service stopped
     	    	stopServiceTv.setVisibility(View.GONE);
