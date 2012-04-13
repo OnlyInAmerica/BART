@@ -61,7 +61,7 @@ public class UsherService extends Service {
     public void onCreate() {
     	c = this;
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        
+        Log.v("Usher","OnCreate");
      // LocalBroadCast Stuff
         LocalBroadcastManager.getInstance(this).registerReceiver(serviceDataMessageReceiver,
         	      new IntentFilter("service_status_change"));
@@ -220,8 +220,7 @@ public class UsherService extends Service {
     	//make sure we don't leak any timers
     	if(timer != null)
     		timer.cancel();
-    	if(reminderTimer != null)
-    		reminderTimer.cancel();
+    	
     	
     	timer = new CountDownTimer(msUntilNext, 60000){
             //new CountDownTimer(5000, 1000){
@@ -266,7 +265,11 @@ public class UsherService extends Service {
     			}
             	
             }.start();
+            //timer.start();
             if(msUntilNext > (REMINDER_PADDING+30*1000)){ // if next event is more than 30 seconds + REMINDER_PADDING out, set reminder
+            	//avoid leaking timer
+            	if(reminderTimer != null)
+            		reminderTimer.cancel();
 	            reminderTimer = new CountDownTimer(msUntilNext - REMINDER_PADDING, msUntilNext - REMINDER_PADDING){
 	
 					@Override
@@ -330,6 +333,7 @@ public class UsherService extends Service {
   		int etd = -1;
   		for(int x=0;x<response.etds.size();x++){
   			//find the etd of response which matches current train
+  			//check this logic
   			if(curLeg.trainHeadStation.compareTo(TheActivity.STATION_MAP.get(((etd)response.etds.get(x)).destination)) == 0){
   				etd = x;
   				break;
