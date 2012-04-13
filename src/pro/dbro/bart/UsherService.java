@@ -213,12 +213,16 @@ public class UsherService extends Service {
         notification.setLatestEventInfo(this, currentStepText,
         		nextStepText, contentIntent);
         mNM.notify(NOTIFICATION, notification);
-        
-        // TODO: Delete this. For testing only
-        
+                
     }
     
     private void makeLegCountdownTimer(long msUntilNext){
+    	//make sure we don't leak any timers
+    	if(timer != null)
+    		timer.cancel();
+    	if(reminderTimer != null)
+    		reminderTimer.cancel();
+    	
     	timer = new CountDownTimer(msUntilNext, 60000){
             //new CountDownTimer(5000, 1000){
 
