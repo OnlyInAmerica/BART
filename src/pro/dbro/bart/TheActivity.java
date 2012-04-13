@@ -546,7 +546,8 @@ public class TheActivity extends Activity {
 	    		});
 	    		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
 	    	}
-	    	new ViewCountDownTimer(timerViews, "route", maxTimer, 60*1000).start();
+	    	timer = new ViewCountDownTimer(timerViews, "route", maxTimer, 60*1000);
+	    	timer.start();
     	}catch(Throwable t){
     		Log.v("WTF",t.getStackTrace().toString());
     		
@@ -716,7 +717,8 @@ public class TheActivity extends Activity {
 			lastDestination = thisEtd.destination;
 		} // end for
 		//scrolly.scrollTo(0, 0);
-		new ViewCountDownTimer(timerViews, "etd", maxTimer, 60*1000).start();
+		timer = new ViewCountDownTimer(timerViews, "etd", maxTimer, 60*1000);
+		timer.start();
 	} 
     
     private void validateInputAndDoRequest(){
