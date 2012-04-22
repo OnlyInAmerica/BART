@@ -7,5 +7,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/android-support-v4.jar"/>
 	<classpathentry kind="lib" path="libs/sjxp-2.2.jar"/>
 	<classpathentry kind="lib" path="libs/android-support-v4.jar"/>
+	<classpathentry kind="lib" path="/Users/dbro/Downloads/crittercism_v2_1_3_crashonly.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>

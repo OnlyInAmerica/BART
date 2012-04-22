@@ -64,6 +64,9 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import com.crittercism.app.Crittercism;
+
+
 // TODO: access to recent stations
 
 public class TheActivity extends Activity {
@@ -156,6 +159,8 @@ public class TheActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Crittercism.init(getApplicationContext(), "4f7a6cebb0931565250000f5");
+
         if(Integer.parseInt(Build.VERSION.SDK) < 11){
         	//If API 14+, The ActionBar will be hidden with this call
         	this.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -659,15 +664,19 @@ public class TheActivity extends Activity {
     		}// end etd for loop
     		
     	}// end route for loop
-    	// If, for whatever reason, no matches were found in currentEtdResponse
 
     	Integer[] routesToUpdate = (Integer[])((routeToEtd.keySet()).toArray(new Integer[0]));
     	for(int x=0;x< routeToEtd.size();x++){
-    		
+    		// etd ETA - route ETA
+    		long timeCorrection = (now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000) - ((route)input.routes.get(routesToUpdate[x])).departureDate.getTime();
+    		// Adjust the arrival date based on the difference in departure dates
+    		((route)input.routes.get(routesToUpdate[x])).arrivalDate.setTime(((route)input.routes.get(routesToUpdate[x])).arrivalDate.getTime() + timeCorrection);
+    		// Adjust departure date
     		((route)input.routes.get(routesToUpdate[x])).departureDate = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
+			// Adjust first leg's board time
+    		((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).boardTime = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
 			//TODO: evaluate whether the first leg boardTime also needs to be updated. I think it does for UsherService
-			((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).boardTime = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
-    		
+
     	}
     	return input;
     	
