@@ -34,6 +34,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.Vibrator;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
@@ -85,7 +86,6 @@ public class UsherService extends Service {
         LocalBroadcastManager.getInstance(this).registerReceiver(serviceDataMessageReceiver,
         	      new IntentFilter("service_status_change"));
         // Display a notification about us starting.  We put an icon in the status bar.
-        
     }
 
     @Override
@@ -144,17 +144,7 @@ public class UsherService extends Service {
     	String destinationStation = ((leg)usherRoute.legs.get(usherRoute.legs.size()-1)).disembarkStation;
     	currentLeg = 0;
     	didBoard = false;
-    	CharSequence text = "Guiding to " + TheActivity.REVERSE_STATION_MAP.get(destinationStation.toLowerCase());
-        // Set the icon, scrolling text and timestamp
-        notification = new Notification(R.drawable.ic_launcher_notification, text,0);
-
-        // The PendingIntent to launch our activity if the user selects this notification
-        Intent i = new Intent(this, TheActivity.class);
-        i.putExtra("Service", true);
-        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        contentIntent = PendingIntent.getActivity(this, 0,
-                i, PendingIntent.FLAG_CANCEL_CURRENT);
+    	CharSequence tickerText = "Guiding to " + TheActivity.REVERSE_STATION_MAP.get(destinationStation.toLowerCase());
 
         // Set the info for the views that show in the notification panel.
         Date now = new Date();
@@ -170,18 +160,29 @@ public class UsherService extends Service {
         
         CharSequence currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).boardStation.toLowerCase());
         CharSequence nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
-        /*
-        if(usherRoute.legs.size()>1){
-        	nextStepText = "Transfer at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " in "+((leg)usherRoute.legs.get(0)).disembarkTime.toString();
-        }
-        else{
-        	nextStepText = "Arriving at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " at "+ ((leg)usherRoute.legs.get(0)).disembarkTime.toString();
-        }
-        */
-        notification.setLatestEventInfo(this, currentStepText,
-        		nextStepText, contentIntent);
-        notification.flags |= Notification.FLAG_ONGOING_EVENT;
-        // Send the notification.
+
+     // The PendingIntent to launch our activity if the user selects this notification
+        Intent i = new Intent(this, TheActivity.class);
+        i.putExtra("Service", true);
+        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        contentIntent = PendingIntent.getActivity(this, 0,
+                i, PendingIntent.FLAG_CANCEL_CURRENT);
+        
+        // Create notification
+        Notification.Builder builder = new Notification.Builder(c);
+        
+        builder.setContentIntent(contentIntent)
+        .setSmallIcon(R.drawable.ic_launcher_notification)
+        //.setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.some_big_img))
+        .setTicker(tickerText)
+        .setWhen(0)
+        //.setAutoCancel(true)
+        .setContentTitle(currentStepText)
+        .setContentText(nextStepText)
+        .setOngoing(true);
+        
+        notification = builder.getNotification();
 
         mNM.notify(NOTIFICATION, notification);
     }
@@ -214,23 +215,20 @@ public class UsherService extends Service {
     		currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase());
     	}
         
-        
-        /*
-        if(usherRoute.legs.size()>1){
-        	nextStepText = "Transfer at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " in "+((leg)usherRoute.legs.get(0)).disembarkTime.toString();
-        }
-        else{
-        	nextStepText = "Arriving at " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).disembarkStation.toLowerCase()) + " at "+ ((leg)usherRoute.legs.get(0)).disembarkTime.toString();
-        }
-        */
-        
+    	Notification.Builder builder = new Notification.Builder(c);
+    	builder.setContentIntent(contentIntent)
+        .setSmallIcon(R.drawable.ic_launcher_notification)
+        //.setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.some_big_img))
+        .setWhen(0)
+        .setContentTitle(currentStepText)
+        .setContentText(nextStepText)
+        .setOngoing(true);
+    	
         if(newNotification){
-    		notification = new Notification(R.drawable.ic_launcher_notification, nextStepText,0);
-    		notification.flags |= Notification.FLAG_ONGOING_EVENT;
+            builder.setTicker(nextStepText);
     	}
-
-        notification.setLatestEventInfo(this, currentStepText,
-        		nextStepText, contentIntent);
+        
+        notification = builder.getNotification();
         mNM.notify(NOTIFICATION, notification);
                 
     }
@@ -255,10 +253,14 @@ public class UsherService extends Service {
     				didBoard = !didBoard;
     				
     				if ((usherRoute.legs.size() == currentLeg+1) && !didBoard){
-    					notification = new Notification(R.drawable.ic_launcher_notification, "This is your stop! Take Care!",
-    			                System.currentTimeMillis());
-    					notification.setLatestEventInfo(c, "You're here",
-    			        		"Take it easy", contentIntent);
+    					Notification.Builder builder = new Notification.Builder(c);
+    			    	builder.setContentIntent(contentIntent)
+    			        .setSmallIcon(R.drawable.ic_launcher_notification)
+    			        //.setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.some_big_img))
+    			        .setWhen(0)
+    			        .setTicker("This is your stop! Take care!");
+    			        
+    			        notification = builder.getNotification();
     			        mNM.notify(NOTIFICATION, notification);
     			        //TheActivity.removeStopServiceText();
     			        stopSelf();
