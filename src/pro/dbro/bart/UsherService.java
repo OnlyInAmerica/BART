@@ -30,17 +30,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Binder;
-import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.TextView;
-import android.widget.Toast;
+
 
 // TODO: Look at Intent to send on notification click to ENSURE stop service label is created in TheActivity
 
@@ -170,7 +166,7 @@ public class UsherService extends Service {
                 i, PendingIntent.FLAG_CANCEL_CURRENT);
         
         // Create notification
-        Notification.Builder builder = new Notification.Builder(c);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
         
         builder.setContentIntent(contentIntent)
         .setSmallIcon(R.drawable.ic_launcher_notification)
@@ -215,7 +211,7 @@ public class UsherService extends Service {
     		currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase());
     	}
         
-    	Notification.Builder builder = new Notification.Builder(c);
+    	NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
     	builder.setContentIntent(contentIntent)
         .setSmallIcon(R.drawable.ic_launcher_notification)
         //.setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.some_big_img))
@@ -253,7 +249,7 @@ public class UsherService extends Service {
     				didBoard = !didBoard;
     				
     				if ((usherRoute.legs.size() == currentLeg+1) && !didBoard){
-    					Notification.Builder builder = new Notification.Builder(c);
+    					NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
     			    	builder.setContentIntent(contentIntent)
     			        .setSmallIcon(R.drawable.ic_launcher_notification)
     			        //.setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.some_big_img))
