@@ -309,7 +309,7 @@ public class TheActivity extends Activity {
     	//Use setting-button context menu OR Action bar
     	if(Integer.parseInt(Build.VERSION.SDK) < 11){
 	        MenuItem mi = menu.add(0,0,0,"About");
-	        mi.setIcon(android.R.drawable.ic_menu_info_details);
+	        mi.setIcon(R.drawable.about);
     	}
     	else{
     		MenuInflater inflater = getMenuInflater();
