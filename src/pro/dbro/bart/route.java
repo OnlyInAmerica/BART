@@ -24,5 +24,16 @@ public class route {
 	public leg getLastLeg(){
 		return (leg)legs.get(legs.size()-1);
 	}
+	
+	@Override
+	public String toString(){
+		if (legs.size() > 1){
+			return ((leg)legs.get(0)).trainHeadStation + " to " + ((leg)legs.get(0)).trainHeadStation;
+		}
+		else{
+			return ((leg)legs.get(0)).trainHeadStation;
+		}
+		
+	}
 
 }

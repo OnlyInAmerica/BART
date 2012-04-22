@@ -6,6 +6,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Set;
+
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
@@ -555,20 +557,113 @@ public class TheActivity extends Activity {
     }
     
     private routeResponse updateRouteResponseWithEtd(routeResponse input){
+    	// Irregular etd Train Name - > bart terminal station abbreviation
+    	// list of all trainHeadStation values that aren't actually stations
+    	// i.e: Daly City/Millbrae, SFO/Milbrae
+    	// TODO: Make this a resource in /values 
+    	final HashMap<String, String> KNOWN_SILLY_TRAINS = new HashMap<String, String>(){
+    		{
+    			put("SFIA/Millbrae", "mlbr");// SFIA is sfia
+    			put("Millbrae/Daly City", "mlbr"); //Daly City is daly
+    		}
+    	};
     	//TODO: Confirm that currentEtdResponse has all ready been verified fresh
     	if(currentEtdResponse == null)
     		return input;
     	long now = new Date().getTime();
     	int numRoutes = input.routes.size();
+    	int numEtds = currentEtdResponse.etds.size();
     	int lastLeg;
+    	HashMap<Integer,Integer> routeToEtd = new HashMap<Integer, Integer>();
     	//find proper destination etds in currentEtdResponse
     	//match times in routeResponse to times in proper etds
     	
     	//for every train arriving at currrent station
     	ArrayList etdsToUpdateWith = new ArrayList();
-    	for(int x=0;x<currentEtdResponse.etds.size();x++){
+    	
+    	// ASSUMPTION: etds and routes are sorted by time, increasing
+    	
+    	// For each route
+    	for(int x=0;x<numRoutes;x++){
+    		lastLeg = ((route)input.routes.get(x)).legs.size()-1;
+    		// For each possible etd match
+    		for(int y=0;y<numEtds;y++){
+    		// DEBUG
+    		try{
+    			//Check that destination train is listed in terminal-station format. Ex: "Fremont" CounterEx: 'SFO/Milbrae'
+    			if (!STATION_MAP.containsKey(((etd)currentEtdResponse.etds.get(y)).destination)){
+    				// If this is not a known silly-named train terminal station
+    				if (!KNOWN_SILLY_TRAINS.containsKey(((etd)currentEtdResponse.etds.get(y)).destination)){
+    					// Let's try and guess what it is
+    					boolean station_guessed = false;
+    					for(int z = 0; z< STATIONS.length; z++){
+    						
+    						// Can we match a station name within the silly-train name?
+    						// haystack.indexOf(needle1);
+    						if ( (((etd)currentEtdResponse.etds.get(y)).destination).indexOf(STATIONS[z]) != -1){
+    							// Set the etd destination to the guessed real station name
+    							((etd)currentEtdResponse.etds.get(y)).destination = STATIONS[z];
+    							station_guessed = true;
+    						}
+    					}
+    					if (!station_guessed){
+    						break; //We have to give up on updating routes based on this utterly silly-named etd
+    					}
+    				}
+    				else{
+    					// Set the etd destination station to the real station name
+    					((etd)currentEtdResponse.etds.get(y)).destination = KNOWN_SILLY_TRAINS.get(((etd)currentEtdResponse.etds.get(y)).destination);
+    					//break;
+    				}		
+    			} // end STATION_MAP silly-name train check and replace
+    			
+    				// Comparing BART station abbreviations
+    			if (STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(0)).trainHeadStation) == 0 ){
+	    			//If matching etd is not all ready matched to a route, match it to this one
+    				if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
+	    				routeToEtd.put(x, y);
+    				}
+    				else{
+    					//if the etd is all ready claimed by a route, go to next etd
+    					break;
+    				}
+	    		}
+	    		else if (STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(lastLeg)).trainHeadStation) == 0 ){
+	    			if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
+	    				routeToEtd.put(x, y);
+    				}
+    				else{
+    					//if the etd is all ready claimed by a route, go to next etd
+    					break;
+    				}
+	    		}
+    			
+    		}catch(Throwable T){
+    			// Likely, a train with destination listed as a
+    			// special tuple and not an actual station name
+    			// was encountered 
+    			Log.v("WTF", "Find me");
+    		}
+    		}// end etd for loop
+    		
+    	}// end route for loop
+    	// If, for whatever reason, no matches were found in currentEtdResponse
+
+    	Integer[] routesToUpdate = (Integer[])((routeToEtd.keySet()).toArray(new Integer[0]));
+    	for(int x=0;x< routeToEtd.size();x++){
+    		
+    		((route)input.routes.get(routesToUpdate[x])).departureDate = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
+			//TODO: evaluate whether the first leg boardTime also needs to be updated. I think it does for UsherService
+			((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).boardTime = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
+    		
+    	}
+    	return input;
+    	
+    		// OLD method of updating, for humor
+    	
     		// for every first leg train of each route
-    		ArrayList routesToUpdate = new ArrayList();
+    		//ArrayList routesToUpdate = new ArrayList();
+    		/*
     		for(int y=0;y<numRoutes;y++){
     			// if the etd train matches the first leg of this route, update it's departureTime with etd value
     			// OR if the etd train matches the last leg of this route, update with first leg
@@ -592,8 +687,8 @@ public class TheActivity extends Activity {
     			//TODO: evaluate whether the first leg boardTime also needs to be updated. I think it does for UsherService
     			((leg)((route)input.routes.get((Integer) routesToUpdate.get(y))).legs.get(0)).boardTime = new Date(now + ((etd)currentEtdResponse.etds.get((Integer) etdsToUpdateWith.get(y))).minutesToArrival*60*1000);
     		}
-    	}
-    	return input;
+    	}*/
+    	
     }
     
     //CALLED-BY: handleResponse() if updateUIOnResponse is true
