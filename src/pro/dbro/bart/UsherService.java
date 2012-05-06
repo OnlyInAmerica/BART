@@ -348,13 +348,76 @@ public class UsherService extends Service {
   		leg curLeg = (leg)usherRoute.legs.get(currentLeg);
   		long curTargetTime; // time until next move according to schedule
   		int etd = -1;
+  		/*
+  		for(int y=0;y<response.etds.size();y++){
+    		// DEBUG
+    		try{
+    			//Check that destination train is listed in terminal-station format. Ex: "Fremont" CounterEx: 'SFO/Milbrae'
+    			if (!TheActivity.STATION_MAP.containsKey(((etd)response.etds.get(y)).destination)){
+    				// If this is not a known silly-named train terminal station
+    				if (!TheActivity.KNOWN_SILLY_TRAINS.containsKey(((etd)response.etds.get(y)).destination)){
+    					// Let's try and guess what it is
+    					boolean station_guessed = false;
+    					for(int z = 0; z< TheActivity.STATIONS.length; z++){
+    						
+    						// Can we match a station name within the silly-train name?
+    						// haystack.indexOf(needle1);
+    						if ( (((etd)response.etds.get(y)).destination).indexOf(TheActivity.STATIONS[z]) != -1){
+    							// Set the etd destination to the guessed real station name
+    							((etd)response.etds.get(y)).destination = TheActivity.STATIONS[z];
+    							station_guessed = true;
+    						}
+    					}
+    					if (!station_guessed){
+    						break; //We have to give up on updating routes based on this utterly silly-named etd
+    					}
+    				}
+    				else{
+    					// Set the etd destination station to the real station name
+    					((etd)response.etds.get(y)).destination = KNOWN_SILLY_TRAINS.get(((etd)response.etds.get(y)).destination);
+    					//break;
+    				}		
+    			} // end STATION_MAP silly-name train check and replace
+    			
+    				// Comparing BART station abbreviations
+    			if (TheActivity.STATION_MAP.get(((etd)response.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(0)).trainHeadStation) == 0 ){
+	    			//If matching etd is not all ready matched to a route, match it to this one
+    				if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
+	    				routeToEtd.put(x, y);
+    				}
+    				else{
+    					//if the etd is all ready claimed by a route, go to next etd
+    					break;
+    				}
+	    		}
+	    		else if (TheActivity.STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(lastLeg)).trainHeadStation) == 0 ){
+	    			if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
+	    				routeToEtd.put(x, y);
+    				}
+    				else{
+    					//if the etd is all ready claimed by a route, go to next etd
+    					break;
+    				}
+	    		}
+    			
+    		}catch(Throwable T){
+    			// Likely, a train with destination listed as a
+    			// special tuple and not an actual station name
+    			// was encountered 
+    			Log.v("WTF", "Find me");
+    		}
+    		}// end etd for loop
+  		*/
   		for(int x=0;x<response.etds.size();x++){
   			//find the etd of response which matches current train
   			//check this logic
+  			//crash here
+  			/* old method
   			if(curLeg.trainHeadStation.compareTo(TheActivity.STATION_MAP.get(((etd)response.etds.get(x)).destination)) == 0){
   				etd = x;
   				break;
   			}
+  			*/
   		}
   		//something went wrong
   		if(etd == -1)

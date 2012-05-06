@@ -108,7 +108,7 @@ public class TheActivity extends Activity {
 	public final static String BART_API_KEY="MW9S-E7SL-26DU-VV8V";
 	
 	//AutoComplete behavior on origin/destination inputs matches against these strings
-	private static final String[] STATIONS = new String[] {
+	static final String[] STATIONS = new String[] {
 		"12th St. Oakland City Center","16th St. Mission (SF)","19th St. Oakland",
 		"24th St. Mission (SF)","Ashby (Berkeley)","Balboa Park (SF)","Bay Fair (San Leandro)",
 		"Castro Valley","Civic Center (SF)","Coliseum/Oakland Airport","Colma","Concord",
@@ -152,6 +152,17 @@ public class TheActivity extends Activity {
 			put("phil", "Pleasant Hill");put("powl", "Powell St. (SF)");put("rich", "Richmond");put("rock", "Rockridge (Oakland)");
 			put("sbrn", "San Bruno");put("sfia", "SFO Airport");put("sanl", "San Leandro");put("shay", "South Hayward");
 			put("ssan", "South San Francisco");put("ucty", "Union City");put("wcrk", "Walnut Creek");put("woak", "West Oakland");
+		}
+	};
+	
+	// Irregular etd Train Name - > bart terminal station abbreviation
+	// list of all trainHeadStation values that aren't actually stations
+	// i.e: Daly City/Millbrae, SFO/Milbrae
+	// TODO: Make this a resource in /values 
+	static final HashMap<String, String> KNOWN_SILLY_TRAINS = new HashMap<String, String>(){
+		{
+			put("SFIA/Millbrae", "mlbr");// SFIA is sfia
+			put("Millbrae/Daly City", "mlbr"); //Daly City is daly
 		}
 	};
 	
@@ -574,16 +585,7 @@ public class TheActivity extends Activity {
     }
     
     private routeResponse updateRouteResponseWithEtd(routeResponse input){
-    	// Irregular etd Train Name - > bart terminal station abbreviation
-    	// list of all trainHeadStation values that aren't actually stations
-    	// i.e: Daly City/Millbrae, SFO/Milbrae
-    	// TODO: Make this a resource in /values 
-    	final HashMap<String, String> KNOWN_SILLY_TRAINS = new HashMap<String, String>(){
-    		{
-    			put("SFIA/Millbrae", "mlbr");// SFIA is sfia
-    			put("Millbrae/Daly City", "mlbr"); //Daly City is daly
-    		}
-    	};
+    	
     	//TODO: Confirm that currentEtdResponse has all ready been verified fresh
     	if(currentEtdResponse == null)
     		return input;
@@ -594,9 +596,6 @@ public class TheActivity extends Activity {
     	HashMap<Integer,Integer> routeToEtd = new HashMap<Integer, Integer>();
     	//find proper destination etds in currentEtdResponse
     	//match times in routeResponse to times in proper etds
-    	
-    	//for every train arriving at currrent station
-    	ArrayList etdsToUpdateWith = new ArrayList();
     	
     	// ASSUMPTION: etds and routes are sorted by time, increasing
     	
@@ -725,20 +724,38 @@ public class TheActivity extends Activity {
 		tableLayout.removeAllViews();
 		String lastDestination = "";
 		
+		// Display the alert ImageView and create a click listener to display alert html
 		if (etdResponse.message != null){
-    		LinearLayout specialScheduleDisplay = (LinearLayout)View.inflate(c, R.layout.specialschedulelayout, null);
-    		TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-    		specialScheduleTv.setPadding(0, 0, 0, 0);
-    		//specialScheduleTv.setWidth(275);
+
+    		ImageView specialScheduleImageView = (ImageView)View.inflate(c, R.layout.specialschedulelayout, null);
+    		// Tag the specialScheduleImageView with the message html
     		if(etdResponse.message.contains("No data matched your criteria."))
-    			specialScheduleTv.setText("This station is closed for tonight.");
+    			specialScheduleImageView.setTag("This station is closed for tonight.");
     		else
-    			specialScheduleTv.setText(Html.fromHtml(etdResponse.message));
-    		specialScheduleTv.setTextSize(18);
-    		specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
-    		//Html.fromHtml("<h2>Title</h2><br><p>Description here</p>"));
-    		specialScheduleDisplay.addView(specialScheduleTv);
-    		tableContainerLayout.addView(specialScheduleDisplay);
+    			specialScheduleImageView.setTag(Html.fromHtml(etdResponse.message));
+    		
+    		// Set the OnClickListener for the specialScheduleImageView to display the tagged message html
+    		specialScheduleImageView.setOnClickListener(new OnClickListener(){
+    			
+				@Override
+				public void onClick(View arg0) {
+				    TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+				    specialScheduleTv.setPadding(0, 0, 0, 0);
+				    specialScheduleTv.setText(Html.fromHtml(arg0.getTag().toString()));
+				    specialScheduleTv.setTextSize(16);
+				    specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
+				    new AlertDialog.Builder(c)
+			        .setTitle("Station Alerts")
+			        .setIcon(R.drawable.warning)
+			        .setView(specialScheduleTv)
+			        .setPositiveButton("Bummer", null)
+			        .show();
+				
+				}
+    			
+    		});
+    		
+    		tableContainerLayout.addView(specialScheduleImageView);
     	}
 		
 		TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow_right, null);
