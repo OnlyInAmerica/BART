@@ -414,7 +414,7 @@ public class TheActivity extends Activity {
     	new RequestTask(request, updateUI).execute(url);
     }
     
-    private void hideSoftKeyboard (View view) {
+    public static void hideSoftKeyboard (View view) {
         InputMethodManager imm = (InputMethodManager)c.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getApplicationWindowToken(), 0);
       }
