@@ -44,15 +44,18 @@ import android.text.Editable;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
 import android.view.View.OnLongClickListener;
 import android.view.View.OnTouchListener;
 import android.view.Window;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -60,6 +63,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
@@ -232,7 +236,7 @@ public class TheActivity extends Activity {
     		destinationTextView.setText(destination);
     		validateInputAndDoRequest();
         }
-        
+       
         ImageView map = (ImageView) findViewById(R.id.map);
         map.setOnClickListener(new OnClickListener(){
 
@@ -272,24 +276,77 @@ public class TheActivity extends Activity {
 			}
         });
         
-        originTextView.setOnTouchListener(new OnTouchListener(){
+        // Handles restoring TextView input when focus lost, if no new input entered
+        // previous input is stored in the target View Tag attribute
+        // Assumes the target view is a TextView
+        // TODO:This works but starts autocomplete when the view loses focus after clicking outside the autocomplete listview
+        OnFocusChangeListener inputOnFocusChangeListener = new OnFocusChangeListener(){
+        	@Override
+			public void onFocusChange(View inputTextView, boolean hasFocus) {
+				if(!hasFocus)
+					Log.v("Lost Focus", " " + inputTextView.getTag());
+				else
+					Log.v("Got Focus", " " + inputTextView.getTag());
+				if (inputTextView.getTag() != null && !hasFocus && ((TextView)inputTextView).getText().toString().compareTo("") == 0){
+						Log.v("InputTextViewTagGet","orig: "+ inputTextView.getTag());
+						((TextView)inputTextView).setText(inputTextView.getTag().toString());	
+				}
+        	}
+        };
+              
+        originTextView.setOnFocusChangeListener(inputOnFocusChangeListener);
+        destinationTextView.setOnFocusChangeListener(inputOnFocusChangeListener);
 
-			@Override
-			public boolean onTouch(View arg0, MotionEvent arg1) {
-				AutoCompleteTextView originTextView = (AutoCompleteTextView)
-		                findViewById(R.id.originTv);
-				originTextView.setThreshold(1);
-				originTextView.setText("");
+        // When the TextView is clicked, store current text in TextView's Tag property, clear displayed text 
+        // and enable Auto-Completing after first character entered
+        OnTouchListener inputOnTouchListener = new OnTouchListener(){
+        	@Override
+			public boolean onTouch(View inputTextView, MotionEvent me) {
+        		// Only perform this logic on finger-down
+				if(me.getAction() == me.ACTION_DOWN){
+					inputTextView.setTag( ((TextView)inputTextView).getText().toString());
+					Log.v("InputTextViewTagSet","orig: " + inputTextView.getTag());
+					((AutoCompleteTextView)inputTextView).setThreshold(1);
+					((TextView)inputTextView).setText("");
+				}
+				// Allow Android to handle additional actions - i.e: TextView takes focus
 				return false;
 			}
-        	
-        });
+        };
+        
+        originTextView.setOnTouchListener(inputOnTouchListener);
+        destinationTextView.setOnTouchListener(inputOnTouchListener);
+        
+        // Autocomplete ListView item select listener
+        
+        OnItemClickListener AutoCompleteItemClickListener = new OnItemClickListener(){
+        	@Override
+			public void onItemClick(AdapterView<?> parent, View arg1, int position,
+					long arg3) {
+				
+				//If a valid origin station is not entered, return
+				if(STATION_MAP.get(originTextView.getText().toString()) == null)
+					return;
+					
+				// Actv not available as arg1
+				AutoCompleteTextView destinationTextView = (AutoCompleteTextView)
+		                findViewById(R.id.destinationTv);
+				destinationTextView.setThreshold(200);
+				hideSoftKeyboard(arg1);
+				validateInputAndDoRequest();
+				//lastRequest = "etd";
+				//String url = "http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+originStation+"&key=MW9S-E7SL-26DU-VV8V";
+				// TEMP: For testing route function
+				//lastRequest = "route";
+				//bartApiRequest();
+			}
+        };
                 
         destinationTextView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View arg1, int position,
 					long arg3) {
-				String destinationStation = STATION_MAP.get(parent.getItemAtPosition(position).toString());
+				
 				//If a valid origin station is not entered, return
 				if(STATION_MAP.get(originTextView.getText().toString()) == null)
 					return;
@@ -307,18 +364,7 @@ public class TheActivity extends Activity {
 				//bartApiRequest();
 			}
         });
-        
-        destinationTextView.setOnTouchListener(new OnTouchListener(){
 
-			@Override
-			public boolean onTouch(View arg0, MotionEvent arg1) {
-				AutoCompleteTextView originTextView = (AutoCompleteTextView)
-		                findViewById(R.id.destinationTv);
-				originTextView.setThreshold(1);
-				originTextView.setText("");
-				return false;
-			}
-        });    
     }
     // Initialize settings menu
     @Override public boolean onCreateOptionsMenu(Menu menu) {
@@ -920,12 +966,15 @@ public class TheActivity extends Activity {
     	    else if(status == 2){//temporarily test this as avenue for countdowntimer to signal views need refreshing
     	    	bartApiRequest(intent.getStringExtra("request"), true);
     	    }
-    	    else if(status == 3){
+    	    else if(status == 3){// Sent by RequestTask upon completion
     	    	parseBart(intent.getStringExtra("result"), intent.getStringExtra("request"), intent.getBooleanExtra("updateUI",true));
     	    }
-    	    else if(status == 4){
+    	    else if(status == 4){ // Sent by BartRouteParser / BartStationEtdParser upon completion
     	    	// I'm amazed that the result's Class (etdResponse, routeResponse) can be introspected from the Serializable!
     	    	// Watch how handleResponse operates as intended!
+    	    	
+    	    	// TODO: Address infinite looping here when response result returns all 0m trains
+    	    	// i.e: after BART service has ended for a station
     	    	handleResponse(intent.getSerializableExtra("result"), intent.getBooleanExtra("updateUI", true));
     	    }
     	    Log.d("receiver", "Got message: " + status);

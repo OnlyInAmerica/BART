@@ -56,7 +56,7 @@ public class UsherService extends Service {
     private CountDownTimer reminderTimer; // timer separated from actual timer by REMINDER_PADDING
     private route usherRoute;	// the route to guide along. Updated with etd data
     
-    private long REMINDER_PADDING = 30*1000; // ms before an event (board, disembark) the usher should issue a reminder
+    private long REMINDER_PADDING = 120*1000; // ms before an event (board, disembark) the usher should issue a reminder
 
     // Unique Identification Number for the Notification.
     // We use it on Notification start, and to cancel it.
@@ -223,7 +223,7 @@ public class UsherService extends Service {
         if(newNotification){
             builder.setTicker(nextStepText);
     	}
-        
+
         notification = builder.getNotification();
         mNM.notify(NOTIFICATION, notification);
                 
