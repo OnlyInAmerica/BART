@@ -247,6 +247,10 @@ public class UsherService extends Service {
     				//if(didBoard) // if we've boarded, we're handling the last leg
     				//	currentLeg ++;
     				didBoard = !didBoard;
+    				if(didBoard)
+    					Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Boarded");
+    				else
+    					Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Waiting");
     				
     				if ((usherRoute.legs.size() == currentLeg+1) && !didBoard){
     					NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
@@ -283,6 +287,7 @@ public class UsherService extends Service {
             	
             }.start();
             //timer.start();
+            // Set Reminder timer REMINDER_PADDING ms before event
             if(msUntilNext > (REMINDER_PADDING+30*1000)){ // if next event is more than 30 seconds + REMINDER_PADDING out, set reminder
             	//avoid leaking timer
             	if(reminderTimer != null)
@@ -292,10 +297,10 @@ public class UsherService extends Service {
 					@Override
 					public void onFinish() {
 						// TODO: Is this a good time for updating?
-						requestDataUpdate();
-						
+						//requestDataUpdate();
+						updateNotification(true);
 						Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
-	    				long[] vPattern = {0,300,300,300};
+	    				long[] vPattern = {0,400,300,400};
 	    				v.vibrate(vPattern,-1);
 						
 					}

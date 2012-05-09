@@ -38,7 +38,9 @@ public class BartLinearLayout extends LinearLayout {
 			if(!isPointInsideView(me.getRawX(), me.getRawY(), (findViewById(R.id.inputLinearLayout)))){
 				TheActivity.hideSoftKeyboard(this);
 				this.requestFocus();
-				return true;
+				if(isPointInsideView(me.getRawX(), me.getRawY(), findViewById(R.id.map)) || isPointInsideView(me.getRawX(), me.getRawY(), (findViewById(R.id.reverse))) )
+					return false; // allow direct touch of map and reverse buttons from text editing
+				return true; // block children from receiving event
 			}
 		}
 		

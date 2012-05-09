@@ -65,7 +65,8 @@ public class ViewCountDownTimer extends CountDownTimer {
 
 	@Override
 	public void onTick(long millisUntilFinished) {
-		// TODO Auto-generated method stub
+		// Prevent timer from ticking within MINIMUM_TICK_MS of beginning
+		// Prevents unnecessary view re-drawing, assuming UI initial data is updated before timer set
 		if(COUNTDOWN_TIME_MS - millisUntilFinished < MINIMUM_TICK_MS){
 			return;
 		}
@@ -75,8 +76,7 @@ public class ViewCountDownTimer extends CountDownTimer {
 			// eta - now = ms till arrival
 			long eta = (Long) ((TextView)timerViews.get(x)).getTag();
 			if((eta + DEPARTING_TRAIN_PADDING_MS - now ) < 0){
-				//eta = 0;
-				//eta TextView inside TableRow inside TableLayout
+				// If an etd or route countdown has expired, hide it's view
 				try{
 					if(request.compareTo("route") == 0){
 	

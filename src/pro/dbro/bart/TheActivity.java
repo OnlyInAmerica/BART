@@ -412,6 +412,11 @@ public class TheActivity extends Activity {
     	url += "&key="+BART_API_KEY;
     	Log.v("BART API",url);
     	new RequestTask(request, updateUI).execute(url);
+    	// Set loading indicator
+    	// I find this jarring when network latency is low
+    	// TODO: set a countdown timer and only indicate loading after a threshold
+    	//fareTv.setVisibility(0);
+    	//fareTv.setText("Loading...");
     }
     
     public static void hideSoftKeyboard (View view) {
@@ -422,6 +427,9 @@ public class TheActivity extends Activity {
     //CALLED-BY: HTTP requester: RequestTask
     //CALLS: Bart API XML response parsers
     public void parseBart(String response, String request, boolean updateUI){
+    	// Clear loading indicator
+    	//fareTv.setText("");
+    	//fareTv.setVisibility(View.GONE);
     	if (response=="error"){
 			new AlertDialog.Builder(c)
 	        .setTitle(res.getStringArray(R.array.networkErrorDialog)[0])
@@ -467,6 +475,14 @@ public class TheActivity extends Activity {
     //CALLED-BY: handleResponse() if updateUIOnResponse is true
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
+    	if(routeResponseIsLoopy(routeResponse)){
+    		Log.d("Loopy RouteResponse","durn loops");
+    		return;
+    	}
+    	else{
+    		Log.d("NonLoopy RouteResponse","all good");
+    	}
+    		
     	if(timer != null)
     		timer.cancel(); // cancel previous timer
     	timerViews = new ArrayList(); // release old ETA text views
@@ -531,10 +547,16 @@ public class TheActivity extends Activity {
 	        	if(eta > maxTimer){
 	        		maxTimer = eta;
 	        	}
+	        	// Set timeTv Tag to departure date for interpretation by ViewCountDownTimer
 	        	arrivalTimeTv.setTag(thisRoute.departureDate.getTime());
-	    		arrivalTimeTv.setText(String.valueOf(eta/(1000*60))); // TODO - remove this? Does countdown tick on start
+	        	// Display 0 as "<1"
+	        	if(eta == 0)
+	        		arrivalTimeTv.setText("<1"); // TODO - remove this? Does countdown tick on start
+	        	else
+	        		arrivalTimeTv.setText(String.valueOf(eta/(1000*60))); // TODO - remove this? Does countdown tick on start
 	    		//new ViewCountDownTimer(arrivalTimeTv, eta, 60*1000).start();
 	    		tr.addView(arrivalTimeTv);
+	    		// Set the Row View (containing train names and times) Tag to the route it represents
 	    		tr.setTag(thisRoute);
 	    		tableLayout.addView(tr);
 	    		tr.setOnLongClickListener(new OnLongClickListener(){
@@ -630,6 +652,7 @@ public class TheActivity extends Activity {
     	}
     }
     
+    // Update route times with ETAs from cached etd response
     private routeResponse updateRouteResponseWithEtd(routeResponse input){
     	
     	//TODO: Confirm that currentEtdResponse has all ready been verified fresh
@@ -684,19 +707,21 @@ public class TheActivity extends Activity {
 	    			//If matching etd is not all ready matched to a route, match it to this one
     				if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
 	    				routeToEtd.put(x, y);
+	    				//Log.v("routeToEtd","Route: " + String.valueOf(x)+ " Etd: " + String.valueOf(y));
     				}
     				else{
     					//if the etd is all ready claimed by a route, go to next etd
-    					break;
+    					continue;
     				}
 	    		}
 	    		else if (STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(lastLeg)).trainHeadStation) == 0 ){
 	    			if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
 	    				routeToEtd.put(x, y);
+	    				//Log.v("routeToEtd","Route: " + String.valueOf(x)+ " Etd: " + String.valueOf(y));
     				}
     				else{
     					//if the etd is all ready claimed by a route, go to next etd
-    					break;
+    					continue;
     				}
 	    		}
     			
@@ -712,8 +737,10 @@ public class TheActivity extends Activity {
 
     	Integer[] routesToUpdate = (Integer[])((routeToEtd.keySet()).toArray(new Integer[0]));
     	for(int x=0;x< routeToEtd.size();x++){
-    		// etd ETA - route ETA
+    		//Log.v("routeToEtd","Update Route: " + String.valueOf(routesToUpdate[x])+ " w/Etd: " + String.valueOf(routeToEtd.get(x)));
+    		// etd ETA - route ETA (ms)
     		long timeCorrection = (now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000) - ((route)input.routes.get(routesToUpdate[x])).departureDate.getTime();
+    		//Log.v("routeToEtd",String.valueOf(timeCorrection/1000));
     		// Adjust the arrival date based on the difference in departure dates
     		((route)input.routes.get(routesToUpdate[x])).arrivalDate.setTime(((route)input.routes.get(routesToUpdate[x])).arrivalDate.getTime() + timeCorrection);
     		// Adjust departure date
@@ -934,7 +961,9 @@ public class TheActivity extends Activity {
     
     @Override
     public void onPause(){
+    	Log.v("onPause","pausin for a cause");
     	super.onPause();
+    	// Save text input state
     	editor.putString("origin", originTextView.getText().toString());
     	editor.putString("destination",destinationTextView.getText().toString());
     	editor.commit();
@@ -947,9 +976,11 @@ public class TheActivity extends Activity {
     	    // Get extra data included in the Intent
     	    int status = intent.getIntExtra("status", -1);
     	    if(status == 0){ // service stopped
+    	    	Log.d("TheActivity-BroadcastReceived", "service stopped");
     	    	stopServiceTv.setVisibility(View.GONE);
     	    }
     	    else if(status == 1){ // service started
+    	    	Log.d("TheActivity-BroadcastReceived", "service started");
     	    	stopServiceTv.setVisibility(0);
             	stopServiceTv.setOnClickListener(new OnClickListener(){
 
@@ -964,12 +995,15 @@ public class TheActivity extends Activity {
             	});
     	    }
     	    else if(status == 2){//temporarily test this as avenue for countdowntimer to signal views need refreshing
+    	    	Log.d("TheActivity-BroadcastReceived", "countdown timer expired");
     	    	bartApiRequest(intent.getStringExtra("request"), true);
     	    }
     	    else if(status == 3){// Sent by RequestTask upon completion
+    	    	Log.d("TheActivity-BroadcastReceived", "requestTask complete");
     	    	parseBart(intent.getStringExtra("result"), intent.getStringExtra("request"), intent.getBooleanExtra("updateUI",true));
     	    }
     	    else if(status == 4){ // Sent by BartRouteParser / BartStationEtdParser upon completion
+    	    	Log.d("TheActivity-BroadcastReceived", "Bart parser complete");
     	    	// I'm amazed that the result's Class (etdResponse, routeResponse) can be introspected from the Serializable!
     	    	// Watch how handleResponse operates as intended!
     	    	
@@ -977,7 +1011,7 @@ public class TheActivity extends Activity {
     	    	// i.e: after BART service has ended for a station
     	    	handleResponse(intent.getSerializableExtra("result"), intent.getBooleanExtra("updateUI", true));
     	    }
-    	    Log.d("receiver", "Got message: " + status);
+    	    
     	  }
     	};
     	
@@ -1030,5 +1064,21 @@ public class TheActivity extends Activity {
 	  	  intent.putExtra("etdResponse", (Serializable) currentEtdResponse);
 	  	  LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
 	  	}
+	
+	// DEBUG method to check if route response contains all 0m entries
+	// NOTE: CountDownTimer uses departureDate for display and countdown set
+	//		 route used to determine if the route detail row needs to be hidden
+	private boolean routeResponseIsLoopy(routeResponse rR){
+		long now = new Date().getTime();
+		Log.v("DisplayRoute",rR.routes.get(0).departureDate.toString());
+		for(int x = 0; x< rR.routes.size();x++){
+			// if at least one route doesn't have a 0 eta, this response isn't loopy
+			if(rR.routes.get(x).departureDate.getTime() - now > 0){
+				return false;
+			}
+		}
+		// this response has all 0 etas, so it's loopy
+		return true;
+	}
     
 }

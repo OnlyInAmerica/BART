@@ -132,6 +132,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 					
 					String originDateStr = routeOriginDate + " " + routeOriginTime;
 					String destinationDateStr = routeDestinationDate + " " + routeDestinationTime;
+					Log.d("RouteParserDate",originDateStr);
 					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a"); 
 					try {
 						thisRoute.departureDate = curFormater.parse(originDateStr);
