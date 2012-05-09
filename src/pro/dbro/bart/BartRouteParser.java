@@ -132,15 +132,20 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 					
 					String originDateStr = routeOriginDate + " " + routeOriginTime;
 					String destinationDateStr = routeDestinationDate + " " + routeDestinationTime;
-					Log.d("RouteParserDate",originDateStr);
-					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a"); 
+					// Bart Route responses don't indicate timezone (?), though etd responses do
+					// Comparing them, it appears the route response is always in PDT
+					// Therefore, I'll append PDT to the date strings
+					// This ensures the application can correctly combine etd responses (with timezone) and route (without)
+					// Even if the application is run on a device who's locale isn't PDT
+					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a z"); 
 					try {
-						thisRoute.departureDate = curFormater.parse(originDateStr);
-						thisRoute.arrivalDate = curFormater.parse(destinationDateStr);
+						thisRoute.departureDate = curFormater.parse(originDateStr+" PDT");//append BART response timezone
+						thisRoute.arrivalDate = curFormater.parse(destinationDateStr+" PDT");//append BART response timezone
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+					Log.d("RouteParserDate","depart: " + thisRoute.departureDate.toString() + " arrive: " + thisRoute.arrivalDate.toString());
 					originDateStr = "";
 					destinationDateStr = "";
 					
@@ -184,11 +189,11 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 				case 4: // board date
 					legDate = value;
 					dateStr = legDate + " " + legTime;
-					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a"); 
+					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a z"); 
 					thisRoute = response.getLastRoute();
 					thisLeg = thisRoute.getLastLeg();
 					try {
-						thisLeg.boardTime = curFormater.parse(dateStr);
+						thisLeg.boardTime = curFormater.parse(dateStr+ " PDT"); //append BART response timezone
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -203,11 +208,11 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 					legDate = value;
 					//assume date always follows time:
 					dateStr = legDate + " " + legTime;
-					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a"); 
+					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a z"); 
 					thisRoute = response.getLastRoute();
 					thisLeg = thisRoute.getLastLeg();
 					try {
-						thisLeg.disembarkTime = curFormater.parse(dateStr);
+						thisLeg.disembarkTime = curFormater.parse(dateStr + " PDT"); // append BART response timezone
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -241,7 +246,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 		String dateStr = responseDate + " " + responseTime;
 		//Log.v("time split", timesplit.toString());
 		//Log.v("Time",dateStr);
-		curFormater = new SimpleDateFormat("MMM dd, yyyy hh:mm a"); 
+		curFormater = new SimpleDateFormat("MMM dd, yyyy hh:mm a z"); 
 		Date dateObj = new Date();
 		try {
 			dateObj = curFormater.parse(dateStr);

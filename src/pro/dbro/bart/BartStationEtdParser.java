@@ -157,7 +157,8 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 		String dateStr = date + " " + time;
 		//Log.v("time split", timesplit.toString());
 		//Log.v("Time",dateStr);
-		SimpleDateFormat curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a"); 
+		// etd time includes timezone info
+		SimpleDateFormat curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a z"); 
 		Date dateObj = new Date();
 		try {
 			dateObj = curFormater.parse(dateStr);
@@ -167,6 +168,7 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 			e.printStackTrace();
 		} 
 		response.date = dateObj;
+		Log.d("EtdParserDate",response.date.toString());
 		
 		return response;
 	}

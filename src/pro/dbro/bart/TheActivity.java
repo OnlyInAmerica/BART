@@ -658,7 +658,11 @@ public class TheActivity extends Activity {
     	//TODO: Confirm that currentEtdResponse has all ready been verified fresh
     	if(currentEtdResponse == null)
     		return input;
-    	long now = new Date().getTime();
+    	// BUGFIX: Using Date().getTime() could possibly return a time different than BART's API Locale
+    	// Bart doesn't provide timezone info in their date responses, so consider whether to coerce their responses to PST
+    	// In this instance, we can simply use the time returned with the etd response
+    	//long now = new Date().getTime();
+    	long now = input.date.getTime();
     	int numRoutes = input.routes.size();
     	int numEtds = currentEtdResponse.etds.size();
     	int lastLeg;
@@ -681,7 +685,7 @@ public class TheActivity extends Activity {
     				if (!KNOWN_SILLY_TRAINS.containsKey(((etd)currentEtdResponse.etds.get(y)).destination)){
     					// Let's try and guess what it is
     					boolean station_guessed = false;
-    					for(int z = 0; z< STATIONS.length; z++){
+    					for(int z = 0; z < STATIONS.length; z++){
     						
     						// Can we match a station name within the silly-train name?
     						// haystack.indexOf(needle1);
@@ -739,16 +743,24 @@ public class TheActivity extends Activity {
     	for(int x=0;x< routeToEtd.size();x++){
     		//Log.v("routeToEtd","Update Route: " + String.valueOf(routesToUpdate[x])+ " w/Etd: " + String.valueOf(routeToEtd.get(x)));
     		// etd ETA - route ETA (ms)
+    		Log.v("updateRR", "etd: "+ new Date((now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000)).toString()+" route: "+ new Date(((route)input.routes.get(routesToUpdate[x])).departureDate.getTime()).toString());
     		long timeCorrection = (now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000) - ((route)input.routes.get(routesToUpdate[x])).departureDate.getTime();
     		//Log.v("routeToEtd",String.valueOf(timeCorrection/1000));
     		// Adjust the arrival date based on the difference in departure dates
     		((route)input.routes.get(routesToUpdate[x])).arrivalDate.setTime(((route)input.routes.get(routesToUpdate[x])).arrivalDate.getTime() + timeCorrection);
-    		// Adjust departure date
-    		((route)input.routes.get(routesToUpdate[x])).departureDate = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
-			// Adjust first leg's board time
-    		((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).boardTime = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
-			//TODO: evaluate whether the first leg boardTime also needs to be updated. I think it does for UsherService
-
+    		// Adjust departure date similarly
+    		((route)input.routes.get(routesToUpdate[x])).departureDate.setTime(((route)input.routes.get(routesToUpdate[x])).departureDate.getTime() + timeCorrection);
+    		//((route)input.routes.get(routesToUpdate[x])).departureDate = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
+			
+    		// Update all leg times
+    		for(int y=0;y<input.routes.size();y++){
+	    		// Adjust leg's board time
+	    		((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).boardTime.setTime(((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).boardTime.getTime() + timeCorrection);
+				// Adjust leg's disembark time
+	    		((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).disembarkTime.setTime(((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).disembarkTime.getTime() + timeCorrection);
+	    		//((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).disembarkTime = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
+	    		//TODO: evaluate whether the first leg boardTime also needs to be updated. I think it does for UsherService
+    		}
     	}
     	return input;
     	
@@ -852,7 +864,11 @@ public class TheActivity extends Activity {
 				destinationTv.setTextSize(28);
 				destinationTv.setText(thisEtd.destination);
 				TextView timeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-				timeTv.setText(String.valueOf(thisEtd.minutesToArrival));
+				// Display 0 eta as "<1"
+				if(thisEtd.minutesToArrival == 0)
+					timeTv.setText("<1");
+				else
+					timeTv.setText(String.valueOf(thisEtd.minutesToArrival));
 				timeTv.setSingleLine(false);
 				timeTv.setTextSize(36);
 				//timeTv.setPadding(30, 0, 0, 0);

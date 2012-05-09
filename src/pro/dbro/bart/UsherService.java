@@ -136,13 +136,18 @@ public class UsherService extends Service {
     private void showNotification() {
         // In this sample, we'll use the same text for the ticker and the expanded notification
         //CharSequence text = getText(R.string.local_service_started);
-    
-    	String destinationStation = ((leg)usherRoute.legs.get(usherRoute.legs.size()-1)).disembarkStation;
+    	String destinationStation = "";
+    	try{
+    		destinationStation = ((leg)usherRoute.legs.get(usherRoute.legs.size()-1)).disembarkStation;
+    	}catch(Throwable T){
+    		Log.d("usherRoute null err", "catch it, bro");
+    	}
     	currentLeg = 0;
     	didBoard = false;
     	CharSequence tickerText = "Guiding to " + TheActivity.REVERSE_STATION_MAP.get(destinationStation.toLowerCase());
 
         // Set the info for the views that show in the notification panel.
+    	// BUGFIX: new Date() is not guaranteed to return in BART's locale
         Date now = new Date();
         long minutesUntilNext = ((((leg)usherRoute.legs.get(0)).boardTime.getTime() - now.getTime()));
         //minutesUntilNext is, for this brief moment, actually milliseconds. 
@@ -242,16 +247,13 @@ public class UsherService extends Service {
     			public void onFinish() {
     				// TODO Auto-generated method stub
     				Vibrator v = (Vibrator) getSystemService(c.VIBRATOR_SERVICE);
-    				long[] vPattern = {0,200,200,200,200,200,200,200};
+    				long[] vPattern = {0,400,300,400,300,400,300,400};
     				v.vibrate(vPattern,-1);
     				//if(didBoard) // if we've boarded, we're handling the last leg
     				//	currentLeg ++;
     				didBoard = !didBoard;
-    				if(didBoard)
-    					Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Boarded");
-    				else
-    					Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Waiting");
     				
+    				// Our next move is departing the final leg train
     				if ((usherRoute.legs.size() == currentLeg+1) && !didBoard){
     					NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
     			    	builder.setContentIntent(contentIntent)
@@ -265,18 +267,22 @@ public class UsherService extends Service {
     			        //TheActivity.removeStopServiceText();
     			        stopSelf();
     				}
+    				// Our next move is departing the current leg's train
     				else if(didBoard){ //Set timer for this leg's disembark time
     					Date now = new Date();
     			        long msUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime()));
-    					makeLegCountdownTimer(msUntilNext);
-    					updateNotification(true);
+    			        Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Boarded. Next: "+String.valueOf(msUntilNext)+"ms");
+    			        updateNotification(true);
+    			        makeLegCountdownTimer(msUntilNext); // this cancels current timer
     				}
-    				else{ // Set timer for next leg's board time
+    				// Our next move is boarding the next leg's train
+    				else{
     					currentLeg ++;
     					Date now = new Date();
     			        long msUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime()));
-    					makeLegCountdownTimer(msUntilNext);
-    					updateNotification(true);
+    			        Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Waiting. Next: "+String.valueOf(msUntilNext)+"ms");
+    			        updateNotification(true);
+    			        makeLegCountdownTimer(msUntilNext);
     				}
     			}
     			
@@ -429,8 +435,10 @@ public class UsherService extends Service {
   			return;
   		long etdTargetTime = ((etd)response.etds.get(etd)).minutesToArrival*60*1000;
   		
-  		
-  		Date now = new Date();
+  		// BUFIX: new Date() is not guaranteed to return time in BART's locale
+  		// instead, use date appended to etd response
+  		//Date now = new Date();
+  		Date now = response.date;
   		if(didBoard){
   			curTargetTime = curLeg.disembarkTime.getTime(); // for debug only
   			// update the usherRoute disembarkTime by adding minutesToArrival to new Date()

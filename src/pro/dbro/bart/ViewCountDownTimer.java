@@ -75,6 +75,8 @@ public class ViewCountDownTimer extends CountDownTimer {
 		for(int x=0;x<timerViews.size();x++){
 			// eta - now = ms till arrival
 			long eta = (Long) ((TextView)timerViews.get(x)).getTag();
+			
+			// If train was scheduled to leave more than DEPARTING_TRAIN_PADDING_MS ago, remove it from view
 			if((eta + DEPARTING_TRAIN_PADDING_MS - now ) < 0){
 				// If an etd or route countdown has expired, hide it's view
 				try{
@@ -99,13 +101,18 @@ public class ViewCountDownTimer extends CountDownTimer {
 				}
 				
 			}
+			// Else if train was scheduled to leave less than DEPARTING_TRAIN_PADDING_MS ago, show it from view, but set eta = 0
 			else if((eta - now ) < 0){
 				eta = 0;
 			}
 			else{
 				eta = eta - now;
 			}
-			((TextView)timerViews.get(x)).setText(String.valueOf((eta) / ( 1000 *60)));
+			// Display 0 eta as "<1"
+			if(eta == 0)
+				((TextView)timerViews.get(x)).setText("<1");
+			else
+				((TextView)timerViews.get(x)).setText(String.valueOf((eta) / ( 1000 *60)));
 		}
 	}
 	
