@@ -89,7 +89,7 @@ public class UsherService extends Service {
     	//TODO: Check if service-start should be sent OnCreate
     	sendMessage(1); // send service-start message
     	usherRoute = TheActivity.usherRoute;
-        Log.i("UsherService", "Received start id " + startId + ": " + intent);
+        Log.i("UsherService", "Received start id " + startId + ": " + intent+ " route: "+usherRoute.toString());
         if(timer != null){
         	timer.cancel();
         }
@@ -149,6 +149,7 @@ public class UsherService extends Service {
         // Set the info for the views that show in the notification panel.
     	// BUGFIX: new Date() is not guaranteed to return in BART's locale
         Date now = new Date();
+        Log.d("UsherRouteEta",((leg)usherRoute.legs.get(0)).boardTime.toString());
         long minutesUntilNext = ((((leg)usherRoute.legs.get(0)).boardTime.getTime() - now.getTime()));
         //minutesUntilNext is, for this brief moment, actually milliseconds. 
         makeLegCountdownTimer(minutesUntilNext);

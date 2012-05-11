@@ -475,6 +475,10 @@ public class TheActivity extends Activity {
     //CALLED-BY: handleResponse() if updateUIOnResponse is true
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
+    	// Previously, if the device's locale wasn't in Pacific Standard Time
+    	// Responses with all expired routes could present, causing a looping refresh cycle
+    	// This is now remedied by coercing response dates into PDT
+    	
     	if(routeResponseIsLoopy(routeResponse)){
     		Log.d("Loopy RouteResponse","durn loops");
     		return;
@@ -482,6 +486,7 @@ public class TheActivity extends Activity {
     	else{
     		Log.d("NonLoopy RouteResponse","all good");
     	}
+    	
     		
     	if(timer != null)
     		timer.cancel(); // cancel previous timer
@@ -563,6 +568,7 @@ public class TheActivity extends Activity {
 	
 					@Override
 					public boolean onLongClick(View arg0) {
+						Log.d("RouteViewTag",((route)arg0.getTag()).toString());
 						usherRoute = (route)arg0.getTag();
 						TextView guidanceTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 						guidanceTv.setText(Html.fromHtml(getString(R.string.service_prompt)));
@@ -745,7 +751,7 @@ public class TheActivity extends Activity {
     		// etd ETA - route ETA (ms)
     		Log.v("updateRR", "etd: "+ new Date((now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000)).toString()+" route: "+ new Date(((route)input.routes.get(routesToUpdate[x])).departureDate.getTime()).toString());
     		long timeCorrection = (now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000) - ((route)input.routes.get(routesToUpdate[x])).departureDate.getTime();
-    		//Log.v("routeToEtd",String.valueOf(timeCorrection/1000));
+    		Log.v("updateRRCorrection",String.valueOf(timeCorrection/(1000*60))+"m");
     		// Adjust the arrival date based on the difference in departure dates
     		((route)input.routes.get(routesToUpdate[x])).arrivalDate.setTime(((route)input.routes.get(routesToUpdate[x])).arrivalDate.getTime() + timeCorrection);
     		// Adjust departure date similarly
@@ -753,13 +759,11 @@ public class TheActivity extends Activity {
     		//((route)input.routes.get(routesToUpdate[x])).departureDate = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
 			
     		// Update all leg times
-    		for(int y=0;y<input.routes.size();y++){
+    		for(int y=0;y<input.routes.get(routesToUpdate[x]).legs.size();y++){
 	    		// Adjust leg's board time
-	    		((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).boardTime.setTime(((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).boardTime.getTime() + timeCorrection);
+	    		((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(y)).boardTime.setTime(((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(y)).boardTime.getTime() + timeCorrection);
 				// Adjust leg's disembark time
-	    		((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).disembarkTime.setTime(((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).disembarkTime.getTime() + timeCorrection);
-	    		//((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(0)).disembarkTime = new Date(now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000);
-	    		//TODO: evaluate whether the first leg boardTime also needs to be updated. I think it does for UsherService
+	    		((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(y)).disembarkTime.setTime(((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(y)).disembarkTime.getTime() + timeCorrection);
     		}
     	}
     	return input;
