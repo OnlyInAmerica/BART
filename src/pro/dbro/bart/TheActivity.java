@@ -386,14 +386,14 @@ public class TheActivity extends Activity {
 		if(item.getItemId() == 0 || item.getItemId() == R.id.menu_about){
 			TextView aboutTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 			aboutTv.setText(Html.fromHtml(res.getStringArray(R.array.aboutDialog)[1]));
-			aboutTv.setPadding(0, 0, 0, 0);
+			aboutTv.setPadding(10, 0, 10, 0);
 			aboutTv.setTextSize(18);
 			aboutTv.setMovementMethod(LinkMovementMethod.getInstance());
 			new AlertDialog.Builder(c)
 	        .setTitle(res.getStringArray(R.array.aboutDialog)[0])
 	        .setIcon(R.drawable.ic_launcher)
 	        .setView(aboutTv)
-	        .setPositiveButton("Word", null)
+	        .setPositiveButton("Okay!", null)
 	        .show();
 			return true;
 		}
@@ -542,7 +542,7 @@ public class TheActivity extends Activity {
 	    		
 	    		// Don't report a train that may JUST be leaving with a negative ETA
 	    		long eta;
-	        	if(thisRoute.departureDate.getTime()-now < 0){
+	        	if(thisRoute.departureDate.getTime()-now <= 0){
 	        		eta = 0;
 	        	}
 	        	else{
@@ -554,8 +554,8 @@ public class TheActivity extends Activity {
 	        	}
 	        	// Set timeTv Tag to departure date for interpretation by ViewCountDownTimer
 	        	arrivalTimeTv.setTag(thisRoute.departureDate.getTime());
-	        	// Display 0 as "<1"
-	        	if(eta == 0)
+	        	// Display eta less than 1m as "<1"
+	        	if(eta < 60*1000)
 	        		arrivalTimeTv.setText("<1"); // TODO - remove this? Does countdown tick on start
 	        	else
 	        		arrivalTimeTv.setText(String.valueOf(eta/(1000*60))); // TODO - remove this? Does countdown tick on start
@@ -650,7 +650,7 @@ public class TheActivity extends Activity {
 	    		});
 	    		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
 	    	}
-	    	timer = new ViewCountDownTimer(timerViews, "route", maxTimer, 60*1000);
+	    	timer = new ViewCountDownTimer(timerViews, "route", maxTimer, 30*1000);
 	    	timer.start();
     	}catch(Throwable t){
     		Log.v("WTF",t.getStackTrace().toString());
@@ -868,7 +868,7 @@ public class TheActivity extends Activity {
 				destinationTv.setTextSize(28);
 				destinationTv.setText(thisEtd.destination);
 				TextView timeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-				// Display 0 eta as "<1"
+				// Display eta less than 1m as "<1"
 				if(thisEtd.minutesToArrival == 0)
 					timeTv.setText("<1");
 				else
@@ -943,7 +943,7 @@ public class TheActivity extends Activity {
 			lastDestination = thisEtd.destination;
 		} // end for
 		//scrolly.scrollTo(0, 0);
-		timer = new ViewCountDownTimer(timerViews, "etd", maxTimer, 60*1000);
+		timer = new ViewCountDownTimer(timerViews, "etd", maxTimer, 30*1000);
 		timer.start();
 	} 
     

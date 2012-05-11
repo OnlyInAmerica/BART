@@ -53,10 +53,12 @@ public class UsherService extends Service {
     private boolean didBoard; // keep track of whether we've boarded the current leg, or are waiting for it to arrive
     private CountDownTimer timer; // keep track of current countdown for cancelling if new request comes
     							  // else we can get errors related to a timer expecting previous route
-    private CountDownTimer reminderTimer; // timer separated from actual timer by REMINDER_PADDING
+    private CountDownTimer reminderTimer; // timer separated from actual timer by REMINDER_PADDING_MS
     private route usherRoute;	// the route to guide along. Updated with etd data
     
-    private long REMINDER_PADDING = 120*1000; // ms before an event (board, disembark) the usher should issue a reminder
+    private final long REMINDER_PADDING_MS = 120*1000; // ms before an event (board, disembark) the usher should issue a reminder
+    
+    private final long UPDATE_INTERVAL_MS = 30*1000; // ms interval for updating notification
 
     // Unique Identification Number for the Notification.
     // We use it on Notification start, and to cancel it.
@@ -156,13 +158,18 @@ public class UsherService extends Service {
         // back to minutes
         minutesUntilNext = (minutesUntilNext)/(1000*60);
         //catch negative time state
-        if(minutesUntilNext < 0){
+        if(minutesUntilNext <= 0){
         	Log.v("Negative ETA", "Catch me");
         }
         
         CharSequence currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).boardStation.toLowerCase());
-        CharSequence nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
-
+        // display 0m as "<1m"
+        CharSequence nextStepText = "";
+        if(minutesUntilNext == 0){
+        	nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in <1m";
+        }else{
+        	nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+        }
      // The PendingIntent to launch our activity if the user selects this notification
         Intent i = new Intent(this, TheActivity.class);
         i.putExtra("Service", true);
@@ -196,24 +203,46 @@ public class UsherService extends Service {
     	CharSequence nextStepText ="";
     	CharSequence currentStepText = "";
     	if(didBoard){
+    		// Notification text set for next disembark (Transfer or final destination)
     		currentStepText = "On " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase())+ " train";
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime())/(1000*60));
     		if(minutesUntilNext < 0){
             	Log.v("Negative ETA", "Catch me");
             }
+    		CharSequence actionText = "";
+    		// If last leg, begin message with "Get off at", else "Transfer at"
     		if(currentLeg+1 == usherRoute.legs.size()){
-    			nextStepText = "Get off at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + String.valueOf(minutesUntilNext) + "m";
+    			actionText = "Get off at ";
     		}
     		else{
-    			nextStepText = "Transfer at "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + String.valueOf(minutesUntilNext) + "m";
+    			actionText = "Transfer at ";
     		}
+    		CharSequence timeText = "";
+    		// If minutesUntilNext == 0, display as "<1m"
+    		if(minutesUntilNext == 0){
+    			timeText = "<1m";
+    		}
+    		else{
+    			timeText = String.valueOf(minutesUntilNext)+"m";
+    		}
+    		// Construct notification text (nextStepText) from actionText, usherRoute next station, and timeText
+    		nextStepText = actionText + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + timeText;
+    		
     	}
     	else{
+    		// Notification text set for next boarding
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime())/(1000*60));
     		if(minutesUntilNext < 0){
             	Log.v("Negative ETA", "Catch me");
             }
-    		nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+    		nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in ";
+    		// Display 0m eta as "<1m"
+    		if(minutesUntilNext == 0){
+    			nextStepText = nextStepText + "<1m";
+    		}
+    		else{
+    			nextStepText = nextStepText + String.valueOf(minutesUntilNext) + "m";
+    		}
     		currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase());
     	}
         
@@ -241,7 +270,7 @@ public class UsherService extends Service {
     		timer.cancel();
     	
     	
-    	timer = new CountDownTimer(msUntilNext, 60000){
+    	timer = new CountDownTimer(msUntilNext, UPDATE_INTERVAL_MS){
             //new CountDownTimer(5000, 1000){
 
     			@Override
@@ -294,12 +323,12 @@ public class UsherService extends Service {
             	
             }.start();
             //timer.start();
-            // Set Reminder timer REMINDER_PADDING ms before event
-            if(msUntilNext > (REMINDER_PADDING+30*1000)){ // if next event is more than 30 seconds + REMINDER_PADDING out, set reminder
+            // Set Reminder timer REMINDER_PADDING_MS ms before event
+            if(msUntilNext > (REMINDER_PADDING_MS+30*1000)){ // if next event is more than 30 seconds + REMINDER_PADDING_MS out, set reminder
             	//avoid leaking timer
             	if(reminderTimer != null)
             		reminderTimer.cancel();
-	            reminderTimer = new CountDownTimer(msUntilNext - REMINDER_PADDING, msUntilNext - REMINDER_PADDING){
+	            reminderTimer = new CountDownTimer(msUntilNext - REMINDER_PADDING_MS, msUntilNext - REMINDER_PADDING_MS){
 	
 					@Override
 					public void onFinish() {

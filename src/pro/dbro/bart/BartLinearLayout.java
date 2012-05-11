@@ -27,20 +27,20 @@ public class BartLinearLayout extends LinearLayout {
 	}   
 
 	// Override onInterceptTouchEvent to allow unfocusing of text inputs
-	// On any ScrollView touch
+	// On any screen touch outside input
 	public boolean onInterceptTouchEvent(MotionEvent me){
-		// On  any screen touch, request the root linearlayout to have focus
+		// On  any layout touch outside of the text inputs, set focus to layout (thus hiding soft keyboard)
 		// and pass the touch event downstream
 		// Thus, the text inputs can still respond and take focus if needed
-		// BUT touches with no clear intent remove focus from the text views
+		// BUT touches with no clear intent remove focus from the text views and remove keyboard
 		if(me.getAction() == me.ACTION_DOWN && (findViewById(R.id.originTv).hasFocus() || findViewById(R.id.destinationTv).hasFocus())){
 			// If the touch occurs in the area of the text inputs:
 			if(!isPointInsideView(me.getRawX(), me.getRawY(), (findViewById(R.id.inputLinearLayout)))){
 				TheActivity.hideSoftKeyboard(this);
 				this.requestFocus();
-				if(isPointInsideView(me.getRawX(), me.getRawY(), findViewById(R.id.map)) || isPointInsideView(me.getRawX(), me.getRawY(), (findViewById(R.id.reverse))) )
-					return false; // allow direct touch of map and reverse buttons from text editing
-				return true; // block children from receiving event
+				//if(isPointInsideView(me.getRawX(), me.getRawY(), findViewById(R.id.map)) || isPointInsideView(me.getRawX(), me.getRawY(), (findViewById(R.id.reverse))) )
+				//	return false; // allow direct touch of map and reverse buttons from text editing
+				return false; // pass all touches downstream
 			}
 		}
 		

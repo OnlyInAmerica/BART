@@ -70,10 +70,11 @@ public class ViewCountDownTimer extends CountDownTimer {
 		if(COUNTDOWN_TIME_MS - millisUntilFinished < MINIMUM_TICK_MS){
 			return;
 		}
-		long now = new Date().getTime(); // do this better
+		// Get current time in MS since '70
+		long now = new Date().getTime();
 		
 		for(int x=0;x<timerViews.size();x++){
-			// eta - now = ms till arrival
+			// ETA tagged on TimerView is ms since '70
 			long eta = (Long) ((TextView)timerViews.get(x)).getTag();
 			
 			// If train was scheduled to leave more than DEPARTING_TRAIN_PADDING_MS ago, remove it from view
@@ -101,8 +102,9 @@ public class ViewCountDownTimer extends CountDownTimer {
 				}
 				
 			}
-			// Else if train was scheduled to leave less than DEPARTING_TRAIN_PADDING_MS ago, show it from view, but set eta = 0
-			else if((eta - now ) < 0){
+			// Else if train was scheduled to leave less than DEPARTING_TRAIN_PADDING_MS ago, show it in view, but set eta = 0
+			// set eta = 0 tied to display "<1m". Due to integer division time between 0 and 60*1000-1 ms will be displayed as 0
+			else if((eta - now ) <= 60*1000){
 				eta = 0;
 			}
 			else{
