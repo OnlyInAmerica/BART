@@ -283,12 +283,8 @@ public class TheActivity extends Activity {
         OnFocusChangeListener inputOnFocusChangeListener = new OnFocusChangeListener(){
         	@Override
 			public void onFocusChange(View inputTextView, boolean hasFocus) {
-				if(!hasFocus)
-					Log.v("Lost Focus", " " + inputTextView.getTag());
-				else
-					Log.v("Got Focus", " " + inputTextView.getTag());
 				if (inputTextView.getTag() != null && !hasFocus && ((TextView)inputTextView).getText().toString().compareTo("") == 0){
-						Log.v("InputTextViewTagGet","orig: "+ inputTextView.getTag());
+						//Log.v("InputTextViewTagGet","orig: "+ inputTextView.getTag());
 						((TextView)inputTextView).setText(inputTextView.getTag().toString());	
 				}
         	}
@@ -305,7 +301,7 @@ public class TheActivity extends Activity {
         		// Only perform this logic on finger-down
 				if(me.getAction() == me.ACTION_DOWN){
 					inputTextView.setTag( ((TextView)inputTextView).getText().toString());
-					Log.v("InputTextViewTagSet","orig: " + inputTextView.getTag());
+					//Log.v("InputTextViewTagSet","orig: " + inputTextView.getTag());
 					((AutoCompleteTextView)inputTextView).setThreshold(1);
 					((TextView)inputTextView).setText("");
 				}
@@ -410,7 +406,7 @@ public class TheActivity extends Activity {
     		url += "sched.aspx?cmd=depart&a=3&b=0&orig="+STATION_MAP.get(originTextView.getText().toString())+"&dest="+STATION_MAP.get(destinationTextView.getText().toString());
     	}
     	url += "&key="+BART_API_KEY;
-    	Log.v("BART API",url);
+    	//Log.v("BART API",url);
     	new RequestTask(request, updateUI).execute(url);
     	// Set loading indicator
     	// I find this jarring when network latency is low
@@ -453,11 +449,11 @@ public class TheActivity extends Activity {
 	    		tableContainerLayout.removeViews(1, tableContainerLayout.getChildCount()-1);
 	    	if (response instanceof etdResponse){
 	    		currentEtdResponse = (etdResponse) response;
-	    		Log.v("ETD_CACHE","ETD SAVED");
+	    		//Log.v("ETD_CACHE","ETD SAVED");
 	    		displayEtdResponse((etdResponse) response);
 	    	}
 	    	else if (response instanceof routeResponse){
-	    		Log.v("ETD_CACHE","ETD ROUTE DISPLAY");
+	    		//Log.v("ETD_CACHE","ETD ROUTE DISPLAY");
 	    		
 	    		displayRouteResponse(updateRouteResponseWithEtd((routeResponse)response));
 	    	}
@@ -467,7 +463,7 @@ public class TheActivity extends Activity {
     		if (response instanceof etdResponse){
     			currentEtdResponse = (etdResponse) response;
     			sendEtdResponseToService();
-    			Log.v("ETD_CACHE","ETD SAVED");
+    			//Log.v("ETD_CACHE","ETD SAVED");
     		}
     	}
     }
@@ -653,7 +649,7 @@ public class TheActivity extends Activity {
 	    	timer = new ViewCountDownTimer(timerViews, "route", maxTimer, 30*1000);
 	    	timer.start();
     	}catch(Throwable t){
-    		Log.v("WTF",t.getStackTrace().toString());
+    		//Log.v("WTF",t.getStackTrace().toString());
     		
     	}
     }
@@ -739,7 +735,7 @@ public class TheActivity extends Activity {
     			// Likely, a train with destination listed as a
     			// special tuple and not an actual station name
     			// was encountered 
-    			Log.v("WTF", "Find me");
+    			//Log.v("WTF", "Find me");
     		}
     		}// end etd for loop
     		
@@ -749,9 +745,9 @@ public class TheActivity extends Activity {
     	for(int x=0;x< routeToEtd.size();x++){
     		//Log.v("routeToEtd","Update Route: " + String.valueOf(routesToUpdate[x])+ " w/Etd: " + String.valueOf(routeToEtd.get(x)));
     		// etd ETA - route ETA (ms)
-    		Log.v("updateRR", "etd: "+ new Date((now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000)).toString()+" route: "+ new Date(((route)input.routes.get(routesToUpdate[x])).departureDate.getTime()).toString());
+    		//Log.v("updateRR", "etd: "+ new Date((now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000)).toString()+" route: "+ new Date(((route)input.routes.get(routesToUpdate[x])).departureDate.getTime()).toString());
     		long timeCorrection = (now + ((etd)currentEtdResponse.etds.get(routeToEtd.get(routesToUpdate[x]))).minutesToArrival*60*1000) - ((route)input.routes.get(routesToUpdate[x])).departureDate.getTime();
-    		Log.v("updateRRCorrection",String.valueOf(timeCorrection/(1000*60))+"m");
+    		//Log.v("updateRRCorrection",String.valueOf(timeCorrection/(1000*60))+"m");
     		// Adjust the arrival date based on the difference in departure dates
     		((route)input.routes.get(routesToUpdate[x])).arrivalDate.setTime(((route)input.routes.get(routesToUpdate[x])).arrivalDate.getTime() + timeCorrection);
     		// Adjust departure date similarly
@@ -957,18 +953,18 @@ public class TheActivity extends Activity {
 					long timeCheck = (now - currentEtdResponse.date.getTime());
 					boolean stationCheck = (currentEtdResponse.station.compareTo(originTextView.getText().toString()) == 0 );
 				
-					Log.v("CACHE_CHECK",String.valueOf(timeCheck) + " " + String.valueOf(stationCheck)+ " " + currentEtdResponse.date.toString());
+					//Log.v("CACHE_CHECK",String.valueOf(timeCheck) + " " + String.valueOf(stationCheck)+ " " + currentEtdResponse.date.toString());
 				}
 				if(currentEtdResponse != null && 
 						(now - currentEtdResponse.date.getTime() < CURRENT_ETD_RESPONSE_FRESH_MS) && 
 							(currentEtdResponse.station.compareTo(originTextView.getText().toString()) == 0 )){
 					
-					Log.v("ETD_CACHE","Cache found");
+					//Log.v("ETD_CACHE","Cache found");
 					bartApiRequest("route", true);
 				}
 				// if an appropriate etd cache is not available, fetch it now
 				else{
-					Log.v("ETD_CACHE","Cache ETD and display ROUTE");
+					//("ETD_CACHE","Cache ETD and display ROUTE");
 					bartApiRequest("etd",false);
 					bartApiRequest("route", true);
 				}
@@ -981,7 +977,7 @@ public class TheActivity extends Activity {
     
     @Override
     public void onPause(){
-    	Log.v("onPause","pausin for a cause");
+    	//Log.v("onPause","pausin for a cause");
     	super.onPause();
     	// Save text input state
     	editor.putString("origin", originTextView.getText().toString());
@@ -1038,7 +1034,7 @@ public class TheActivity extends Activity {
 	@Override
 	protected void onResume() {
 	  // Unregister since the activity is about to be closed.
-		Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
+		//Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
 		if(usherServiceIsRunning()){
 			stopServiceTv.setVisibility(0);
         	stopServiceTv.setOnClickListener(new OnClickListener(){
@@ -1090,7 +1086,7 @@ public class TheActivity extends Activity {
 	//		 route used to determine if the route detail row needs to be hidden
 	private boolean routeResponseIsLoopy(routeResponse rR){
 		long now = new Date().getTime();
-		Log.v("DisplayRoute",rR.routes.get(0).departureDate.toString());
+		//Log.v("DisplayRoute",rR.routes.get(0).departureDate.toString());
 		for(int x = 0; x< rR.routes.size();x++){
 			// if at least one route doesn't have a 0 eta, this response isn't loopy
 			if(rR.routes.get(x).departureDate.getTime() - now > 0){

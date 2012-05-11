@@ -79,7 +79,7 @@ public class UsherService extends Service {
     public void onCreate() {
     	c = this;
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        Log.v("Usher","OnCreate");
+        //Log.v("Usher","OnCreate");
      // LocalBroadCast Stuff
         LocalBroadcastManager.getInstance(this).registerReceiver(serviceDataMessageReceiver,
         	      new IntentFilter("service_status_change"));
@@ -159,7 +159,7 @@ public class UsherService extends Service {
         minutesUntilNext = (minutesUntilNext)/(1000*60);
         //catch negative time state
         if(minutesUntilNext <= 0){
-        	Log.v("Negative ETA", "Catch me");
+        	//Log.v("Negative ETA", "Catch me");
         }
         
         CharSequence currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).boardStation.toLowerCase());
@@ -207,7 +207,7 @@ public class UsherService extends Service {
     		currentStepText = "On " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase())+ " train";
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime())/(1000*60));
     		if(minutesUntilNext < 0){
-            	Log.v("Negative ETA", "Catch me");
+            	//Log.v("Negative ETA", "Catch me");
             }
     		CharSequence actionText = "";
     		// If last leg, begin message with "Get off at", else "Transfer at"
@@ -233,7 +233,7 @@ public class UsherService extends Service {
     		// Notification text set for next boarding
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime())/(1000*60));
     		if(minutesUntilNext < 0){
-            	Log.v("Negative ETA", "Catch me");
+            	//Log.v("Negative ETA", "Catch me");
             }
     		nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in ";
     		// Display 0m eta as "<1m"
@@ -301,7 +301,7 @@ public class UsherService extends Service {
     				else if(didBoard){ //Set timer for this leg's disembark time
     					Date now = new Date();
     			        long msUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime()));
-    			        Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Boarded. Next: "+String.valueOf(msUntilNext)+"ms");
+    			        //Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Boarded. Next: "+String.valueOf(msUntilNext)+"ms");
     			        updateNotification(true);
     			        makeLegCountdownTimer(msUntilNext); // this cancels current timer
     				}
@@ -310,7 +310,7 @@ public class UsherService extends Service {
     					currentLeg ++;
     					Date now = new Date();
     			        long msUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).boardTime.getTime() - now.getTime()));
-    			        Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Waiting. Next: "+String.valueOf(msUntilNext)+"ms");
+    			        //Log.v("UsherState","leg: "+ String.valueOf(currentLeg)+ " / "+String.valueOf(usherRoute.legs.size())+" Waiting. Next: "+String.valueOf(msUntilNext)+"ms");
     			        updateNotification(true);
     			        makeLegCountdownTimer(msUntilNext);
     				}
@@ -482,7 +482,7 @@ public class UsherService extends Service {
   			makeLegCountdownTimer(curLeg.boardTime.getTime());
   		}
   		
-  		Log.v("USHER SYNC",String.valueOf((etdTargetTime-curTargetTime)/1000)); // s diff b/t current and etd
+  		//Log.v("USHER SYNC",String.valueOf((etdTargetTime-curTargetTime)/1000)); // s diff b/t current and etd
   		
   	}
 }
