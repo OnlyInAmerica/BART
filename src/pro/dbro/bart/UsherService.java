@@ -146,7 +146,7 @@ public class UsherService extends Service {
     	}
     	currentLeg = 0;
     	didBoard = false;
-    	CharSequence tickerText = "Guiding to " + TheActivity.REVERSE_STATION_MAP.get(destinationStation.toLowerCase());
+    	CharSequence tickerText = "Guiding to " + BART.REVERSE_STATION_MAP.get(destinationStation.toLowerCase());
 
         // Set the info for the views that show in the notification panel.
     	// BUGFIX: new Date() is not guaranteed to return in BART's locale
@@ -162,13 +162,13 @@ public class UsherService extends Service {
         	//Log.v("Negative ETA", "Catch me");
         }
         
-        CharSequence currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).boardStation.toLowerCase());
+        CharSequence currentStepText = "At " + BART.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).boardStation.toLowerCase());
         // display 0m as "<1m"
         CharSequence nextStepText = "";
         if(minutesUntilNext == 0){
-        	nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in <1m";
+        	nextStepText = "Board "+ BART.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in <1m";
         }else{
-        	nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
+        	nextStepText = "Board "+ BART.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
         }
      // The PendingIntent to launch our activity if the user selects this notification
         Intent i = new Intent(this, TheActivity.class);
@@ -204,7 +204,7 @@ public class UsherService extends Service {
     	CharSequence currentStepText = "";
     	if(didBoard){
     		// Notification text set for next disembark (Transfer or final destination)
-    		currentStepText = "On " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase())+ " train";
+    		currentStepText = "On " + BART.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase())+ " train";
     		long minutesUntilNext = ((((leg)usherRoute.legs.get(currentLeg)).disembarkTime.getTime() - now.getTime())/(1000*60));
     		if(minutesUntilNext < 0){
             	//Log.v("Negative ETA", "Catch me");
@@ -226,7 +226,7 @@ public class UsherService extends Service {
     			timeText = String.valueOf(minutesUntilNext)+"m";
     		}
     		// Construct notification text (nextStepText) from actionText, usherRoute next station, and timeText
-    		nextStepText = actionText + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + timeText;
+    		nextStepText = actionText + BART.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).disembarkStation.toLowerCase()) + " in " + timeText;
     		
     	}
     	else{
@@ -235,7 +235,7 @@ public class UsherService extends Service {
     		if(minutesUntilNext < 0){
             	//Log.v("Negative ETA", "Catch me");
             }
-    		nextStepText = "Board "+ TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in ";
+    		nextStepText = "Board "+ BART.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).trainHeadStation.toLowerCase()) + " train in ";
     		// Display 0m eta as "<1m"
     		if(minutesUntilNext == 0){
     			nextStepText = nextStepText + "<1m";
@@ -243,7 +243,7 @@ public class UsherService extends Service {
     		else{
     			nextStepText = nextStepText + String.valueOf(minutesUntilNext) + "m";
     		}
-    		currentStepText = "At " + TheActivity.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase());
+    		currentStepText = "At " + BART.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase());
     	}
         
     	NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
@@ -379,7 +379,7 @@ public class UsherService extends Service {
   			curStation = ((leg)usherRoute.legs.get(currentLeg)).boardStation.toLowerCase();
   		}
 
-  		new RequestTask("etd", false).execute(TheActivity.BART_API_ROOT+"etd.aspx?cmd=etd&orig="+curStation+"&key="+TheActivity.BART_API_KEY);
+  		new RequestTask("etd", false).execute(BART.API_ROOT+"etd.aspx?cmd=etd&orig="+curStation+"&key="+BART.API_KEY);
   	}
   	// TODO: I've gotten NullPointerException pointed here ?
   	//04-11 18:24:42.420: E/AndroidRuntime(6698): java.lang.NullPointerException
@@ -394,18 +394,18 @@ public class UsherService extends Service {
     		// DEBUG
     		try{
     			//Check that destination train is listed in terminal-station format. Ex: "Fremont" CounterEx: 'SFO/Milbrae'
-    			if (!TheActivity.STATION_MAP.containsKey(((etd)response.etds.get(y)).destination)){
+    			if (!BART.STATION_MAP.containsKey(((etd)response.etds.get(y)).destination)){
     				// If this is not a known silly-named train terminal station
-    				if (!TheActivity.KNOWN_SILLY_TRAINS.containsKey(((etd)response.etds.get(y)).destination)){
+    				if (!BART.KNOWN_SILLY_TRAINS.containsKey(((etd)response.etds.get(y)).destination)){
     					// Let's try and guess what it is
     					boolean station_guessed = false;
-    					for(int z = 0; z< TheActivity.STATIONS.length; z++){
+    					for(int z = 0; z< BART.STATIONS.length; z++){
     						
     						// Can we match a station name within the silly-train name?
     						// haystack.indexOf(needle1);
-    						if ( (((etd)response.etds.get(y)).destination).indexOf(TheActivity.STATIONS[z]) != -1){
+    						if ( (((etd)response.etds.get(y)).destination).indexOf(BART.STATIONS[z]) != -1){
     							// Set the etd destination to the guessed real station name
-    							((etd)response.etds.get(y)).destination = TheActivity.STATIONS[z];
+    							((etd)response.etds.get(y)).destination = BART.STATIONS[z];
     							station_guessed = true;
     						}
     					}
@@ -421,7 +421,7 @@ public class UsherService extends Service {
     			} // end STATION_MAP silly-name train check and replace
     			
     				// Comparing BART station abbreviations
-    			if (TheActivity.STATION_MAP.get(((etd)response.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(0)).trainHeadStation) == 0 ){
+    			if (BART.STATION_MAP.get(((etd)response.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(0)).trainHeadStation) == 0 ){
 	    			//If matching etd is not all ready matched to a route, match it to this one
     				if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
 	    				routeToEtd.put(x, y);
@@ -431,7 +431,7 @@ public class UsherService extends Service {
     					break;
     				}
 	    		}
-	    		else if (TheActivity.STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(lastLeg)).trainHeadStation) == 0 ){
+	    		else if (BART.STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(lastLeg)).trainHeadStation) == 0 ){
 	    			if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
 	    				routeToEtd.put(x, y);
     				}
@@ -454,7 +454,7 @@ public class UsherService extends Service {
   			//check this logic
   			//crash here
   			/* old method
-  			if(curLeg.trainHeadStation.compareTo(TheActivity.STATION_MAP.get(((etd)response.etds.get(x)).destination)) == 0){
+  			if(curLeg.trainHeadStation.compareTo(BART.STATION_MAP.get(((etd)response.etds.get(x)).destination)) == 0){
   				etd = x;
   				break;
   			}

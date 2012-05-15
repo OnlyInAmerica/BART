@@ -108,68 +108,6 @@ public class TheActivity extends Activity {
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
 	
-	public final static String BART_API_ROOT = "http://api.bart.gov/api/";
-	public final static String BART_API_KEY="MW9S-E7SL-26DU-VV8V";
-	
-	//AutoComplete behavior on origin/destination inputs matches against these strings
-	static final String[] STATIONS = new String[] {
-		"12th St. Oakland City Center","16th St. Mission (SF)","19th St. Oakland",
-		"24th St. Mission (SF)","Ashby (Berkeley)","Balboa Park (SF)","Bay Fair (San Leandro)",
-		"Castro Valley","Civic Center (SF)","Coliseum/Oakland Airport","Colma","Concord",
-		"Daly City","Downtown Berkeley","Dublin/Pleasanton","El Cerrito del Norte","El Cerrito Plaza",
-		"Embarcadero (SF)","Fremont","Fruitvale (Oakland)","Glen Park (SF)","Hayward","Lafayette",
-		"Lake Merritt (Oakland)","MacArthur (Oakland)","Millbrae","Montgomery St. (SF)",
-		"North Berkeley","North Concord/Martinez","Orinda","Pittsburg/Bay Point","Pleasant Hill",
-		"Powell St. (SF)","Richmond","Rockridge (Oakland)","San Bruno","San Francisco Int'l Airport SFO",
-		"San Leandro","South Hayward","South San Francisco","Union City","Walnut Creek","West Oakland"
-    };
-	
-	//Convert plain text to BART API station string representations
-	static final HashMap<String, String> STATION_MAP = new HashMap<String, String>() {
-		{
-			put("12th St. Oakland City Center", "12th");put("16th St. Mission (SF)", "16th");put("19th St. Oakland", "19th");
-			put("24th St. Mission (SF)", "24th");put("Ashby (Berkeley)", "ashb");put("Balboa Park (SF)", "balb");put("Bay Fair (San Leandro)", "bayf");
-			put("Castro Valley", "cast");put("Civic Center (SF)", "civc");put("Coliseum/Oakland Airport", "cols");put("Colma", "colm");
-			put("Concord", "conc");put("Daly City", "daly");put("Downtown Berkeley", "dbrk");put("Dublin/Pleasanton", "dubl");
-			put("El Cerrito del Norte", "deln");put("El Cerrito Plaza", "plza");put("Embarcadero (SF)", "embr");put("Fremont", "frmt");
-			put("Fruitvale (Oakland)", "ftvl");put("Glen Park (SF)", "glen");put("Hayward", "hayw");put("Lafayette", "lafy");
-			put("Lake Merritt (Oakland)", "lake");put("MacArthur (Oakland)", "mcar");put("Millbrae", "mlbr");put("Montgomery St. (SF)", "mont");
-			put("North Berkeley", "nbrk");put("North Concord/Martinez", "ncon");put("Orinda", "orin");put("Pittsburg/Bay Point", "pitt");
-			put("Pleasant Hill", "phil");put("Powell St. (SF)", "powl");put("Richmond", "rich");put("Rockridge (Oakland)", "rock");
-			put("San Bruno", "sbrn");put("San Francisco Int'l Airport SFO", "sfia");put("San Leandro", "sanl");put("South Hayward", "shay");
-			put("South San Francisco", "ssan");put("Union City", "ucty");put("Walnut Creek", "wcrk");put("West Oakland", "woak");
-		}
-	};
-	
-	//Convert BART API station string to plain text representation
-	//This map is only used to populate UI, so the values (but NOT keys) are safe to meddle with.
-	static final HashMap<String, String> REVERSE_STATION_MAP = new HashMap<String, String>(){
-		{
-			put("12th", "12th St. Oakland City Center");put("16th", "16th St. Mission (SF)");put("19th", "19th St. Oakland");
-			put("24th", "24th St. Mission (SF)");put("ashb", "Ashby (Berkeley)");put("balb", "Balboa Park (SF)");put("bayf", "Bay Fair (San Leandro)");
-			put("cast", "Castro Valley");put("civc", "Civic Center (SF)");put("cols", "Coliseum/Oakland Airport");put("colm", "Colma");
-			put("conc", "Concord");put("daly", "Daly City");put("dbrk", "Downtown Berkeley");put("dubl", "Dublin/Pleasanton");
-			put("deln", "El Cerrito del Norte");put("plza", "El Cerrito Plaza");put("embr", "Embarcadero (SF)");put("frmt", "Fremont");
-			put("ftvl", "Fruitvale (Oakland)");put("glen", "Glen Park (SF)");put("hayw", "Hayward");put("lafy", "Lafayette");
-			put("lake", "Lake Merritt (Oakland)");put("mcar", "MacArthur (Oakland)");put("mlbr", "Millbrae");put("mont", "Montgomery St. (SF)");
-			put("nbrk", "North Berkeley");put("ncon", "North Concord/Martinez");put("orin", "Orinda");put("pitt", "Pittsburg/Bay Point");
-			put("phil", "Pleasant Hill");put("powl", "Powell St. (SF)");put("rich", "Richmond");put("rock", "Rockridge (Oakland)");
-			put("sbrn", "San Bruno");put("sfia", "SFO Airport");put("sanl", "San Leandro");put("shay", "South Hayward");
-			put("ssan", "South San Francisco");put("ucty", "Union City");put("wcrk", "Walnut Creek");put("woak", "West Oakland");
-		}
-	};
-	
-	// Irregular etd Train Name - > bart terminal station abbreviation
-	// list of all trainHeadStation values that aren't actually stations
-	// i.e: Daly City/Millbrae, SFO/Milbrae
-	// TODO: Make this a resource in /values 
-	static final HashMap<String, String> KNOWN_SILLY_TRAINS = new HashMap<String, String>(){
-		{
-			put("SFIA/Millbrae", "mlbr");// SFIA is sfia
-			put("Millbrae/Daly City", "mlbr"); //Daly City is daly
-		}
-	};
-	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -212,7 +150,7 @@ public class TheActivity extends Activity {
         infoLayout = (LinearLayout) findViewById(R.id.infoLayout);
         
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_dropdown_item_1line, STATIONS);
+                android.R.layout.simple_dropdown_item_1line, BART.STATIONS);
         originTextView = (AutoCompleteTextView)
                 findViewById(R.id.originTv);
         
@@ -321,7 +259,7 @@ public class TheActivity extends Activity {
 					long arg3) {
 				
 				//If a valid origin station is not entered, return
-				if(STATION_MAP.get(originTextView.getText().toString()) == null)
+				if(BART.STATION_MAP.get(originTextView.getText().toString()) == null)
 					return;
 					
 				// Actv not available as arg1
@@ -344,7 +282,7 @@ public class TheActivity extends Activity {
 					long arg3) {
 				
 				//If a valid origin station is not entered, return
-				if(STATION_MAP.get(originTextView.getText().toString()) == null)
+				if(BART.STATION_MAP.get(originTextView.getText().toString()) == null)
 					return;
 					
 				// Actv not available as arg1
@@ -398,14 +336,14 @@ public class TheActivity extends Activity {
     //CALLED-BY: originTextView and destinationTextView item-select listeners
     //CALLS: HTTP requester: RequestTask
     public void bartApiRequest(String request, boolean updateUI){
-    	String url = BART_API_ROOT;
+    	String url = BART.API_ROOT;
     	if (request.compareTo("etd") == 0){
-    		url += "etd.aspx?cmd=etd&orig="+STATION_MAP.get(originTextView.getText().toString());
+    		url += "etd.aspx?cmd=etd&orig="+BART.STATION_MAP.get(originTextView.getText().toString());
     	}
     	else if (request.compareTo("route") == 0){
-    		url += "sched.aspx?cmd=depart&a=3&b=0&orig="+STATION_MAP.get(originTextView.getText().toString())+"&dest="+STATION_MAP.get(destinationTextView.getText().toString());
+    		url += "sched.aspx?cmd=depart&a=3&b=0&orig="+BART.STATION_MAP.get(originTextView.getText().toString())+"&dest="+BART.STATION_MAP.get(destinationTextView.getText().toString());
     	}
-    	url += "&key="+BART_API_KEY;
+    	url += "&key="+BART.API_KEY;
     	//Log.v("BART API",url);
     	new RequestTask(request, updateUI).execute(url);
     	// Set loading indicator
@@ -508,7 +446,7 @@ public class TheActivity extends Activity {
 	    			trainTv.setTextSize(20);
 	    			trainTv.setGravity(3); // set left gravity
 	    			if (y>0){
-	    				trainTv.setText("transfer at "+ REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y-1)).disembarkStation.toLowerCase()));
+	    				trainTv.setText("transfer at "+ BART.REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y-1)).disembarkStation.toLowerCase()));
 	    				trainTv.setPadding(0, 0, 0, 0);
 	    				legLayout.addView(trainTv);
 	    				trainTv.setTextSize(14);
@@ -516,10 +454,10 @@ public class TheActivity extends Activity {
 	    				trainTv.setPadding(0, 0, 0, 0);
 	    				trainTv.setTextSize(20);
 	        			trainTv.setGravity(3); // set left gravity
-	    				trainTv.setText("to "+REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation.toLowerCase()));
+	    				trainTv.setText("to "+BART.REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation.toLowerCase()));
 	    			}
 	    			else
-	    				trainTv.setText("take " +REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
+	    				trainTv.setText("take " +BART.REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
 	    			
 	    			legLayout.addView(trainTv);
 	
@@ -682,18 +620,18 @@ public class TheActivity extends Activity {
     		// DEBUG
     		try{
     			//Check that destination train is listed in terminal-station format. Ex: "Fremont" CounterEx: 'SFO/Milbrae'
-    			if (!STATION_MAP.containsKey(((etd)currentEtdResponse.etds.get(y)).destination)){
+    			if (!BART.STATION_MAP.containsKey(((etd)currentEtdResponse.etds.get(y)).destination)){
     				// If this is not a known silly-named train terminal station
-    				if (!KNOWN_SILLY_TRAINS.containsKey(((etd)currentEtdResponse.etds.get(y)).destination)){
+    				if (!BART.KNOWN_SILLY_TRAINS.containsKey(((etd)currentEtdResponse.etds.get(y)).destination)){
     					// Let's try and guess what it is
     					boolean station_guessed = false;
-    					for(int z = 0; z < STATIONS.length; z++){
+    					for(int z = 0; z < BART.STATIONS.length; z++){
     						
     						// Can we match a station name within the silly-train name?
     						// haystack.indexOf(needle1);
-    						if ( (((etd)currentEtdResponse.etds.get(y)).destination).indexOf(STATIONS[z]) != -1){
+    						if ( (((etd)currentEtdResponse.etds.get(y)).destination).indexOf(BART.STATIONS[z]) != -1){
     							// Set the etd destination to the guessed real station name
-    							((etd)currentEtdResponse.etds.get(y)).destination = STATIONS[z];
+    							((etd)currentEtdResponse.etds.get(y)).destination = BART.STATIONS[z];
     							station_guessed = true;
     						}
     					}
@@ -703,13 +641,13 @@ public class TheActivity extends Activity {
     				}
     				else{
     					// Set the etd destination station to the real station name
-    					((etd)currentEtdResponse.etds.get(y)).destination = KNOWN_SILLY_TRAINS.get(((etd)currentEtdResponse.etds.get(y)).destination);
+    					((etd)currentEtdResponse.etds.get(y)).destination = BART.KNOWN_SILLY_TRAINS.get(((etd)currentEtdResponse.etds.get(y)).destination);
     					//break;
     				}		
     			} // end STATION_MAP silly-name train check and replace
     			
     				// Comparing BART station abbreviations
-    			if (STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(0)).trainHeadStation) == 0 ){
+    			if (BART.STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(0)).trainHeadStation) == 0 ){
 	    			//If matching etd is not all ready matched to a route, match it to this one
     				if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
 	    				routeToEtd.put(x, y);
@@ -720,7 +658,7 @@ public class TheActivity extends Activity {
     					continue;
     				}
 	    		}
-	    		else if (STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(lastLeg)).trainHeadStation) == 0 ){
+	    		else if (BART.STATION_MAP.get(((etd)currentEtdResponse.etds.get(y)).destination).compareTo(((leg)((route)input.routes.get(x)).legs.get(lastLeg)).trainHeadStation) == 0 ){
 	    			if (!routeToEtd.containsKey(x) && !routeToEtd.containsValue(y)){
 	    				routeToEtd.put(x, y);
 	    				//Log.v("routeToEtd","Route: " + String.valueOf(x)+ " Etd: " + String.valueOf(y));
@@ -945,8 +883,8 @@ public class TheActivity extends Activity {
     
     private void validateInputAndDoRequest(){
     	long now = new Date().getTime();
-    	if(STATION_MAP.get(originTextView.getText().toString()) != null){
-			if(STATION_MAP.get(destinationTextView.getText().toString()) != null){
+    	if(BART.STATION_MAP.get(originTextView.getText().toString()) != null){
+			if(BART.STATION_MAP.get(destinationTextView.getText().toString()) != null){
 				//if an etd response is cached, is fresh, and is for the route departure station:
 				//temp testing
 				if(currentEtdResponse != null){

@@ -2,7 +2,7 @@
 
 # Open BART
 
-### Version 0.2
+### Version 0.4.2.0
 
 Open BART is a Free and Open Source Android companion to San Francisco's BART. Open BART is intended to be beautifully minimal and easy to use.
 
