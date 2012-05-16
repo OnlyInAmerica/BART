@@ -25,6 +25,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.crittercism.app.Crittercism;
 import com.thebuzzmedia.sjxp.XMLParser;
 import com.thebuzzmedia.sjxp.rule.DefaultRule;
 import com.thebuzzmedia.sjxp.rule.IRule;
@@ -143,7 +144,17 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 						thisRoute.arrivalDate = curFormater.parse(destinationDateStr+" PDT");//append BART response timezone
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
-						e.printStackTrace();
+						// 5.15.2012: I've received multiple crashes here. Something's going on related to irregular time format...
+						// IF coercing PDT fails, try without at the risk of displaying incorrect time
+						try{
+							Crittercism.leaveBreadcrumb(Log.getStackTraceString(e));
+							thisRoute.departureDate = curFormater.parse(originDateStr);//append BART response timezone
+							thisRoute.arrivalDate = curFormater.parse(destinationDateStr);//append BART response timezone
+						}
+						catch(ParseException e2){
+							Crittercism.leaveBreadcrumb(originDateStr+" , "+destinationDateStr+" PDT");
+							Crittercism.leaveBreadcrumb(Log.getStackTraceString(e2));
+						}
 					}
 					Log.d("RouteParserDate","depart: " + thisRoute.departureDate.toString() + " arrive: " + thisRoute.arrivalDate.toString());
 					originDateStr = "";

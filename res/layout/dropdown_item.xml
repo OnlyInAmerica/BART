@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--  
+	  Represents a single entry in a dropdown list
+	  attached to the origin / destination TextView inputs
+	  The TextView (left-aligned) shows the station name
+	  The ImageView (right-aligned) shows an icon representing the type
+	  of entry (gps or recent station) 
+-->
+	  
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+   android:id="@+id/infoLayout"
+   android:layout_width="fill_parent"
+   android:layout_height="wrap_content"
+   android:orientation="horizontal" 
+   android:gravity="left"
+   >
+	<!--  Intended for the station name. Left aligned to parent -->
+	<TextView 
+	    android:id="@+id/dropdowntext"
+	    style="?android:attr/dropDownItemStyle"
+	    android:textAppearance="?android:attr/textAppearanceMedium"
+	    android:singleLine="true"
+	    android:layout_width="200dp"
+	    android:layout_height="?android:attr/listPreferredItemHeight"
+	    android:ellipsize="marquee" />
+	
+	<!-- Intended for the icon indicating type: Nearby (via gps), recent, etc.
+		 Right aligned to parent -->
+	<ImageView
+   		android:id="@+id/dropdownicon"
+	    android:layout_width="wrap_content" 
+	    android:layout_height="fill_parent" 
+	    android:layout_marginRight="5dp"
+	    android:contentDescription="type"
+	     />
+	
+</LinearLayout>

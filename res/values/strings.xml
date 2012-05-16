@@ -7,10 +7,9 @@
         <item>Check your network connection.</item>
     </string-array>
     <string name="greeting">
-        Open BART is a lean, mean, free and open-source transit companion! 
-        Check out the "About" screen in the settings menu (or the info icon in Android 3.0+) to contact us.&lt;br>&lt;/br>
-        May you always avoid the smelly trains!&lt;br>&lt;/br>
-        Check out our code on &lt;a href="https://github.com/OnlyInAmerica/BART">github!&lt;/a></string>
+        Open BART is free and open-source software. All train estimates are displayed as minutes until departure.
+        &lt;h1>Happy Riding&lt;/h1>
+        </string>
     <string-array name="aboutDialog">
         <item>About Open BART</item>
         <item>Open BART is open source software (GPLv3), so it belongs to all of us. Check out the code on &lt;a href="https://github.com/OnlyInAmerica/BART">github&lt;/a>.&lt;br/>&lt;br/>
@@ -27,5 +26,5 @@
     <string name="local_service_disconnected">trip usher off</string>
     <string name="service_prompt">I can vibrate your phone when your stops are approaching! You can also check the notification bar at any time to see your next move.</string>
     <string name="service_start_button">Guide Me!</string>
-
+    
 </resources>

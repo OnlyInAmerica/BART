@@ -24,6 +24,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -42,6 +44,7 @@ import android.os.CountDownTimer;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.Html;
+import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -52,6 +55,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
+import android.view.View.OnKeyListener;
 import android.view.View.OnLongClickListener;
 import android.view.View.OnTouchListener;
 import android.view.Window;
@@ -89,6 +93,8 @@ public class TheActivity extends Activity {
 	CountDownTimer timer;
 	long maxTimer = 0;
 	
+	ArrayList<StationSuggestion> stationSuggestions;
+	
 	// route that the usher service should access
 	public static route usherRoute; 
 	// real time info for current station of interest in route
@@ -112,7 +118,8 @@ public class TheActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Crittercism.init(getApplicationContext(), "4f7a6cebb0931565250000f5");
+        //TESTING: enable crittercism
+        //Crittercism.init(getApplicationContext(), "4f7a6cebb0931565250000f5");
 
         if(Integer.parseInt(Build.VERSION.SDK) < 11){
         	//If API 14+, The ActionBar will be hidden with this call
@@ -147,17 +154,26 @@ public class TheActivity extends Activity {
         LocalBroadcastManager.getInstance(this).registerReceiver(serviceStateMessageReceiver,
         	      new IntentFilter("service_status_change"));
         
+        // infoLayout is at the bottom of the screen
+        // currently contains the stop service label 
         infoLayout = (LinearLayout) findViewById(R.id.infoLayout);
         
+        // Assign the stationSuggestions Set
+        stationSuggestions = new ArrayList();
+        
+        // Assign the bart station list to the autocompletetextviews 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, BART.STATIONS);
         originTextView = (AutoCompleteTextView)
                 findViewById(R.id.originTv);
+        // Set tag for array adapter switch
+        originTextView.setTag(R.id.TextInputShowingSuggestions,"false");
         
         fareTv = (TextView) findViewById(R.id.fareTv);
         stopServiceTv = (TextView) findViewById(R.id.stopServiceTv);
 
         destinationTextView = (AutoCompleteTextView) findViewById(R.id.destinationTv);
+        destinationTextView.setTag(R.id.TextInputShowingSuggestions,"false");
         destinationTextView.setAdapter(adapter);
         originTextView.setAdapter(adapter);
         
@@ -201,19 +217,6 @@ public class TheActivity extends Activity {
         });
         	
         
-        originTextView.setOnItemClickListener(new OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> parent, View arg1, int position,
-					long arg3) {
-				AutoCompleteTextView originTextView = (AutoCompleteTextView)
-		                findViewById(R.id.originTv);
-				originTextView.setThreshold(200);
-				hideSoftKeyboard(arg1);
-
-				validateInputAndDoRequest();
-			}
-        });
-        
         // Handles restoring TextView input when focus lost, if no new input entered
         // previous input is stored in the target View Tag attribute
         // Assumes the target view is a TextView
@@ -221,9 +224,9 @@ public class TheActivity extends Activity {
         OnFocusChangeListener inputOnFocusChangeListener = new OnFocusChangeListener(){
         	@Override
 			public void onFocusChange(View inputTextView, boolean hasFocus) {
-				if (inputTextView.getTag() != null && !hasFocus && ((TextView)inputTextView).getText().toString().compareTo("") == 0){
+				if (inputTextView.getTag(R.id.TextInputMemory) != null && !hasFocus && ((TextView)inputTextView).getText().toString().compareTo("") == 0){
 						//Log.v("InputTextViewTagGet","orig: "+ inputTextView.getTag());
-						((TextView)inputTextView).setText(inputTextView.getTag().toString());	
+						((TextView)inputTextView).setText(inputTextView.getTag(R.id.TextInputMemory).toString());	
 				}
         	}
         };
@@ -238,10 +241,28 @@ public class TheActivity extends Activity {
 			public boolean onTouch(View inputTextView, MotionEvent me) {
         		// Only perform this logic on finger-down
 				if(me.getAction() == me.ACTION_DOWN){
-					inputTextView.setTag( ((TextView)inputTextView).getText().toString());
-					//Log.v("InputTextViewTagSet","orig: " + inputTextView.getTag());
+					inputTextView.setTag(R.id.TextInputMemory, ((TextView)inputTextView).getText().toString());
+					Log.d("adapterSwitch","suggestions");
 					((AutoCompleteTextView)inputTextView).setThreshold(1);
 					((TextView)inputTextView).setText("");
+					
+					// TESTING 
+					// Simulate GPS-based and recent stations
+					//ArrayList values = new ArrayList();
+					//values.add(new StationSuggestion("Downtown Berkeley", "nearby"));
+					//values.add(new StationSuggestion("Macarthur", "recent"));
+					//values.add(new StationSuggestion("Fremont", "recent"));
+					// set tag to be retrieved on input entered to set adapter back to station list
+					// The key of a tag must be a unique ID resource
+					inputTextView.setTag(R.id.TextInputShowingSuggestions,"true");
+					// TESTING: Set Custom ArrayAdapter to hold recent/nearby stations
+					TextPlusIconArrayAdapter adapter = new TextPlusIconArrayAdapter(c, stationSuggestions);
+					((AutoCompleteTextView)inputTextView).setAdapter(adapter);
+					// force drop-down to appear, overriding requirement that at least one char is entered
+					((AutoCompleteTextView)inputTextView).showDropDown();
+					
+					// ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+	                // android.R.layout.simple_dropdown_item_1line, BART.STATIONS);
 				}
 				// Allow Android to handle additional actions - i.e: TextView takes focus
 				return false;
@@ -253,29 +274,23 @@ public class TheActivity extends Activity {
         
         // Autocomplete ListView item select listener
         
-        OnItemClickListener AutoCompleteItemClickListener = new OnItemClickListener(){
-        	@Override
+        originTextView.setOnItemClickListener(new OnItemClickListener() {
+			@Override
 			public void onItemClick(AdapterView<?> parent, View arg1, int position,
 					long arg3) {
-				
-				//If a valid origin station is not entered, return
-				if(BART.STATION_MAP.get(originTextView.getText().toString()) == null)
-					return;
-					
-				// Actv not available as arg1
-				AutoCompleteTextView destinationTextView = (AutoCompleteTextView)
-		                findViewById(R.id.destinationTv);
-				destinationTextView.setThreshold(200);
+				AutoCompleteTextView originTextView = (AutoCompleteTextView)
+		                findViewById(R.id.originTv);
+				originTextView.setThreshold(200);
 				hideSoftKeyboard(arg1);
+
+				// Add selected station to stationSuggestions ArrayList if it doesn't exist
+				if(!stationSuggestions.contains((new StationSuggestion(originTextView.getText().toString(),"recent"))))
+						stationSuggestions.add(new StationSuggestion(originTextView.getText().toString(),"recent"));
+					
 				validateInputAndDoRequest();
-				//lastRequest = "etd";
-				//String url = "http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+originStation+"&key=MW9S-E7SL-26DU-VV8V";
-				// TEMP: For testing route function
-				//lastRequest = "route";
-				//bartApiRequest();
 			}
-        };
-                
+        });
+        
         destinationTextView.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View arg1, int position,
@@ -290,6 +305,11 @@ public class TheActivity extends Activity {
 		                findViewById(R.id.destinationTv);
 				destinationTextView.setThreshold(200);
 				hideSoftKeyboard(arg1);
+				
+				// Add selected station to stationSuggestions set
+				if(!stationSuggestions.contains((new StationSuggestion(destinationTextView.getText().toString(),"recent"))))
+					stationSuggestions.add(new StationSuggestion(destinationTextView.getText().toString(),"recent"));
+				
 				validateInputAndDoRequest();
 				//lastRequest = "etd";
 				//String url = "http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+originStation+"&key=MW9S-E7SL-26DU-VV8V";
@@ -297,6 +317,56 @@ public class TheActivity extends Activity {
 				//lastRequest = "route";
 				//bartApiRequest();
 			}
+        });
+        
+        //OnKeyListener only gets physical device keyboard events (except the softkeyboard delete key. hmmm)
+        originTextView.addTextChangedListener(new TextWatcher()
+        {
+                public void  afterTextChanged (Editable s){ 
+                        //Log.d("seachScreen", "afterTextChanged"); 
+                } 
+                public void  beforeTextChanged  (CharSequence s, int start, int 
+                        count, int after)
+                { 
+                        //Log.d("seachScreen", "beforeTextChanged"); 
+                } 
+                public void  onTextChanged  (CharSequence s, int start, int before, 
+                        int count) 
+                { 
+                	
+                	ArrayAdapter<String> adapter = new ArrayAdapter<String>(c,
+			                android.R.layout.simple_dropdown_item_1line, BART.STATIONS);
+                	if( ((String)((TextView)findViewById(R.id.originTv)).getTag(R.id.TextInputShowingSuggestions)).compareTo("true") == 0){
+                		((TextView)findViewById(R.id.originTv)).setTag(R.id.TextInputShowingSuggestions,"false");
+                		((AutoCompleteTextView)findViewById(R.id.originTv)).setAdapter(adapter);
+                	}
+					
+                        Log.d("seachScreen", s.toString()); 
+                }
+
+        });
+        destinationTextView.addTextChangedListener(new TextWatcher()
+        {
+                public void  afterTextChanged (Editable s){ 
+                        //Log.d("seachScreen", "afterTextChanged"); 
+                } 
+                public void  beforeTextChanged  (CharSequence s, int start, int 
+                        count, int after)
+                { 
+                        //Log.d("seachScreen", "beforeTextChanged"); 
+                } 
+                public void  onTextChanged  (CharSequence s, int start, int before, 
+                        int count) 
+                { 
+                	ArrayAdapter<String> adapter = new ArrayAdapter<String>(c,
+			                android.R.layout.simple_dropdown_item_1line, BART.STATIONS);
+                	if( ((String)((TextView)findViewById(R.id.destinationTv)).getTag(R.id.TextInputShowingSuggestions)).compareTo("true") == 0){
+                		((TextView)findViewById(R.id.destinationTv)).setTag(R.id.TextInputShowingSuggestions,"false");
+                		((AutoCompleteTextView)findViewById(R.id.destinationTv)).setAdapter(adapter);
+                	}
+                        Log.d("seachScreen", s.toString()); 
+                }
+
         });
 
     }
