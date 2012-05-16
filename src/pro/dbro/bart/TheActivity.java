@@ -22,10 +22,13 @@ package pro.dbro.bart;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+
+import pro.dbro.bart.DeviceLocation.LocationResult;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -38,6 +41,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -114,14 +118,22 @@ public class TheActivity extends Activity {
 	private SharedPreferences prefs;
 	private SharedPreferences.Editor editor;
 	
+	// Location 
+	Location currentLocation;
+	double currentLat;
+	double currentLon;
+	boolean hasLocation = false;
+	// set when first location received
+	String localStation = "";
+	
     /** Called when the activity is first created. */
-    @Override
+	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //TESTING: enable crittercism
         //Crittercism.init(getApplicationContext(), "4f7a6cebb0931565250000f5");
 
-        if(Integer.parseInt(Build.VERSION.SDK) < 11){
+        if(Build.VERSION.SDK_INT < 11){
         	//If API 14+, The ActionBar will be hidden with this call
         	this.requestWindowFeature(Window.FEATURE_NO_TITLE);
         }
@@ -177,6 +189,7 @@ public class TheActivity extends Activity {
         destinationTextView.setAdapter(adapter);
         originTextView.setAdapter(adapter);
         
+        // Retrieve TextView inputs from saved preferences
         if(prefs.contains("origin") && prefs.contains("destination")){
         	//state= originTextView,destinationTextView
         	String origin = prefs.getString("origin", "");
@@ -190,7 +203,23 @@ public class TheActivity extends Activity {
     		destinationTextView.setText(destination);
     		validateInputAndDoRequest();
         }
-       
+        
+        // Retrieve station suggestions from file storage
+        try{
+          ArrayList<StationSuggestion> storedSuggestions= (ArrayList<StationSuggestion>)LocalPersistence.readObjectFromFile(c, res.getResourceEntryName(R.string.StationSuggestionFileName));
+          // If stored StationSuggestions are found, apply them
+          if(storedSuggestions != null){
+        	  stationSuggestions = storedSuggestions;
+        	  Log.d("stationSuggestions","Loaded"); 
+          }
+          else
+        	  Log.d("stationSuggestions","Not Found");
+                 
+        }
+        catch(Throwable t){
+        	// don't sweat it
+        }
+
         ImageView map = (ImageView) findViewById(R.id.map);
         map.setOnClickListener(new OnClickListener(){
 
@@ -247,16 +276,42 @@ public class TheActivity extends Activity {
 					((TextView)inputTextView).setText("");
 					
 					// TESTING 
-					// Simulate GPS-based and recent stations
-					//ArrayList values = new ArrayList();
-					//values.add(new StationSuggestion("Downtown Berkeley", "nearby"));
-					//values.add(new StationSuggestion("Macarthur", "recent"));
-					//values.add(new StationSuggestion("Fremont", "recent"));
 					// set tag to be retrieved on input entered to set adapter back to station list
 					// The key of a tag must be a unique ID resource
 					inputTextView.setTag(R.id.TextInputShowingSuggestions,"true");
+					ArrayList<StationSuggestion> prunedSuggestions = new ArrayList<StationSuggestion>();
+					// copy suggestions
+					
+					for(int x=0;x<stationSuggestions.size();x++){
+						prunedSuggestions.add(stationSuggestions.get(x));
+					}
+					
+					// Check for and remove other text input's value from stationSuggestions
+					if(inputTextView.equals(findViewById(R.id.originTv))){
+						// If the originTv is clicked, remove the destinationTv's value from prunedSuggestions
+						if(prunedSuggestions.contains(new StationSuggestion(((TextView)findViewById(R.id.destinationTv)).getText().toString(),"recent"))){
+							prunedSuggestions.remove(new StationSuggestion(((TextView)findViewById(R.id.destinationTv)).getText().toString(),"recent"));
+						}
+					}
+					else if(inputTextView.equals(findViewById(R.id.destinationTv))){
+						// If the originTv is clicked, remove the destinationTv's value from prunedSuggestions
+						if(prunedSuggestions.contains(new StationSuggestion(((TextView)findViewById(R.id.originTv)).getText().toString(),"recent"))){
+							prunedSuggestions.remove(new StationSuggestion(((TextView)findViewById(R.id.originTv)).getText().toString(),"recent"));
+						}
+					}
+
+					//if(stationSuggestions.contains(new StationSuggestion(((TextView)inputTextView).getText().toString(),"recent")))
+					
+					// if available, add localStation to prunedSuggestions
+					if(localStation.compareTo("") != 0){
+						if(BART.REVERSE_STATION_MAP.get(localStation) != null){
+							if(!prunedSuggestions.contains(new StationSuggestion(BART.REVERSE_STATION_MAP.get(localStation),"recent")))
+								prunedSuggestions.add(new StationSuggestion(BART.REVERSE_STATION_MAP.get(localStation),"nearby"));
+						}
+					}
+						
 					// TESTING: Set Custom ArrayAdapter to hold recent/nearby stations
-					TextPlusIconArrayAdapter adapter = new TextPlusIconArrayAdapter(c, stationSuggestions);
+					TextPlusIconArrayAdapter adapter = new TextPlusIconArrayAdapter(c, prunedSuggestions);
 					((AutoCompleteTextView)inputTextView).setAdapter(adapter);
 					// force drop-down to appear, overriding requirement that at least one char is entered
 					((AutoCompleteTextView)inputTextView).showDropDown();
@@ -278,15 +333,17 @@ public class TheActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View arg1, int position,
 					long arg3) {
+				Log.d("OriginTextView","item clicked");
 				AutoCompleteTextView originTextView = (AutoCompleteTextView)
 		                findViewById(R.id.originTv);
 				originTextView.setThreshold(200);
-				hideSoftKeyboard(arg1);
+				//hideSoftKeyboard(arg1);
+				// calling hideSoftKeyboard with arg1 doesn't work with stationSuggestion adapter
+				hideSoftKeyboard(findViewById(R.id.inputLinearLayout));
 
 				// Add selected station to stationSuggestions ArrayList if it doesn't exist
 				if(!stationSuggestions.contains((new StationSuggestion(originTextView.getText().toString(),"recent"))))
-						stationSuggestions.add(new StationSuggestion(originTextView.getText().toString(),"recent"));
-					
+						stationSuggestions.add(0,new StationSuggestion(originTextView.getText().toString(),"recent"));
 				validateInputAndDoRequest();
 			}
         });
@@ -295,7 +352,7 @@ public class TheActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View arg1, int position,
 					long arg3) {
-				
+				Log.d("DestinationTextView","item clicked");
 				//If a valid origin station is not entered, return
 				if(BART.STATION_MAP.get(originTextView.getText().toString()) == null)
 					return;
@@ -304,11 +361,12 @@ public class TheActivity extends Activity {
 				AutoCompleteTextView destinationTextView = (AutoCompleteTextView)
 		                findViewById(R.id.destinationTv);
 				destinationTextView.setThreshold(200);
-				hideSoftKeyboard(arg1);
+				//hideSoftKeyboard(arg1);
+				hideSoftKeyboard(findViewById(R.id.inputLinearLayout));
 				
 				// Add selected station to stationSuggestions set
 				if(!stationSuggestions.contains((new StationSuggestion(destinationTextView.getText().toString(),"recent"))))
-					stationSuggestions.add(new StationSuggestion(destinationTextView.getText().toString(),"recent"));
+					stationSuggestions.add(0,new StationSuggestion(destinationTextView.getText().toString(),"recent"));
 				
 				validateInputAndDoRequest();
 				//lastRequest = "etd";
@@ -368,12 +426,30 @@ public class TheActivity extends Activity {
                 }
 
         });
-
-    }
+        
+        // Determine device location
+        DeviceLocation deviceLocation = new DeviceLocation();
+        LocationResult locationResult = new LocationResult(){
+            @Override
+            public void gotLocation(final Location location){
+                //Got the location!
+                
+                currentLocation = location;
+                if (location != null) {
+                    currentLat = location.getLatitude();
+                    currentLon = location.getLongitude();
+                    localStation = BART.findNearestStation(currentLat, currentLon);
+                }
+                hasLocation = true;
+                };
+            };
+       deviceLocation.getLocation(this, locationResult);
+        
+    } // End OnCreate
     // Initialize settings menu
     @Override public boolean onCreateOptionsMenu(Menu menu) {
     	//Use setting-button context menu OR Action bar
-    	if(Integer.parseInt(Build.VERSION.SDK) < 11){
+    	if(Build.VERSION.SDK_INT < 11){
 	        MenuItem mi = menu.add(0,0,0,"About");
 	        mi.setIcon(R.drawable.about);
     	}
@@ -414,7 +490,7 @@ public class TheActivity extends Activity {
     		url += "sched.aspx?cmd=depart&a=3&b=0&orig="+BART.STATION_MAP.get(originTextView.getText().toString())+"&dest="+BART.STATION_MAP.get(destinationTextView.getText().toString());
     	}
     	url += "&key="+BART.API_KEY;
-    	//Log.v("BART API",url);
+    	Log.v("BART API",url);
     	new RequestTask(request, updateUI).execute(url);
     	// Set loading indicator
     	// I find this jarring when network latency is low
@@ -955,6 +1031,9 @@ public class TheActivity extends Activity {
     	long now = new Date().getTime();
     	if(BART.STATION_MAP.get(originTextView.getText().toString()) != null){
 			if(BART.STATION_MAP.get(destinationTextView.getText().toString()) != null){
+				// If origin and destination stations are equal, cancel
+				if(destinationTextView.getText().toString().compareTo(originTextView.getText().toString()) == 0)
+					return;
 				//if an etd response is cached, is fresh, and is for the route departure station:
 				//temp testing
 				if(currentEtdResponse != null){
@@ -987,6 +1066,9 @@ public class TheActivity extends Activity {
     public void onPause(){
     	//Log.v("onPause","pausin for a cause");
     	super.onPause();
+    	
+    	//Save station suggestions
+    	LocalPersistence.writeObjectToFile(c, stationSuggestions,res.getResourceEntryName(R.string.StationSuggestionFileName));
     	// Save text input state
     	editor.putString("origin", originTextView.getText().toString());
     	editor.putString("destination",destinationTextView.getText().toString());

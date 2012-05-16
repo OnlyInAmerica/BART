@@ -1,13 +1,22 @@
 package pro.dbro.bart;
 
-public class StationSuggestion {
+import java.io.Serializable;
+
+public class StationSuggestion implements Serializable{
 	
+	private int hits;
 	public String station;
 	public String type;
 	
 	public StationSuggestion(String station, String type){
+		this.hits = 0;
 		this.station = station;
 		this.type = type;
+	}
+	
+	public int addHit(){
+		this.hits += 1;
+		return this.hits;
 	}
 	
 	public String toString(){
