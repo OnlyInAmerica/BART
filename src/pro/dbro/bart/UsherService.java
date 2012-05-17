@@ -56,9 +56,11 @@ public class UsherService extends Service {
     private CountDownTimer reminderTimer; // timer separated from actual timer by REMINDER_PADDING_MS
     private route usherRoute;	// the route to guide along. Updated with etd data
     
-    private final long REMINDER_PADDING_MS = 120*1000; // ms before an event (board, disembark) the usher should issue a reminder
+    private final long EVENT_PADDING_MS = 60*1000; // ms before an event (board, disembark) the usher should notify and issue next direction
     
-    private final long UPDATE_INTERVAL_MS = 30*1000; // ms interval for updating notification
+    private final long REMINDER_PADDING_MS = 180*1000; // ms before an event (board, disembark) the usher should issue a reminder
+    
+    private final long UPDATE_INTERVAL_MS = 20*1000; // ms interval for updating notification
 
     // Unique Identification Number for the Notification.
     // We use it on Notification start, and to cancel it.
@@ -269,8 +271,8 @@ public class UsherService extends Service {
     	if(timer != null)
     		timer.cancel();
     	
-    	
-    	timer = new CountDownTimer(msUntilNext, UPDATE_INTERVAL_MS){
+    	// Make a new timer to expire EVENT_PADDING_MS before event
+    	timer = new CountDownTimer(msUntilNext - EVENT_PADDING_MS, UPDATE_INTERVAL_MS){
             //new CountDownTimer(5000, 1000){
 
     			@Override
