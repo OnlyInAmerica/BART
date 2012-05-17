@@ -98,6 +98,7 @@ public class TheActivity extends Activity {
 	long maxTimer = 0;
 	
 	ArrayList<StationSuggestion> stationSuggestions;
+	private final int STATION_SUGGESTION_SIZE = 3;
 	
 	// route that the usher service should access
 	public static route usherRoute; 
@@ -131,7 +132,7 @@ public class TheActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //TESTING: enable crittercism
-        //Crittercism.init(getApplicationContext(), "4f7a6cebb0931565250000f5");
+        Crittercism.init(getApplicationContext(), "4f7a6cebb0931565250000f5");
 
         if(Build.VERSION.SDK_INT < 11){
         	//If API 14+, The ActionBar will be hidden with this call
@@ -342,9 +343,19 @@ public class TheActivity extends Activity {
 				hideSoftKeyboard(findViewById(R.id.inputLinearLayout));
 
 				// Add selected station to stationSuggestions ArrayList if it doesn't exist
-				if(!stationSuggestions.contains((new StationSuggestion(originTextView.getText().toString(),"recent"))))
+				if(!stationSuggestions.contains((new StationSuggestion(originTextView.getText().toString(),"recent")))){
 						stationSuggestions.add(0,new StationSuggestion(originTextView.getText().toString(),"recent"));
+						// if the stationSuggestion arraylist is over the max size, remove the last item
+						if(stationSuggestions.size() > STATION_SUGGESTION_SIZE){
+							stationSuggestions.remove(stationSuggestions.size()-1);
+						}
+				}
+				// Else, increment click count for that recent
+				else{
+					stationSuggestions.get(stationSuggestions.indexOf((new StationSuggestion(originTextView.getText().toString(),"recent")))).addHit();
+				}
 				validateInputAndDoRequest();
+				
 			}
         });
         
@@ -353,9 +364,7 @@ public class TheActivity extends Activity {
 			public void onItemClick(AdapterView<?> parent, View arg1, int position,
 					long arg3) {
 				Log.d("DestinationTextView","item clicked");
-				//If a valid origin station is not entered, return
-				if(BART.STATION_MAP.get(originTextView.getText().toString()) == null)
-					return;
+				
 					
 				// Actv not available as arg1
 				AutoCompleteTextView destinationTextView = (AutoCompleteTextView)
@@ -365,9 +374,21 @@ public class TheActivity extends Activity {
 				hideSoftKeyboard(findViewById(R.id.inputLinearLayout));
 				
 				// Add selected station to stationSuggestions set
-				if(!stationSuggestions.contains((new StationSuggestion(destinationTextView.getText().toString(),"recent"))))
+				if(!stationSuggestions.contains((new StationSuggestion(destinationTextView.getText().toString(),"recent")))){
+					Log.d("DestinationTextView","adding station");
 					stationSuggestions.add(0,new StationSuggestion(destinationTextView.getText().toString(),"recent"));
+					if(stationSuggestions.size() > STATION_SUGGESTION_SIZE){
+						stationSuggestions.remove(stationSuggestions.size()-1);
+					}
+				}
+				else{
+					stationSuggestions.get(stationSuggestions.indexOf((new StationSuggestion(destinationTextView.getText().toString(),"recent")))).addHit();
+					//Log.d("DestinationTextView",String.valueOf(stationSuggestions.get(stationSuggestions.indexOf((new StationSuggestion(destinationTextView.getText().toString(),"recent")))).hits));
+				}
 				
+				//If a valid origin station is not entered, return
+				if(BART.STATION_MAP.get(originTextView.getText().toString()) == null)
+					return;
 				validateInputAndDoRequest();
 				//lastRequest = "etd";
 				//String url = "http://api.bart.gov/api/etd.aspx?cmd=etd&orig="+originStation+"&key=MW9S-E7SL-26DU-VV8V";
@@ -490,7 +511,7 @@ public class TheActivity extends Activity {
     		url += "sched.aspx?cmd=depart&a=3&b=0&orig="+BART.STATION_MAP.get(originTextView.getText().toString())+"&dest="+BART.STATION_MAP.get(destinationTextView.getText().toString());
     	}
     	url += "&key="+BART.API_KEY;
-    	Log.v("BART API",url);
+    	Log.d("BART API",url);
     	new RequestTask(request, updateUI).execute(url);
     	// Set loading indicator
     	// I find this jarring when network latency is low
@@ -692,10 +713,12 @@ public class TheActivity extends Activity {
 							arrivalTv.setText("arrives "+curFormater.format(thisRoute.arrivalDate));
 							arrivalTv.setTextSize(20);
 							routeDetail.addView(arrivalTv);
-							if(thisRoute.bikes){
-								ImageView bikeIv = (ImageView) View.inflate(c, R.layout.bikeimage, null);
-								routeDetail.addView(bikeIv);
+							ImageView bikeIv = (ImageView) View.inflate(c, R.layout.bikeimage, null);
+							
+							if(!thisRoute.bikes){
+								bikeIv.setImageResource(R.drawable.no_bicycle);
 							}
+							routeDetail.addView(bikeIv);
 							tableLayout.addView(routeDetail, index+1);
 						}
 						else{
@@ -984,10 +1007,11 @@ public class TheActivity extends Activity {
 							platformTv.setText("platform "+thisEtd.platform);
 							platformTv.setTextSize(20);
 							routeDetail.addView(platformTv);
-							if(thisEtd.bikes){
-								ImageView bikeIv = (ImageView) View.inflate(c, R.layout.bikeimage, null);
-								routeDetail.addView(bikeIv);
-							}
+							ImageView bikeIv = (ImageView) View.inflate(c, R.layout.bikeimage, null);
+							if(!thisEtd.bikes)
+								bikeIv.setImageResource(R.drawable.no_bicycle);
+								
+							routeDetail.addView(bikeIv);
 							tableLayout.addView(routeDetail, index+1);
 						}
 						else{

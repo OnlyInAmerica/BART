@@ -107,7 +107,10 @@ public class TextPlusIconArrayAdapter extends ArrayAdapter<StationSuggestion> im
 			 iconView.setImageResource(R.drawable.reticle);
 		 }
 		 else if( ((StationSuggestion)this.getItem(position)).type.compareTo("recent") == 0 ){
-			 iconView.setImageResource(R.drawable.clock);
+			 if(((StationSuggestion)this.getItem(position)).hits > StationSuggestion.LOVE_THRESHOLD)
+				 iconView.setImageResource(R.drawable.heart);
+			 else
+				 iconView.setImageResource(R.drawable.clock);
 		 }
 		 
 		 return rowView;

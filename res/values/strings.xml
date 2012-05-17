@@ -24,7 +24,7 @@
     <string name="local_service_label">I\'ll vibrate when you need to move</string>
     <string name="local_service_connected">trip usher at work</string>
     <string name="local_service_disconnected">trip usher off</string>
-    <string name="service_prompt">I can vibrate your phone when your stops are approaching! You can also check the notification bar at any time to see your next move.</string>
+    <string name="service_prompt">Experimental Feature! I can vibrate your phone when your stops are approaching! You can also check the notification bar at any time to see your next move.</string>
     <string name="service_start_button">Guide Me!</string>
     
 </resources>

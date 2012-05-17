@@ -4,7 +4,10 @@ import java.io.Serializable;
 
 public class StationSuggestion implements Serializable{
 	
-	private int hits;
+	// After LOVE_THRESHOLD hits, this station becomes a "favorite" and gets special icon treatment
+	public final static int LOVE_THRESHOLD = 5;
+	
+	public int hits;
 	public String station;
 	public String type;
 	
