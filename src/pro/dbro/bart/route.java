@@ -47,7 +47,11 @@ public class route {
 	@Override
 	public String toString(){
 		if (legs.size() > 1){
-			return departureDate.toString() + " : " + ((leg)legs.get(0)).trainHeadStation + " to " + ((leg)legs.get(0)).trainHeadStation;
+			String response = departureDate.toString() + " : " + ((leg)legs.get(0)).trainHeadStation;
+			for(int x=1; x < legs.size();x++){
+				response += " to " + ((leg)legs.get(x)).trainHeadStation;
+			}
+			return response;
 		}
 		else{
 			return departureDate.toString() + " : " + ((leg)legs.get(0)).trainHeadStation;

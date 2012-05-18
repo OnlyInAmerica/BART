@@ -2,6 +2,11 @@
 <resources>
 
     <string name="app_name">Open BART</string>
+    <string-array name="crashCatchDialog">
+        <item>We\'re sorry!</item>
+        <item>Open BART is misbehaving and we\'ll get right on a fix. If you please, 
+              &lt;a href="mailto:openbart@dbro.pro">write us&lt;/a> and tell us how you got here!</item>
+    </string-array>
     <string-array name="networkErrorDialog">
         <item>Network Error</item>
         <item>Check your network connection.</item>

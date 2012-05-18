@@ -33,7 +33,7 @@ public class etdResponse implements Serializable{
 	public String message;
 	
 	public String toString(){
-		return station;
+		return station + "date: "+ date.toString() + " etds: " + etds;
 	}
 	
 	public etdResponse(){

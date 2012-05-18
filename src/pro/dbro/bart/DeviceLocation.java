@@ -15,6 +15,8 @@ public class DeviceLocation {
     LocationResult locationResult;
     boolean gps_enabled=false;
     boolean network_enabled=false;
+    
+    public static final long LOCATION_FRESH_MS = 1000*60*5;
 
     public boolean getLocation(Context context, LocationResult result)
     {

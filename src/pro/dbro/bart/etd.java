@@ -33,11 +33,11 @@ public class etd {
 		return destination + " in " + String.valueOf(minutesToArrival)+"m";
 	}
 	
-	public void etd(){
+	public etd(){
 		this.minutesToArrival = 0;
-
 	}
-	public void etd(String destination, int minutesToArrival, int platform, String direction, boolean bikes, String color){
+	
+	public etd(String destination, int minutesToArrival, int platform, String direction, boolean bikes, String color){
 		this.destination = destination;
 		this.minutesToArrival = minutesToArrival;
 		this.platform = platform;

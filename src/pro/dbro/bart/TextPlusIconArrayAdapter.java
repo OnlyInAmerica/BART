@@ -52,6 +52,7 @@ public class TextPlusIconArrayAdapter extends ArrayAdapter<StationSuggestion> im
 	// all stations
 	private class CustomFilter extends Filter {
 
+		// Always return All results. No filtering 
 	    @Override
 	    protected FilterResults performFiltering(CharSequence constraint) {
 	        FilterResults results = new FilterResults();

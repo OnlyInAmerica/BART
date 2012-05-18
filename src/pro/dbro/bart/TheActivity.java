@@ -306,7 +306,10 @@ public class TheActivity extends Activity {
 					// if available, add localStation to prunedSuggestions
 					if(localStation.compareTo("") != 0){
 						if(BART.REVERSE_STATION_MAP.get(localStation) != null){
-							if(!prunedSuggestions.contains(new StationSuggestion(BART.REVERSE_STATION_MAP.get(localStation),"recent")))
+								// If a valid localStation (based on DeviceLocation) is available: 
+							    // remove localStations from recent suggestions (if it exists there)
+								// and add as nearby station
+								prunedSuggestions.remove(new StationSuggestion(BART.REVERSE_STATION_MAP.get(localStation),"recent"));
 								prunedSuggestions.add(new StationSuggestion(BART.REVERSE_STATION_MAP.get(localStation),"nearby"));
 						}
 					}
@@ -381,6 +384,7 @@ public class TheActivity extends Activity {
 						stationSuggestions.remove(stationSuggestions.size()-1);
 					}
 				}
+				// If station exists in StationSuggestions, increment hit
 				else{
 					stationSuggestions.get(stationSuggestions.indexOf((new StationSuggestion(destinationTextView.getText().toString(),"recent")))).addHit();
 					//Log.d("DestinationTextView",String.valueOf(stationSuggestions.get(stationSuggestions.indexOf((new StationSuggestion(destinationTextView.getText().toString(),"recent")))).hits));
@@ -447,24 +451,6 @@ public class TheActivity extends Activity {
                 }
 
         });
-        
-        // Determine device location
-        DeviceLocation deviceLocation = new DeviceLocation();
-        LocationResult locationResult = new LocationResult(){
-            @Override
-            public void gotLocation(final Location location){
-                //Got the location!
-                
-                currentLocation = location;
-                if (location != null) {
-                    currentLat = location.getLatitude();
-                    currentLon = location.getLongitude();
-                    localStation = BART.findNearestStation(currentLat, currentLon);
-                }
-                hasLocation = true;
-                };
-            };
-       deviceLocation.getLocation(this, locationResult);
         
     } // End OnCreate
     // Initialize settings menu
@@ -559,8 +545,17 @@ public class TheActivity extends Activity {
 	    	}
 	    	else if (response instanceof routeResponse){
 	    		//Log.v("ETD_CACHE","ETD ROUTE DISPLAY");
-	    		
-	    		displayRouteResponse(updateRouteResponseWithEtd((routeResponse)response));
+	    		// BartRouteParser removes routes that have bunk date info
+	    		// If all routes removed, alert user
+	    		if( ((routeResponse)response).routes.size() == 0){
+	    			new AlertDialog.Builder(c)
+	    	        .setTitle(res.getStringArray(R.array.crashCatchDialog)[0])
+	    	        .setMessage(res.getStringArray(R.array.crashCatchDialog)[1])
+	    	        .setPositiveButton("Bummer", null)
+	    	        .show();
+	    		}
+	    		else
+	    			displayRouteResponse(updateRouteResponseWithEtd((routeResponse)response));
 	    	}
     	}
     	else{
@@ -599,10 +594,16 @@ public class TheActivity extends Activity {
 	    	tableLayout.removeAllViews();
 	    	//Log.v("DATE",new Date().toString());
 	    	long now = new Date().getTime();
-	    
+	    	
+	    	
 	    	for (int x=0;x<routeResponse.routes.size();x++){
-	    		
 	    		route thisRoute = routeResponse.routes.get(x);
+	    		
+	    		// Don't print route if it occurs during the next day
+	    		if(thisRoute.departureDate.getTime()-now > BART.ETA_THRESHOLD_MS){
+	    			continue;
+	    		}
+
 	        	TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
 	        	tr.setPadding(0, 20, 0, 0);
 	    		LinearLayout legLayout = (LinearLayout) View.inflate(c, R.layout.routelinearlayout, null);
@@ -1147,7 +1148,6 @@ public class TheActivity extends Activity {
     	
 	@Override
 	protected void onResume() {
-	  // Unregister since the activity is about to be closed.
 		//Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
 		if(usherServiceIsRunning()){
 			stopServiceTv.setVisibility(0);
@@ -1163,6 +1163,13 @@ public class TheActivity extends Activity {
 				}
         	});
 		}
+		
+		// Update user location, if none exists OR enough time has elapsed since last update
+		if(currentLocation == null || (currentLocation.getTime() + DeviceLocation.LOCATION_FRESH_MS < new Date().getTime()) ){
+			Log.d("RefreshLocation","Bagooosh!");
+			getDeviceLocation();
+		}
+		
 	  super.onResume();
 	}
 	
@@ -1209,6 +1216,28 @@ public class TheActivity extends Activity {
 		}
 		// this response has all 0 etas, so it's loopy
 		return true;
+	}
+	
+	// Registers with LocationService to update appropriate class variables
+	// with LocationResult when it's available
+	private void getDeviceLocation(){
+		DeviceLocation deviceLocation = new DeviceLocation();
+        LocationResult locationResult = new LocationResult(){
+            @Override
+            public void gotLocation(final Location location){
+                //Got the location!
+                
+                currentLocation = location;
+                if (location != null) {
+                    currentLat = location.getLatitude();
+                    currentLon = location.getLongitude();
+                    localStation = BART.findNearestStation(currentLat, currentLon);
+                    Log.d("RefreshLocation","station: " + localStation + " accuracy: "+ String.valueOf(location.getAccuracy())+" meters");
+                }
+                hasLocation = true;
+                };
+            };
+       deviceLocation.getLocation(this, locationResult);
 	}
     
 }

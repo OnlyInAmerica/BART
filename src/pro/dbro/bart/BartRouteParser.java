@@ -49,6 +49,9 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 	Date dateObj;
 	boolean updateUI;
 	
+	//DEBUGGING
+	boolean dateError = false;
+	
 	BartRouteParser(boolean updateUI) {
         this.updateUI = updateUI;
     }
@@ -124,6 +127,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 				if (!isStartTag){
 					route thisRoute = response.getLastRoute();
 					
+					// Determine if bikes are allowed on all legs of this route
 					boolean bikes = true;
 					for(int x=0;x<thisRoute.legs.size();x++){
 						if(!((leg)thisRoute.legs.get(x)).bikes)
@@ -140,26 +144,38 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 					// Even if the application is run on a device who's locale isn't PDT
 					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a z"); 
 					try {
+						Log.d("BartRouteParserEndTrip","originDate: " + originDateStr + "destDate: " + destinationDateStr);
 						thisRoute.departureDate = curFormater.parse(originDateStr+" PDT");//append BART response timezone
 						thisRoute.arrivalDate = curFormater.parse(destinationDateStr+" PDT");//append BART response timezone
 					} catch (ParseException e) {
+						Log.d("BartRouteParserEndTrip","PDT coerced parse failed");
 						// TODO Auto-generated catch block
 						// 5.15.2012: I've received multiple crashes here. Something's going on related to irregular time format...
 						// IF coercing PDT fails, try without at the risk of displaying incorrect time
 						try{
 							Crittercism.leaveBreadcrumb(Log.getStackTraceString(e));
-							thisRoute.departureDate = curFormater.parse(originDateStr);//append BART response timezone
-							thisRoute.arrivalDate = curFormater.parse(destinationDateStr);//append BART response timezone
+							thisRoute.departureDate = curFormater.parse(originDateStr);
+							thisRoute.arrivalDate = curFormater.parse(destinationDateStr);
 						}
 						catch(ParseException e2){
-							Crittercism.leaveBreadcrumb(originDateStr+" , "+destinationDateStr+" PDT");
+							Log.d("BartRouteParserEndTrip","non-PDT coerced parse failed");
+							Log.d("BartRouteParserEndTrip_DateString", "origin: " + originDateStr+" , destination: "+destinationDateStr+" PDT");
+							Log.d("BartRouteParserEndTripException",e.getClass().toString() + ": " + e.getMessage());
+							Crittercism.leaveBreadcrumb(originDateStr+" PDT , "+destinationDateStr+" PDT");
 							Crittercism.leaveBreadcrumb(Log.getStackTraceString(e2));
+							Crittercism.logHandledException(e2);
+							dateError = true;
 						}
 					}
-					Log.d("RouteParserDate","depart: " + thisRoute.departureDate.toString() + " arrive: " + thisRoute.arrivalDate.toString());
+					if(!dateError)
+						Log.d("RouteParserDate","depart: " + thisRoute.departureDate.toString() + " arrive: " + thisRoute.arrivalDate.toString());
+					else{
+						// if an improper date is given, remove this route from response
+						response.removeLastRoute();
+					}
+					// reset these variables for use by the next route
 					originDateStr = "";
 					destinationDateStr = "";
-					
 				}
 
 			}

@@ -43,5 +43,15 @@ public class routeResponse implements Serializable{
 	public route getLastRoute(){
 		return (route) routes.get(routes.size()-1);
 	}
+	
+	public route removeLastRoute(){
+		route toRemove = (route) routes.get(routes.size()-1);
+		routes.remove(routes.size()-1);
+		return toRemove;
+	}
+	
+	public String toString(){
+		return originStation + " to " + destinationStation + " on " + date.toString() + " routes: " + routes.toString();
+	}
 
 }

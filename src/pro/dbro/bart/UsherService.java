@@ -172,13 +172,8 @@ public class UsherService extends Service {
         }else{
         	nextStepText = "Board "+ BART.REVERSE_STATION_MAP.get(((leg)usherRoute.legs.get(0)).trainHeadStation.toLowerCase()) + " train in " + String.valueOf(minutesUntilNext) + "m";
         }
-     // The PendingIntent to launch our activity if the user selects this notification
-        Intent i = new Intent(this, TheActivity.class);
-        i.putExtra("Service", true);
-        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
-                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        contentIntent = PendingIntent.getActivity(this, 0,
-                i, PendingIntent.FLAG_CANCEL_CURRENT);
+        // The PendingIntent to launch our activity if the user selects this notification
+        setContentIntent();
         
         // Create notification
         NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
@@ -249,6 +244,10 @@ public class UsherService extends Service {
     	}
         
     	NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
+    	if(contentIntent == null){
+    		Log.d("ContentIntent","was null");
+    		setContentIntent();
+    	}
     	builder.setContentIntent(contentIntent)
         .setSmallIcon(R.drawable.ic_launcher_notification)
         //.setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.some_big_img))
@@ -288,6 +287,10 @@ public class UsherService extends Service {
     				// Our next move is departing the final leg train
     				if ((usherRoute.legs.size() == currentLeg+1) && !didBoard){
     					NotificationCompat.Builder builder = new NotificationCompat.Builder(c);
+    					if(contentIntent == null){
+    						Log.d("ContentIntent","was null");
+    						setContentIntent();
+    					}
     			    	builder.setContentIntent(contentIntent)
     			        .setSmallIcon(R.drawable.ic_launcher_notification)
     			        //.setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.some_big_img))
@@ -486,6 +489,15 @@ public class UsherService extends Service {
   		
   		//Log.v("USHER SYNC",String.valueOf((etdTargetTime-curTargetTime)/1000)); // s diff b/t current and etd
   		
+  	}
+  	
+  	private void setContentIntent(){
+  		Intent i = new Intent(this, TheActivity.class);
+        i.putExtra("Service", true);
+        i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        contentIntent = PendingIntent.getActivity(this, 0,
+                i, PendingIntent.FLAG_CANCEL_CURRENT);
   	}
 }
 
