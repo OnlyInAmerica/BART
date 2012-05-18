@@ -581,10 +581,10 @@ public class TheActivity extends Activity {
     	// Previously, if the device's locale wasn't in Pacific Standard Time
     	// Responses with all expired routes could present, causing a looping refresh cycle
     	// This is now remedied by coercing response dates into PDT
-    	
+    	boolean expiredResponse = false;
     	if(routeResponseIsLoopy(routeResponse)){
     		Log.d("Loopy RouteResponse","durn loops");
-    		return;
+    		expiredResponse = true;
     	}
     	else{
     		Log.d("NonLoopy RouteResponse","all good");
@@ -602,7 +602,7 @@ public class TheActivity extends Activity {
 	    	//Log.v("DATE",new Date().toString());
 	    	long now = new Date().getTime();
 	    	
-	    	
+	    	if(!expiredResponse){
 	    	for (int x=0;x<routeResponse.routes.size();x++){
 	    		route thisRoute = routeResponse.routes.get(x);
 	    		
@@ -736,7 +736,8 @@ public class TheActivity extends Activity {
 						
 					}
 	    		});
-	    	}
+	    	} // end route iteration
+	    	} // end expiredResponse check
 	    	if (routeResponse.specialSchedule != null){
 	    		ImageView specialSchedule = (ImageView)View.inflate(c, R.layout.specialschedulelayout, null);
 	    		specialSchedule.setTag(routeResponse.specialSchedule);
@@ -761,11 +762,13 @@ public class TheActivity extends Activity {
 	    		});
 	    		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
 	    	}
-	    	timer = new ViewCountDownTimer(timerViews, "route", maxTimer, 30*1000);
-	    	timer.start();
+	    	// Don't set timer if response is expired
+	    	if(!expiredResponse){
+		    	timer = new ViewCountDownTimer(timerViews, "route", maxTimer, 30*1000);
+		    	timer.start();
+	    	}
     	}catch(Throwable t){
-    		//Log.v("WTF",t.getStackTrace().toString());
-    		
+    		Log.d("displayRouteResponseError",t.getStackTrace().toString());
     	}
     }
     
@@ -1055,10 +1058,15 @@ public class TheActivity extends Activity {
 			lastDestination = thisEtd.destination;
 		} // end for
 		//scrolly.scrollTo(0, 0);
-		timer = new ViewCountDownTimer(timerViews, "etd", maxTimer, 30*1000);
-		timer.start();
+		// Avoid spamming bart.gov. Only re-ping if etd response is valid for at least 3m
+		if(maxTimer > 1000*60*3){
+			timer = new ViewCountDownTimer(timerViews, "etd", maxTimer, 30*1000);
+			timer.start();
+		}
 	} 
     
+    // Validates text input values (originTextView, destinationTextView) are valid stations
+    // And performs requests as needed. Handles caching of etdResponse for merge into routeResponse
     private void validateInputAndDoRequest(){
     	long now = new Date().getTime();
     	if(BART.STATION_MAP.get(originTextView.getText().toString()) != null){
@@ -1134,7 +1142,9 @@ public class TheActivity extends Activity {
     	    }
     	    else if(status == 2){//temporarily test this as avenue for countdowntimer to signal views need refreshing
     	    	Log.d("TheActivity-BroadcastReceived", "countdown timer expired");
-    	    	bartApiRequest(intent.getStringExtra("request"), true);
+    	    	// Change this to validateInputAndDoRequest
+    	    	validateInputAndDoRequest();
+    	    	//bartApiRequest(intent.getStringExtra("request"), true);
     	    }
     	    else if(status == 3){// Sent by RequestTask upon completion
     	    	Log.d("TheActivity-BroadcastReceived", "requestTask complete");
@@ -1224,6 +1234,7 @@ public class TheActivity extends Activity {
 		// this response has all 0 etas, so it's loopy
 		return true;
 	}
+
 	
 	// Registers with LocationService to update appropriate class variables
 	// with LocationResult when it's available
