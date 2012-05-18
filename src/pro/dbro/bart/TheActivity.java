@@ -132,7 +132,7 @@ public class TheActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //TESTING: enable crittercism
-        Crittercism.init(getApplicationContext(), "4f7a6cebb0931565250000f5");
+        Crittercism.init(getApplicationContext(), SECRETS.CRITTERCISM_SECRET);
 
         if(Build.VERSION.SDK_INT < 11){
         	//If API 14+, The ActionBar will be hidden with this call
@@ -451,6 +451,7 @@ public class TheActivity extends Activity {
                 }
 
         });
+
         
     } // End OnCreate
     // Initialize settings menu
@@ -548,9 +549,15 @@ public class TheActivity extends Activity {
 	    		// BartRouteParser removes routes that have bunk date info
 	    		// If all routes removed, alert user
 	    		if( ((routeResponse)response).routes.size() == 0){
+	    			TextView crashTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+	    			crashTv.setText(Html.fromHtml(res.getStringArray(R.array.crashCatchDialog)[1]));
+	    			crashTv.setTextSize(18);
+	    			crashTv.setPadding(0, 0, 0, 0);
+	    			crashTv.setMovementMethod(LinkMovementMethod.getInstance());
 	    			new AlertDialog.Builder(c)
 	    	        .setTitle(res.getStringArray(R.array.crashCatchDialog)[0])
-	    	        .setMessage(res.getStringArray(R.array.crashCatchDialog)[1])
+	    	        .setView(crashTv)
+	    	        .setIcon(R.drawable.sad_mac)
 	    	        .setPositiveButton("Bummer", null)
 	    	        .show();
 	    		}

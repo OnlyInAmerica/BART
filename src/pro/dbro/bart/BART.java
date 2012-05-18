@@ -7,8 +7,9 @@ import java.util.Set;
 public class BART {
 	// *****  BART API Data  *****
 	public final static String API_ROOT = "http://api.bart.gov/api/";
-	// The public BART API key is below. To obtain your own, see http://api.bart.gov/api/register.aspx
-	public final static String API_KEY="MW9S-E7SL-26DU-VV8V";
+	// The public BART API key is: MW9S-E7SL-26DU-VV8V
+	// To obtain your own key, see http://api.bart.gov/api/register.aspx
+	public final static String API_KEY= SECRETS.BART_API_KEY;
 	
 	// *****  BART Route ETA Threshold  *****
 	// After a day's service has concluded, BART will return scheduled trains for the next day 
