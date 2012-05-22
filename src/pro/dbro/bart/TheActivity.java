@@ -578,6 +578,7 @@ public class TheActivity extends Activity {
     //CALLED-BY: handleResponse() if updateUIOnResponse is true
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
+
     	// Previously, if the device's locale wasn't in Pacific Standard Time
     	// Responses with all expired routes could present, causing a looping refresh cycle
     	// This is now remedied by coercing response dates into PDT
@@ -602,14 +603,9 @@ public class TheActivity extends Activity {
 	    	//Log.v("DATE",new Date().toString());
 	    	long now = new Date().getTime();
 	    	
-	    	if(!expiredResponse){
+	    	if(!expiredResponse){  
 	    	for (int x=0;x<routeResponse.routes.size();x++){
 	    		route thisRoute = routeResponse.routes.get(x);
-	    		
-	    		// Don't print route if it occurs during the next day
-	    		if(thisRoute.departureDate.getTime()-now > BART.ETA_THRESHOLD_MS){
-	    			continue;
-	    		}
 
 	        	TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow, null);
 	        	tr.setPadding(0, 20, 0, 0);
@@ -620,6 +616,7 @@ public class TheActivity extends Activity {
 	    			trainTv.setPadding(0, 0, 0, 0);
 	    			trainTv.setTextSize(20);
 	    			trainTv.setGravity(3); // set left gravity
+	    			// If route has multiple legs, generate "Transfer At [station name]" and "To [train name] " rows for each leg after the first
 	    			if (y>0){
 	    				trainTv.setText("transfer at "+ BART.REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y-1)).disembarkStation.toLowerCase()));
 	    				trainTv.setPadding(0, 0, 0, 0);
@@ -631,8 +628,10 @@ public class TheActivity extends Activity {
 	        			trainTv.setGravity(3); // set left gravity
 	    				trainTv.setText("to "+BART.REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation.toLowerCase()));
 	    			}
-	    			else
+	    			else{
+	    				// For first route leg, display "Take [train name]" row
 	    				trainTv.setText("take " +BART.REVERSE_STATION_MAP.get(((leg)thisRoute.legs.get(y)).trainHeadStation));
+	    			}
 	    			
 	    			legLayout.addView(trainTv);
 	
@@ -644,9 +643,10 @@ public class TheActivity extends Activity {
 	    		
 	    		tr.addView(legLayout);
 	    		
+	    		// Prepare ETA TextView
 	    		TextView arrivalTimeTv = (TextView) View.inflate(c, R.layout.tabletext, null);
 	    		arrivalTimeTv.setPadding(10, 0, 0, 0);
-	    		arrivalTimeTv.setTextSize(36);
+	    		
 	    		//Log.v("DEPART_DATE",thisRoute.departureDate.toString());
 	    		
 	    		// Don't report a train that may JUST be leaving with a negative ETA
@@ -657,17 +657,31 @@ public class TheActivity extends Activity {
 	        	else{
 	        		eta = thisRoute.departureDate.getTime()-now;
 	        	}
-	        	timerViews.add(arrivalTimeTv);
+	        	
 	        	if(eta > maxTimer){
 	        		maxTimer = eta;
 	        	}
 	        	// Set timeTv Tag to departure date for interpretation by ViewCountDownTimer
 	        	arrivalTimeTv.setTag(thisRoute.departureDate.getTime());
-	        	// Display eta less than 1m as "<1"
-	        	if(eta < 60*1000)
-	        		arrivalTimeTv.setText("<1"); // TODO - remove this? Does countdown tick on start
-	        	else
-	        		arrivalTimeTv.setText(String.valueOf(eta/(1000*60))); // TODO - remove this? Does countdown tick on start
+	        	
+	        	// Print arrival as time, not eta if greater than BART.ETA_THRESHOLD_MS
+	    		if(thisRoute.departureDate.getTime()-now > BART.ETA_THRESHOLD_MS){
+    				SimpleDateFormat sdf = new SimpleDateFormat("KK:MM a");
+    				arrivalTimeTv.setText(sdf.format(thisRoute.departureDate));
+    				arrivalTimeTv.setTextSize(32);
+	    		}
+	    		// Display ETA as minutes until arrival
+	    		else{
+	    			arrivalTimeTv.setTextSize(36);
+	    			// Display eta less than 1m as "<1"
+		        	if(eta < 60*1000)
+		        		arrivalTimeTv.setText("<1"); // TODO - remove this? Does countdown tick on start
+		        	else
+		        		arrivalTimeTv.setText(String.valueOf(eta/(1000*60))); // TODO - remove this? Does countdown tick on start
+		        	// Add the timerView to the list of views to be passed to the ViewCountDownTimer
+		        	timerViews.add(arrivalTimeTv);
+	    		}
+	        	
 	    		//new ViewCountDownTimer(arrivalTimeTv, eta, 60*1000).start();
 	    		tr.addView(arrivalTimeTv);
 	    		// Set the Row View (containing train names and times) Tag to the route it represents
@@ -754,7 +768,7 @@ public class TheActivity extends Activity {
 				        .setTitle("Route Alerts")
 				        .setIcon(R.drawable.warning)
 				        .setView(specialScheduleTv)
-				        .setPositiveButton("Bummer", null)
+				        .setPositiveButton("Okay!", null)
 				        .show();
 						
 					}
@@ -930,35 +944,49 @@ public class TheActivity extends Activity {
 		// Display the alert ImageView and create a click listener to display alert html
 		if (etdResponse.message != null){
 
-    		ImageView specialScheduleImageView = (ImageView)View.inflate(c, R.layout.specialschedulelayout, null);
-    		// Tag the specialScheduleImageView with the message html
-    		if(etdResponse.message.contains("No data matched your criteria."))
-    			specialScheduleImageView.setTag("This station is closed for tonight.");
-    		else
+    		// If the response message matches the response for a closed station, 
+			// Display "Closed for tonight" and time of next train, if available.
+    		if(etdResponse.message.contains("No data matched your criteria.")){
+    			String message = "Closed for tonight";
+    			TextView specialScheduleTextView = (TextView)View.inflate(c, R.layout.tabletext, null);
+    			if(etdResponse.etds != null && etdResponse.etds.size() > 0){
+    				Date nextTrain = new Date(etdResponse.date.getTime() + ((etd)etdResponse.etds.get(0)).minutesToArrival*60*1000);
+    				SimpleDateFormat sdf = new SimpleDateFormat("KK:MM a");
+    				message += ". Next train at " + sdf.format(nextTrain);
+    			}
+    			specialScheduleTextView.setText(message);
+    			tableContainerLayout.addView(specialScheduleTextView);
+    		}
+    		else{
+    			// Create an imageview that spawns an alertDialog with BART message
+    			ImageView specialScheduleImageView = (ImageView)View.inflate(c, R.layout.specialschedulelayout, null);
+    			// Tag the specialScheduleImageView with the message html
     			specialScheduleImageView.setTag(Html.fromHtml(etdResponse.message));
-    		
-    		// Set the OnClickListener for the specialScheduleImageView to display the tagged message html
-    		specialScheduleImageView.setOnClickListener(new OnClickListener(){
     			
-				@Override
-				public void onClick(View arg0) {
-				    TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-				    specialScheduleTv.setPadding(0, 0, 0, 0);
-				    specialScheduleTv.setText(Html.fromHtml(arg0.getTag().toString()));
-				    specialScheduleTv.setTextSize(16);
-				    specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
-				    new AlertDialog.Builder(c)
-			        .setTitle("Station Alerts")
-			        .setIcon(R.drawable.warning)
-			        .setView(specialScheduleTv)
-			        .setPositiveButton("Bummer", null)
-			        .show();
-				
-				}
     			
-    		});
-    		
-    		tableContainerLayout.addView(specialScheduleImageView);
+    			// Set the OnClickListener for the specialScheduleImageView to display the tagged message html
+        		specialScheduleImageView.setOnClickListener(new OnClickListener(){
+        			
+    				@Override
+    				public void onClick(View arg0) {
+    				    TextView specialScheduleTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+    				    specialScheduleTv.setPadding(0, 0, 0, 0);
+    				    specialScheduleTv.setText(Html.fromHtml(arg0.getTag().toString()));
+    				    specialScheduleTv.setTextSize(16);
+    				    specialScheduleTv.setMovementMethod(LinkMovementMethod.getInstance());
+    				    new AlertDialog.Builder(c)
+    			        .setTitle("Station Alerts")
+    			        .setIcon(R.drawable.warning)
+    			        .setView(specialScheduleTv)
+    			        .setPositiveButton("Bummer", null)
+    			        .show();
+    				
+    				}
+        			
+        		});
+        		tableContainerLayout.addView(specialScheduleImageView);
+    		}
+	
     	}
 		
 		TableRow tr = (TableRow) View.inflate(c, R.layout.tablerow_right, null);
@@ -1223,11 +1251,13 @@ public class TheActivity extends Activity {
 	// NOTE: CountDownTimer uses departureDate for display and countdown set
 	//		 route used to determine if the route detail row needs to be hidden
 	private boolean routeResponseIsLoopy(routeResponse rR){
+		// A response must report trains arriving greater than MINIMUM_TIME_MS out to be considered valid
+		int MINIMUM_TIME_MS = 1000 * 60;
 		long now = new Date().getTime();
 		//Log.v("DisplayRoute",rR.routes.get(0).departureDate.toString());
 		for(int x = 0; x< rR.routes.size();x++){
 			// if at least one route doesn't have a 0 eta, this response isn't loopy
-			if(rR.routes.get(x).departureDate.getTime() - now > 0){
+			if(rR.routes.get(x).departureDate.getTime() - now > MINIMUM_TIME_MS){
 				return false;
 			}
 		}

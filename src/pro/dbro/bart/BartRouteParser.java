@@ -270,7 +270,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 		//11:15:32 AM PDT
 		
 		//String[] timesplit = time.split(" ");
-		String dateStr = responseDate + " " + responseTime;
+		String dateStr = responseDate + " " + responseTime + " PDT";
 		//Log.v("time split", timesplit.toString());
 		//Log.v("Time",dateStr);
 		curFormater = new SimpleDateFormat("MMM dd, yyyy hh:mm a z"); 
