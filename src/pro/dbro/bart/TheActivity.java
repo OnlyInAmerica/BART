@@ -79,8 +79,6 @@ import android.widget.TextView;
 import com.crittercism.app.Crittercism;
 
 
-// TODO: access to recent stations
-
 public class TheActivity extends Activity {
 	static Context c;
 	TableLayout tableLayout;
@@ -561,8 +559,11 @@ public class TheActivity extends Activity {
 	    	        .setPositiveButton("Bummer", null)
 	    	        .show();
 	    		}
-	    		else
-	    			displayRouteResponse(updateRouteResponseWithEtd((routeResponse)response));
+	    		else{
+	    			// Check that routeResponse routes are in the future. 
+	    			// BART API may return routes from earlier in the night when called after service has stopped
+	    				displayRouteResponse(updateRouteResponseWithEtd((routeResponse)removeExpiredRoutes((routeResponse)response)));
+	    		}
 	    	}
     	}
     	else{
@@ -752,6 +753,17 @@ public class TheActivity extends Activity {
 	    		});
 	    	} // end route iteration
 	    	} // end expiredResponse check
+	    	// expiredResponse == True
+	    	// If a late-night routeResponse includes the next morning's routes, they will be
+	    	// presented with HH:MM ETAs, instead of minutes
+	    	// Else if a late-night routeResponse includes routes from earlier in the evening
+	    	// We will display "This route has stopped for tonight"
+	    	else{
+	    		String message = "This route has stopped for tonight";
+    			TextView specialScheduleTextView = (TextView)View.inflate(c, R.layout.tabletext, null);
+    			specialScheduleTextView.setText(message);
+    			tableContainerLayout.addView(specialScheduleTextView);
+	    	}
 	    	if (routeResponse.specialSchedule != null){
 	    		ImageView specialSchedule = (ImageView)View.inflate(c, R.layout.specialschedulelayout, null);
 	    		specialSchedule.setTag(routeResponse.specialSchedule);
@@ -788,16 +800,27 @@ public class TheActivity extends Activity {
     
     // Update route times with ETAs from cached etd response
     private routeResponse updateRouteResponseWithEtd(routeResponse input){
+    	int numRoutes = input.routes.size();
+    	/***** Preliminary Argument Checks *****/
+    	// If response has no routes (due to filtering by removeExpiredRoutes), return
+    	if(numRoutes == 0)
+    		return input;
     	
+    	// If there is no cached etdResponse to update with, return
     	//TODO: Confirm that currentEtdResponse has all ready been verified fresh
     	if(currentEtdResponse == null)
     		return input;
+    	
+    	// If etdResponse indicates a closed station, return
+    	if(currentEtdResponse.message.contains("No data matched your criteria."))
+    		return input;
+    	/***** End Preliminary Argument Checks *****/
+    	
     	// BUGFIX: Using Date().getTime() could possibly return a time different than BART's API Locale
     	// Bart doesn't provide timezone info in their date responses, so consider whether to coerce their responses to PST
     	// In this instance, we can simply use the time returned with the etd response
     	//long now = new Date().getTime();
     	long now = input.date.getTime();
-    	int numRoutes = input.routes.size();
     	int numEtds = currentEtdResponse.etds.size();
     	int lastLeg;
     	HashMap<Integer,Integer> routeToEtd = new HashMap<Integer, Integer>();
@@ -1286,6 +1309,24 @@ public class TheActivity extends Activity {
                 };
             };
        deviceLocation.getLocation(this, locationResult);
+	}
+	
+	// Remove all routes returned in a RouteResponse that occur before now
+	private routeResponse removeExpiredRoutes(routeResponse response){
+		Date now = new Date();
+		ArrayList indexesToRemove = new ArrayList(response.routes.size());
+		// Fun Fact: Hand-written iteration of ArrayList is 3x faster than the Java enhanced for-loop syntax
+		// See http://developer.android.com/guide/practices/design/performance.html#foreach
+		for(int x = 0; x<response.routes.size();x++){
+			if(((route)response.routes.get(x)).departureDate.before(now)){
+				indexesToRemove.add(x);
+			}
+		}
+		// Remove indexesToRemove from response.routes by descending index
+		for(int x = indexesToRemove.size()-1; x>=0;x--){
+			response.routes.remove(indexesToRemove.get(x));
+		}
+		return response;
 	}
     
 }
