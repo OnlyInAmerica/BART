@@ -579,7 +579,7 @@ public class TheActivity extends Activity {
     //CALLED-BY: handleResponse() if updateUIOnResponse is true
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
-
+    	Log.d("displayRouteResponse","Is this real?: "+routeResponse.toString());
     	// Previously, if the device's locale wasn't in Pacific Standard Time
     	// Responses with all expired routes could present, causing a looping refresh cycle
     	// This is now remedied by coercing response dates into PDT
@@ -598,13 +598,13 @@ public class TheActivity extends Activity {
     	timerViews = new ArrayList(); // release old ETA text views
     	maxTimer = 0;
     	try{
-	    	fareTv.setVisibility(0);
-	    	fareTv.setText("$"+routeResponse.routes.get(0).fare);
 	    	tableLayout.removeAllViews();
 	    	//Log.v("DATE",new Date().toString());
 	    	long now = new Date().getTime();
 	    	
 	    	if(!expiredResponse){  
+    		fareTv.setVisibility(0);
+	    	fareTv.setText("$"+routeResponse.routes.get(0).fare);
 	    	for (int x=0;x<routeResponse.routes.size();x++){
 	    		route thisRoute = routeResponse.routes.get(x);
 
@@ -667,9 +667,9 @@ public class TheActivity extends Activity {
 	        	
 	        	// Print arrival as time, not eta if greater than BART.ETA_THRESHOLD_MS
 	    		if(thisRoute.departureDate.getTime()-now > BART.ETA_THRESHOLD_MS){
-    				SimpleDateFormat sdf = new SimpleDateFormat("KK:MM a");
+    				SimpleDateFormat sdf = new SimpleDateFormat("h:mm a");
     				arrivalTimeTv.setText(sdf.format(thisRoute.departureDate));
-    				arrivalTimeTv.setTextSize(32);
+    				arrivalTimeTv.setTextSize(20);
 	    		}
 	    		// Display ETA as minutes until arrival
 	    		else{
@@ -762,6 +762,7 @@ public class TheActivity extends Activity {
 	    		String message = "This route has stopped for tonight";
     			TextView specialScheduleTextView = (TextView)View.inflate(c, R.layout.tabletext, null);
     			specialScheduleTextView.setText(message);
+    			specialScheduleTextView.setPadding(0, 0, 0, 0);
     			tableContainerLayout.addView(specialScheduleTextView);
 	    	}
 	    	if (routeResponse.specialSchedule != null){
@@ -786,7 +787,7 @@ public class TheActivity extends Activity {
 					}
 	    			
 	    		});
-	    		tableLayout.addView(specialSchedule, tableLayout.getChildCount());
+	    		tableContainerLayout.addView(specialSchedule);
 	    	}
 	    	// Don't set timer if response is expired
 	    	if(!expiredResponse){
@@ -970,8 +971,9 @@ public class TheActivity extends Activity {
     		// If the response message matches the response for a closed station, 
 			// Display "Closed for tonight" and time of next train, if available.
     		if(etdResponse.message.contains("No data matched your criteria.")){
-    			String message = "Closed for tonight";
+    			String message = "This station is closed for tonight";
     			TextView specialScheduleTextView = (TextView)View.inflate(c, R.layout.tabletext, null);
+    			specialScheduleTextView.setPadding(0, 0, 0, 0);
     			if(etdResponse.etds != null && etdResponse.etds.size() > 0){
     				Date nextTrain = new Date(etdResponse.date.getTime() + ((etd)etdResponse.etds.get(0)).minutesToArrival*60*1000);
     				SimpleDateFormat sdf = new SimpleDateFormat("KK:MM a");
@@ -1313,19 +1315,21 @@ public class TheActivity extends Activity {
 	
 	// Remove all routes returned in a RouteResponse that occur before now
 	private routeResponse removeExpiredRoutes(routeResponse response){
+		Log.d("preRemoveExpiredRoutes",response.toString());
 		Date now = new Date();
 		ArrayList indexesToRemove = new ArrayList(response.routes.size());
 		// Fun Fact: Hand-written iteration of ArrayList is 3x faster than the Java enhanced for-loop syntax
 		// See http://developer.android.com/guide/practices/design/performance.html#foreach
 		for(int x = 0; x<response.routes.size();x++){
-			if(((route)response.routes.get(x)).departureDate.before(now)){
+			if(((route)response.routes.get(x)).departureDate.after(now)){
 				indexesToRemove.add(x);
 			}
 		}
 		// Remove indexesToRemove from response.routes by descending index
 		for(int x = indexesToRemove.size()-1; x>=0;x--){
-			response.routes.remove(indexesToRemove.get(x));
+			response.routes.remove(Integer.parseInt(indexesToRemove.get(x).toString()));
 		}
+		Log.d("postRemoveExpiredRoutes",response.toString());
 		return response;
 	}
     

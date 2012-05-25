@@ -83,7 +83,7 @@ public class RequestTask extends AsyncTask<String, String, String> {
 	
 	private void sendMessage(String result) { // 0 = service stopped , 1 = service started, 2 = refresh view with call to bartApiRequest(), 3 = 
 	  	  int status = 3; // hardcode status for calling TheActivity.parseBart
-		  Log.d("BART_Response", result);
+		  //Log.d("BART_Response", result);
 	  	  Intent intent = new Intent("service_status_change");
 	  	  // You can also include some extra data.
 	  	  intent.putExtra("status", status);
