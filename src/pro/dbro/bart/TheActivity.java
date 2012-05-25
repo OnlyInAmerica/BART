@@ -813,8 +813,11 @@ public class TheActivity extends Activity {
     		return input;
     	
     	// If etdResponse indicates a closed station, return
-    	if(currentEtdResponse.message.contains("No data matched your criteria."))
-    		return input;
+    	if(currentEtdResponse.message != null){
+    		if(currentEtdResponse.message.contains("No data matched your criteria."))
+    			return input;
+    	}
+    		
     	/***** End Preliminary Argument Checks *****/
     	
     	// BUGFIX: Using Date().getTime() could possibly return a time different than BART's API Locale
@@ -1321,7 +1324,7 @@ public class TheActivity extends Activity {
 		// Fun Fact: Hand-written iteration of ArrayList is 3x faster than the Java enhanced for-loop syntax
 		// See http://developer.android.com/guide/practices/design/performance.html#foreach
 		for(int x = 0; x<response.routes.size();x++){
-			if(((route)response.routes.get(x)).departureDate.after(now)){
+			if(((route)response.routes.get(x)).departureDate.before(now)){
 				indexesToRemove.add(x);
 			}
 		}
