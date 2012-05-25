@@ -497,6 +497,7 @@ public class TheActivity extends Activity {
     	}
     	url += "&key="+BART.API_KEY;
     	Log.d("BART API",url);
+    	Crittercism.leaveBreadcrumb("BART API: "+ url);
     	new RequestTask(request, updateUI).execute(url);
     	// Set loading indicator
     	// I find this jarring when network latency is low
@@ -547,17 +548,7 @@ public class TheActivity extends Activity {
 	    		// BartRouteParser removes routes that have bunk date info
 	    		// If all routes removed, alert user
 	    		if( ((routeResponse)response).routes.size() == 0){
-	    			TextView crashTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-	    			crashTv.setText(Html.fromHtml(res.getStringArray(R.array.crashCatchDialog)[1]));
-	    			crashTv.setTextSize(18);
-	    			crashTv.setPadding(0, 0, 0, 0);
-	    			crashTv.setMovementMethod(LinkMovementMethod.getInstance());
-	    			new AlertDialog.Builder(c)
-	    	        .setTitle(res.getStringArray(R.array.crashCatchDialog)[0])
-	    	        .setView(crashTv)
-	    	        .setIcon(R.drawable.sad_mac)
-	    	        .setPositiveButton("Bummer", null)
-	    	        .show();
+	    			showErrorDialog("");
 	    		}
 	    		else{
 	    			// Check that routeResponse routes are in the future. 
@@ -1215,6 +1206,9 @@ public class TheActivity extends Activity {
     	    	// i.e: after BART service has ended for a station
     	    	handleResponse(intent.getSerializableExtra("result"), intent.getBooleanExtra("updateUI", true));
     	    }
+    	    else if(status == 13){ // Error from BartStationParser
+    	    	showErrorDialog(intent.getStringExtra("message"));
+    	    }
     	    
     	  }
     	};
@@ -1334,6 +1328,24 @@ public class TheActivity extends Activity {
 		}
 		Log.d("postRemoveExpiredRoutes",response.toString());
 		return response;
+	}
+	
+	// Displays an error dialog with a generic error if message is an empty string
+	private void showErrorDialog(String message){
+		TextView crashTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+		if(message.compareTo("") == 0)
+			crashTv.setText(Html.fromHtml(res.getStringArray(R.array.crashCatchDialog)[1]));
+		else
+			crashTv.setText(message);
+		crashTv.setTextSize(18);
+		crashTv.setPadding(0, 0, 0, 0);
+		crashTv.setMovementMethod(LinkMovementMethod.getInstance());
+		new AlertDialog.Builder(c)
+        .setTitle(res.getStringArray(R.array.crashCatchDialog)[0])
+        .setView(crashTv)
+        .setIcon(R.drawable.sad_mac)
+        .setPositiveButton("Bummer", null)
+        .show();
 	}
     
 }

@@ -24,16 +24,15 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 
 import pro.dbro.bart.TheActivity;
 
 import com.thebuzzmedia.sjxp.XMLParser;
+import com.thebuzzmedia.sjxp.XMLParserException;
 import com.thebuzzmedia.sjxp.rule.DefaultRule;
 import com.thebuzzmedia.sjxp.rule.IRule;
 import com.thebuzzmedia.sjxp.rule.IRule.Type;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v4.content.LocalBroadcastManager;
@@ -150,8 +149,17 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 			}
 		};
 		XMLParser parser = new XMLParser(stationRule, timeRule, dateRule, estTagRule, destinationRule, minuteRule, platformRule, bikeRule, warningRule);
-		parser.parse(bais);
+		try{
+			parser.parse(bais); // CRASH: XMLPullParserException
+		}
+		catch(XMLParserException e){
+			// Send a message to TheActivity to display an error dialog
+			// Then cancel this AsyncTask
+			sendError("Open BART received a malformed response. Please try again.");
+			this.cancel(true);
+		}
 		//11:15:32 AM PDT
+		
 		
 		//String[] timesplit = time.split(" ");
 		String dateStr = date + " " + time;
@@ -190,6 +198,14 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 	  	  //intent.putExtra("result",(CharSequence)result);
 	  	  intent.putExtra("updateUI", updateUI);
 	  	  LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
-	  	}
+	}
+	
+	private void sendError(String message){
+		int status = 13;
+		Intent intent = new Intent("service_status_change");
+		intent.putExtra("status", status);
+		intent.putExtra("message", message);
+		LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
+	}
 
 }

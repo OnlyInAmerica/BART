@@ -27,6 +27,7 @@ import java.util.Date;
 
 import com.crittercism.app.Crittercism;
 import com.thebuzzmedia.sjxp.XMLParser;
+import com.thebuzzmedia.sjxp.XMLParserException;
 import com.thebuzzmedia.sjxp.rule.DefaultRule;
 import com.thebuzzmedia.sjxp.rule.IRule;
 import com.thebuzzmedia.sjxp.rule.IRule.Type;
@@ -266,7 +267,15 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 		};
 		
 		XMLParser parser = new XMLParser(originStationRule, destinationStationRule, timeRule, dateRule, tripAttributeRule, tripTagRule, legAttributeRule, specialScheduleRule);
-		parser.parse(bais);
+		try{
+			parser.parse(bais);
+		}
+		catch(XMLParserException e){
+			// Send a message to TheActivity to display an error dialog
+			// Then cancel this AsyncTask
+			sendError("Open BART received a malformed response. Please try again.");
+			this.cancel(true);
+		}
 		//11:15:32 AM PDT
 		
 		//String[] timesplit = time.split(" ");
@@ -304,6 +313,15 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 	  	  //intent.putExtra("result",(CharSequence)result);
 	  	  intent.putExtra("updateUI", updateUI);
 	  	  LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
-	  	}
+	}
+	
+	// Send a LocalBroadCast message to TheActivity indicating an error
+	private void sendError(String message){
+		int status = 13;
+		Intent intent = new Intent("service_status_change");
+		intent.putExtra("status", status);
+		intent.putExtra("message", message);
+		LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
+	}
 
 }
