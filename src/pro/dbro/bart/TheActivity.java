@@ -575,14 +575,10 @@ public class TheActivity extends Activity {
     	// Responses with all expired routes could present, causing a looping refresh cycle
     	// This is now remedied by coercing response dates into PDT
     	boolean expiredResponse = false;
-    	if(routeResponseIsLoopy(routeResponse)){
-    		Log.d("Loopy RouteResponse","durn loops");
+    	if(routeResponse.routes.size() == 0){
+    		Log.d("displayRouteResponse","no routes to display");
     		expiredResponse = true;
     	}
-    	else{
-    		Log.d("NonLoopy RouteResponse","all good");
-    	}
-    	
     		
     	if(timer != null)
     		timer.cancel(); // cancel previous timer
@@ -657,7 +653,7 @@ public class TheActivity extends Activity {
 	        	arrivalTimeTv.setTag(thisRoute.departureDate.getTime());
 	        	
 	        	// Print arrival as time, not eta if greater than BART.ETA_THRESHOLD_MS
-	    		if(thisRoute.departureDate.getTime()-now > BART.ETA_THRESHOLD_MS){
+	    		if(thisRoute.departureDate.getTime()-now > BART.ETA_IN_MINUTES_THRESHOLD_MS){
     				SimpleDateFormat sdf = new SimpleDateFormat("h:mm a");
     				arrivalTimeTv.setText(sdf.format(thisRoute.departureDate));
     				arrivalTimeTv.setTextSize(20);
@@ -754,7 +750,7 @@ public class TheActivity extends Activity {
     			TextView specialScheduleTextView = (TextView)View.inflate(c, R.layout.tabletext, null);
     			specialScheduleTextView.setText(message);
     			specialScheduleTextView.setPadding(0, 0, 0, 0);
-    			tableContainerLayout.addView(specialScheduleTextView);
+    			tableLayout.addView(specialScheduleTextView);
 	    	}
 	    	if (routeResponse.specialSchedule != null){
 	    		ImageView specialSchedule = (ImageView)View.inflate(c, R.layout.specialschedulelayout, null);
@@ -778,7 +774,7 @@ public class TheActivity extends Activity {
 					}
 	    			
 	    		});
-	    		tableContainerLayout.addView(specialSchedule);
+	    		tableLayout.addView(specialSchedule);
 	    	}
 	    	// Don't set timer if response is expired
 	    	if(!expiredResponse){
@@ -974,7 +970,7 @@ public class TheActivity extends Activity {
     				message += ". Next train at " + sdf.format(nextTrain);
     			}
     			specialScheduleTextView.setText(message);
-    			tableContainerLayout.addView(specialScheduleTextView);
+    			tableLayout.addView(specialScheduleTextView);
     		}
     		else{
     			// Create an imageview that spawns an alertDialog with BART message
@@ -1003,7 +999,7 @@ public class TheActivity extends Activity {
     				}
         			
         		});
-        		tableContainerLayout.addView(specialScheduleImageView);
+        		tableLayout.addView(specialScheduleImageView);
     		}
 	
     	}
@@ -1268,24 +1264,6 @@ public class TheActivity extends Activity {
 	  	  intent.putExtra("etdResponse", (Serializable) currentEtdResponse);
 	  	  LocalBroadcastManager.getInstance(TheActivity.c).sendBroadcast(intent);
 	  	}
-	
-	// DEBUG method to check if route response contains all 0m entries
-	// NOTE: CountDownTimer uses departureDate for display and countdown set
-	//		 route used to determine if the route detail row needs to be hidden
-	private boolean routeResponseIsLoopy(routeResponse rR){
-		// A response must report trains arriving greater than MINIMUM_TIME_MS out to be considered valid
-		int MINIMUM_TIME_MS = 1000 * 60;
-		long now = new Date().getTime();
-		//Log.v("DisplayRoute",rR.routes.get(0).departureDate.toString());
-		for(int x = 0; x< rR.routes.size();x++){
-			// if at least one route doesn't have a 0 eta, this response isn't loopy
-			if(rR.routes.get(x).departureDate.getTime() - now > MINIMUM_TIME_MS){
-				return false;
-			}
-		}
-		// this response has all 0 etas, so it's loopy
-		return true;
-	}
 
 	
 	// Registers with LocationService to update appropriate class variables
@@ -1311,14 +1289,22 @@ public class TheActivity extends Activity {
 	}
 	
 	// Remove all routes returned in a RouteResponse that occur before now
+	// and all routes that occur more than BART.ETA_DISPLAY_THRESHOLD_MS out
+	// the latter rule accounts for a bug in BART's feed occurring after business hours
 	private routeResponse removeExpiredRoutes(routeResponse response){
+		long MINIMUM_TIME_MS = 1000 * 60;
 		Log.d("preRemoveExpiredRoutes",response.toString());
 		Date now = new Date();
 		ArrayList indexesToRemove = new ArrayList(response.routes.size());
 		// Fun Fact: Hand-written iteration of ArrayList is 3x faster than the Java enhanced for-loop syntax
 		// See http://developer.android.com/guide/practices/design/performance.html#foreach
 		for(int x = 0; x<response.routes.size();x++){
-			if(((route)response.routes.get(x)).departureDate.before(now)){
+			// If a returned route departs before the current time, remove it
+			if(((route)response.routes.get(x)).departureDate.getTime() - now.getTime() < MINIMUM_TIME_MS ){
+				indexesToRemove.add(x);
+			}
+			// If a returned route occurs more than BART.ETA_DISPLAY_THRESHOLD_MS out, remove it
+			else if(((route)response.routes.get(x)).departureDate.getTime() - now.getTime() > BART.ETA_DISPLAY_THRESHOLD_MS){
 				indexesToRemove.add(x);
 			}
 		}

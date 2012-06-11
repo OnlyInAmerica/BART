@@ -24,6 +24,8 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import com.crittercism.app.Crittercism;
 import com.thebuzzmedia.sjxp.XMLParser;
@@ -48,6 +50,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 	String legDate;
 	SimpleDateFormat curFormater;
 	Date dateObj;
+	TimeZone tz = TimeZone.getTimeZone("America/Los_Angeles");
 	boolean updateUI;
 	
 	//DEBUGGING
@@ -139,34 +142,34 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 					String originDateStr = routeOriginDate + " " + routeOriginTime;
 					String destinationDateStr = routeDestinationDate + " " + routeDestinationTime;
 					// Bart Route responses don't indicate timezone (?), though etd responses do
-					// Comparing them, it appears the route response is always in PDT
-					// Therefore, I'll append PDT to the date strings
+					// Set SimpleDateFormat TimeZone to America/Los-Angeles
 					// This ensures the application can correctly combine etd responses (with timezone) and route (without)
-					// Even if the application is run on a device who's locale isn't PDT
-					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a z"); 
+					// Even if the application is run on a device who's locale differs from BARTs (PST)
+					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a", Locale.US); 
+					curFormater.setTimeZone(tz);
 					try {
-						Log.d("BartRouteParserEndTrip","originDate: " + originDateStr + "destDate: " + destinationDateStr);
-						thisRoute.departureDate = curFormater.parse(originDateStr+" PDT");//append BART response timezone
-						thisRoute.arrivalDate = curFormater.parse(destinationDateStr+" PDT");//append BART response timezone
+						Log.d("BartRouteParserEndTrip","originDate: " + originDateStr + " destDate: " + destinationDateStr);
+						thisRoute.departureDate = curFormater.parse(originDateStr);//append BART response timezone
+						thisRoute.arrivalDate = curFormater.parse(destinationDateStr);//append BART response timezone
 					} catch (ParseException e) {
-						Log.d("BartRouteParserEndTrip","PDT coerced parse failed");
+						Log.d("BartRouteParserEndTrip","non-PDT coerced parse failed");
 						// TODO Auto-generated catch block
 						// 5.15.2012: I've received multiple crashes here. Something's going on related to irregular time format...
 						// IF coercing PDT fails, try without at the risk of displaying incorrect time
-						try{
+						/*try{
 							Crittercism.leaveBreadcrumb(Log.getStackTraceString(e));
 							thisRoute.departureDate = curFormater.parse(originDateStr);
 							thisRoute.arrivalDate = curFormater.parse(destinationDateStr);
 						}
-						catch(ParseException e2){
-							Log.d("BartRouteParserEndTrip","non-PDT coerced parse failed");
-							Log.d("BartRouteParserEndTrip_DateString", "origin: " + originDateStr+" , destination: "+destinationDateStr+" PDT");
+						catch(ParseException e2){*/
+							Log.d("BartRouteParserEndTrip","non-PST coerced parse failed");
+							Log.d("BartRouteParserEndTrip_DateString", "origin: " + originDateStr+" , destination: "+destinationDateStr);
 							Log.d("BartRouteParserEndTripException",e.getClass().toString() + ": " + e.getMessage());
-							Crittercism.leaveBreadcrumb(originDateStr+" PDT , "+destinationDateStr+" PDT");
-							Crittercism.leaveBreadcrumb(Log.getStackTraceString(e2));
-							Crittercism.logHandledException(e2);
+							Crittercism.leaveBreadcrumb(originDateStr+" , "+destinationDateStr);
+							Crittercism.leaveBreadcrumb(Log.getStackTraceString(e));
+							Crittercism.logHandledException(e);
 							dateError = true;
-						}
+						//}
 					}
 					if(!dateError)
 						Log.d("RouteParserDate","depart: " + thisRoute.departureDate.toString() + " arrive: " + thisRoute.arrivalDate.toString());
@@ -217,32 +220,35 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 				case 4: // board date
 					legDate = value;
 					dateStr = legDate + " " + legTime;
-					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a z"); 
+					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a", Locale.US); 
+					curFormater.setTimeZone(tz);
 					thisRoute = response.getLastRoute();
 					thisLeg = thisRoute.getLastLeg();
 					try {
-						thisLeg.boardTime = curFormater.parse(dateStr+ " PDT"); //append BART response timezone
+						thisLeg.boardTime = curFormater.parse(dateStr); 
 					} catch (ParseException e) {
-						// TODO Auto-generated catch block
+						Log.d("BartRouteParser","boardTime unparseable: "+ dateStr);
 						e.printStackTrace();
 					}
 					break;
 				
-				case 5: // board time
+				case 5: // dest time
 					legTime = value;
 					break;
 				
-				case 6: // board date
+				case 6: // dest date
 					legDate = value;
 					//assume date always follows time:
 					dateStr = legDate + " " + legTime;
-					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a z"); 
+					curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm a", Locale.US); 
+					curFormater.setTimeZone(tz);
 					thisRoute = response.getLastRoute();
 					thisLeg = thisRoute.getLastLeg();
 					try {
-						thisLeg.disembarkTime = curFormater.parse(dateStr + " PDT"); // append BART response timezone
+						thisLeg.disembarkTime = curFormater.parse(dateStr);
 					} catch (ParseException e) {
 						// TODO Auto-generated catch block
+						Log.d("BartRouteParser","disembarkTime unparseable: "+ dateStr);
 						e.printStackTrace();
 					}
 					break;
@@ -279,10 +285,11 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 		//11:15:32 AM PDT
 		
 		//String[] timesplit = time.split(" ");
-		String dateStr = responseDate + " " + responseTime + " PDT";
+		String dateStr = responseDate + " " + responseTime + " PST";
 		//Log.v("time split", timesplit.toString());
 		//Log.v("Time",dateStr);
-		curFormater = new SimpleDateFormat("MMM dd, yyyy hh:mm a z"); 
+		curFormater = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.US); 
+		curFormater.setTimeZone(tz);
 		Date dateObj = new Date();
 		try {
 			dateObj = curFormater.parse(dateStr);

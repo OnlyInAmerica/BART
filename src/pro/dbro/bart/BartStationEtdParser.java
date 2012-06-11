@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import pro.dbro.bart.TheActivity;
 
@@ -164,16 +165,18 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 		//String[] timesplit = time.split(" ");
 		String dateStr = date + " " + time;
 		//Log.v("time split", timesplit.toString());
-		//Log.v("Time",dateStr);
-		// etd time includes timezone info
-		SimpleDateFormat curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a z"); 
+		Log.d("BartStationEtdParser","dateStr: "+ dateStr);
+		/* Example etdResponse data/time data:
+		 * <date>06/11/2012</date>
+		 * <time>01:11:16 PM PDT</time>
+		 */
+		SimpleDateFormat curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a z", Locale.US); 
 		Date dateObj = new Date();
 		try {
 			dateObj = curFormater.parse(dateStr);
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			//Log.v("XMLParse", "date formatting error");
 			e.printStackTrace();
+			// If this fails, dateObj will have value of current device datetime
 		} 
 		response.date = dateObj;
 		Log.d("EtdParserDate",response.date.toString());
