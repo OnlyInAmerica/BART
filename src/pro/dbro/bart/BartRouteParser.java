@@ -93,7 +93,8 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 		IRule specialScheduleRule = new DefaultRule(Type.CHARACTER, "/root/message/special_schedule") {
 			@Override
 			public void handleParsedCharacters(XMLParser parser, String text, Object userObject) {
-				response.specialSchedule = text;
+				//fix for BART returning relative, not absolute, links
+				response.specialSchedule = text.replace("href=\"/", "href=\"http://bart.gov/");
 			}
 		};
 		// origin="DBRK" destination="WCRK" fare="3.15" origTimeMin="3:18 PM" origTimeDate="03/16/2012 " destTimeMin="3:44 PM" destTimeDate="03/16/2012"

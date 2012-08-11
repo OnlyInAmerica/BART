@@ -42,6 +42,7 @@ public class RequestTask extends AsyncTask<String, String, String> {
 	boolean updateUI;
 	
 	RequestTask(String request, boolean updateUI) {
+		super();
 		this.request = request;
         this.updateUI = updateUI;
     }
