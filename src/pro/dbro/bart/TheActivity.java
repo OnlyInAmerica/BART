@@ -517,12 +517,17 @@ public class TheActivity extends Activity {
     	// Clear loading indicator
     	//fareTv.setText("");
     	//fareTv.setVisibility(View.GONE);
+    	
+    	// if the response was not initiated by the user (updateUI is false)
+    	// fail silently
     	if (response=="error"){
-			new AlertDialog.Builder(c)
-	        .setTitle(res.getStringArray(R.array.networkErrorDialog)[0])
-	        .setMessage(res.getStringArray(R.array.networkErrorDialog)[1])
-	        .setPositiveButton("Bummer", null)
-	        .show();
+    		if(updateUI){
+				new AlertDialog.Builder(c)
+		        .setTitle(res.getStringArray(R.array.networkErrorDialog)[0])
+		        .setMessage(res.getStringArray(R.array.networkErrorDialog)[1])
+		        .setPositiveButton("Bummer", null)
+		        .show();
+    		}
     	}
     	else if(request.compareTo("etd") == 0)
     		new BartStationEtdParser(updateUI).execute(response);
