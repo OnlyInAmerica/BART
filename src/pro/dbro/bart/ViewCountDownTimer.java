@@ -37,6 +37,9 @@ public class ViewCountDownTimer extends CountDownTimer {
 	// type of request: "etd" or "route" This reveals the format of views within timerViews
 	String request;
 	
+	// absolute time when countdown will be finished in ms since 1970
+	public static long expiryTime;
+	
 	static final long DEPARTING_TRAIN_PADDING_MS = 15*1000; // how long after departure should we display train?
 															  // since timer polls only once per minute setting <60s
 															  // only effectively removes trains leaving when request is first sent
@@ -53,6 +56,7 @@ public class ViewCountDownTimer extends CountDownTimer {
 		COUNTDOWN_TIME_MS = millisInFuture;
 		timerViews = tViews;
 		this.request = request;
+		expiryTime = new Date().getTime() + millisInFuture;
 		
 	}
 

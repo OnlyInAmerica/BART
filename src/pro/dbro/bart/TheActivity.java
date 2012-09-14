@@ -92,7 +92,7 @@ public class TheActivity extends Activity {
 	LinearLayout infoLayout;
 	
 	ArrayList timerViews = new ArrayList();
-	CountDownTimer timer;
+	static ViewCountDownTimer timer;
 	long maxTimer = 0;
 	
 	ArrayList<StationSuggestion> stationSuggestions;
@@ -1212,6 +1212,14 @@ public class TheActivity extends Activity {
 	@Override
 	protected void onResume() {
 		//Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
+		
+		// Force timer to refresh all on-screen estimates
+		if(timer != null){
+			long msUntilTimerExpiry = timer.expiryTime - new Date().getTime();
+			if(msUntilTimerExpiry > 0){
+				timer.onTick(msUntilTimerExpiry);
+			}
+		}
 		if(usherServiceIsRunning()){
 			stopServiceTv.setVisibility(0);
         	stopServiceTv.setOnClickListener(new OnClickListener(){
