@@ -1218,12 +1218,17 @@ public class TheActivity extends Activity {
 	protected void onResume() {
 		//Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
 		
-		// Force timer to refresh all on-screen estimates
+		// If a timer is active, force it to refresh all on-screen estimates
 		if(timer != null){
 			long msUntilTimerExpiry = timer.expiryTime - new Date().getTime();
 			if(msUntilTimerExpiry > 0){
 				timer.onTick(msUntilTimerExpiry);
 			}
+		}
+		// Else if a timer is not active, check if a request can be made
+		// on the current input
+		else{
+			validateInputAndDoRequest();
 		}
 		if(usherServiceIsRunning()){
 			stopServiceTv.setVisibility(0);

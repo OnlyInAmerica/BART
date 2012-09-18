@@ -45,6 +45,9 @@ public class ViewCountDownTimer extends CountDownTimer {
 															  // only effectively removes trains leaving when request is first sent
 	static final long MINIMUM_TICK_MS = 1*1000; // disable timer from ticking onStart(); Causes flickering when set on view that has just been
 												 // populated with a time. 
+	final long MINIMUM_TIME_FOR_REFRESH_MS = 60 * 1000; // If the timer is initialized with a time 
+														// less than this value, don't request new data
+														// on timer expiry
 	private long COUNTDOWN_TIME_MS; // initial countdown time
 
 	public ViewCountDownTimer(long millisInFuture, long countDownInterval) {
@@ -63,8 +66,9 @@ public class ViewCountDownTimer extends CountDownTimer {
 	@Override
 	public void onFinish() {
 		// TODO Auto-generated method stub
-		//broadcast message to TheActivity to refresh data from the BART API
-		sendMessage(2);
+		// broadcast message to TheActivity to refresh data from the BART API
+		if(COUNTDOWN_TIME_MS > MINIMUM_TIME_FOR_REFRESH_MS)
+			sendMessage(2);
 	}
 
 	@Override
