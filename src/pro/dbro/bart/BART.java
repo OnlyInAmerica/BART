@@ -5,6 +5,10 @@ import java.util.HashMap;
 import java.util.Set;
 
 public class BART {
+	
+	// ***** DEVELOPMENT SETTINGS *****
+	public final static boolean USE_LOCAL_RESPONSES = false; // Whether to direct all requests to the etd / route response stored in assets
+	
 	// *****  BART API Data  *****
 	public final static String API_ROOT = "http://api.bart.gov/api/";
 	// The public BART API key is: MW9S-E7SL-26DU-VV8V

@@ -286,7 +286,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 		//11:15:32 AM PDT
 		
 		//String[] timesplit = time.split(" ");
-		String dateStr = responseDate + " " + responseTime + " PST";
+		String dateStr = responseDate + " " + responseTime;
 		//Log.v("time split", timesplit.toString());
 		//Log.v("Time",dateStr);
 		curFormater = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.US); 
@@ -297,6 +297,7 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 		} catch (ParseException e) {
 			// TODO Auto-generated catch block
 			//Log.v("XMLParse", "date formatting error");
+			Log.d("BartRouteParser","Response date parse error");
 			e.printStackTrace();
 		} 
 		response.date = dateObj;

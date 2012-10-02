@@ -19,8 +19,10 @@
 
 package pro.dbro.bart;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -48,6 +50,27 @@ public class RequestTask extends AsyncTask<String, String, String> {
     }
 	@Override
 	protected String doInBackground(String... uri) {
+		if(BART.USE_LOCAL_RESPONSES){
+			Log.d("RequestTask","Using local responses");
+			try {
+				String filename = null;
+				if (request.compareTo("etd") == 0)
+					filename = "problem_etd.aspx.xml";
+				else
+					filename = "problem_sched.aspx.xml";
+				
+				 BufferedReader r = new BufferedReader(new InputStreamReader((TheActivity.c.getAssets().open(filename))));
+				 StringBuilder total = new StringBuilder();
+				 String line;
+				 while ((line = r.readLine()) != null) {
+				     total.append(line);
+				 }
+				 return total.toString();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		HttpClient httpclient = new DefaultHttpClient();
         HttpResponse response;
         String responseString = null;

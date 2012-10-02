@@ -79,6 +79,7 @@ public class UsherService extends Service {
     
     @Override
     public void onCreate() {
+    	super.onCreate();
     	c = this;
         mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
         //Log.v("Usher","OnCreate");

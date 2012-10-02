@@ -493,7 +493,7 @@ public class TheActivity extends Activity {
     		url += "etd.aspx?cmd=etd&orig="+BART.STATION_MAP.get(originTextView.getText().toString());
     	}
     	else if (request.compareTo("route") == 0){
-    		url += "sched.aspx?cmd=depart&a=3&b=0&orig="+BART.STATION_MAP.get(originTextView.getText().toString())+"&dest="+BART.STATION_MAP.get(destinationTextView.getText().toString());
+    		url += "sched.aspx?cmd=depart&a=4&b=0&orig="+BART.STATION_MAP.get(originTextView.getText().toString())+"&dest="+BART.STATION_MAP.get(destinationTextView.getText().toString());
     	}
     	url += "&key="+BART.API_KEY;
     	Log.d("BART API",url);
@@ -575,10 +575,10 @@ public class TheActivity extends Activity {
     //CALLED-BY: handleResponse() if updateUIOnResponse is true
     //Updates the UI with data from a routeResponse
     public void displayRouteResponse(routeResponse routeResponse){
-    	Log.d("displayRouteResponse","Is this real?: "+routeResponse.toString());
+    	// Log.d("displayRouteResponse","Is this real?: "+routeResponse.toString());
     	// Previously, if the device's locale wasn't in Pacific Standard Time
     	// Responses with all expired routes could present, causing a looping refresh cycle
-    	// This is now remedied by coercing response dates into PDT
+    	// This is now remedied by coercing response dates into PST
     	boolean expiredResponse = false;
     	if(routeResponse.routes.size() == 0){
     		Log.d("displayRouteResponse","no routes to display");

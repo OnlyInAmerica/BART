@@ -25,6 +25,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import pro.dbro.bart.TheActivity;
 
@@ -45,6 +46,7 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 	//we combine them into one Java Date
 	private String date = new String();
 	private String time = new String();
+	TimeZone tz = TimeZone.getTimeZone("America/Los_Angeles");
 	boolean updateUI;
 	
 	BartStationEtdParser(boolean updateUI) {
@@ -171,7 +173,10 @@ public class BartStationEtdParser extends AsyncTask<String, String, etdResponse>
 		 * <time>01:11:16 PM PDT</time>
 		 */
 		SimpleDateFormat curFormater = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a z", Locale.US); 
+		//curFormater.setTimeZone(tz);
+		
 		Date dateObj = new Date();
+		Log.d("BartStationEtdParser","expected dateStr format: " + curFormater.format(dateObj) + "DST: "+ String.valueOf(tz.inDaylightTime(dateObj)));
 		try {
 			dateObj = curFormater.parse(dateStr);
 		} catch (ParseException e) {
