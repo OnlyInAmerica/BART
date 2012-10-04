@@ -30,10 +30,12 @@ import java.util.Set;
 
 import pro.dbro.bart.DeviceLocation.LocationResult;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -42,9 +44,15 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.location.Location;
+import android.nfc.NfcAdapter;
+import android.nfc.tech.IsoDep;
+import android.nfc.tech.MifareClassic;
+import android.nfc.tech.MifareUltralight;
+import android.nfc.tech.NfcF;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
 import android.text.Html;
@@ -80,6 +88,11 @@ import com.crittercism.app.Crittercism;
 
 
 public class TheActivity extends Activity {
+	// NFC test stuff
+	private NfcAdapter mNfcAdapter;
+    private PendingIntent mPendingIntent;
+    private String[][] mTechLists;
+    
 	static Context c;
 	TableLayout tableLayout;
 	LinearLayout tableContainerLayout;
@@ -129,6 +142,11 @@ public class TheActivity extends Activity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        if(Build.VERSION.SDK_INT >= 10){
+        	setupNFC();
+        }
+        
         //TESTING: enable crittercism
         Crittercism.init(getApplicationContext(), SECRETS.CRITTERCISM_SECRET);
 
@@ -1214,8 +1232,12 @@ public class TheActivity extends Activity {
     	  }
     	};
     	
+	@SuppressLint("NewApi")
 	@Override
 	protected void onResume() {
+		
+		if(Build.VERSION.SDK_INT >= 10)
+			mNfcAdapter.enableForegroundDispatch(this, mPendingIntent, null, mTechLists);
 		//Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
 		
 		// If a timer is active, force it to refresh all on-screen estimates
@@ -1350,6 +1372,50 @@ public class TheActivity extends Activity {
         .setIcon(R.drawable.sad_mac)
         .setPositiveButton("Bummer", null)
         .show();
+	}
+	
+	@SuppressLint("NewApi")
+	private void checkNfcEnabled()
+    {
+		if (mNfcAdapter.isEnabled()) {
+            return;
+        }
+        new AlertDialog.Builder(TheActivity.this)
+            .setTitle("NFC Off")
+            .setMessage("If your phone supports NFC, turn it on to read your Clipper Card balance!")
+            .setCancelable(true)
+            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    dialog.dismiss();
+                }
+            })
+            .setNeutralButton("Go to Settings", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
+                }
+            })
+            .show();
+	}
+	
+	@SuppressLint("NewApi")
+	public void setupNFC(){
+		// NFC stuff
+        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        checkNfcEnabled();
+
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.setType("vnd.android.cursor.dir/com.codebutler.farebot.card");
+        //intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
+        mPendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
+        
+        mTechLists = new String[][] {
+            new String[] { IsoDep.class.getName() },
+            new String[] { MifareClassic.class.getName() },
+            new String[] { MifareUltralight.class.getName() },
+            new String[] { NfcF.class.getName() }
+        };
 	}
     
 }

@@ -6,29 +6,42 @@
     android:focusableInTouchMode="true"
     android:orientation="vertical" >
 
-    <LinearLayout
+    <RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="1.0" >
+        android:layout_height="100dp" >
 
         <ImageView
             android:id="@+id/map"
             android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
             android:layout_gravity="center"
             android:layout_marginRight="5dp"
-            android:layout_weight=".15"
             android:contentDescription="map"
             android:src="@drawable/map" />
+
+        <ImageView
+            android:id="@+id/reverse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_gravity="center"
+            android:layout_marginLeft="5dp"
+            android:contentDescription="reverse"
+            android:src="@drawable/shuffle" />
 
         <LinearLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
             android:id="@+id/inputLinearLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight=".70"
+            android:layout_toLeftOf="@id/reverse"
+            android:layout_toRightOf="@id/map"
             android:orientation="vertical" >
 
             <AutoCompleteTextView
@@ -37,8 +50,8 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center|center_horizontal"
                 android:completionThreshold="1"
-                android:hint="Departure Station"
                 android:gravity="center"
+                android:hint="Departure Station"
                 android:inputType="textNoSuggestions"
                 android:selectAllOnFocus="false"
                 android:text=""
@@ -59,17 +72,7 @@
                 android:textSize="24dp" >
             </AutoCompleteTextView>
         </LinearLayout>
-
-        <ImageView
-            android:id="@+id/reverse"
-            android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center"
-            android:layout_marginLeft="5dp"
-            android:layout_weight=".15"
-            android:contentDescription="reverse"
-            android:src="@drawable/shuffle" />
-    </LinearLayout>
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/fareTv"
