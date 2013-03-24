@@ -84,8 +84,6 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
-import com.crittercism.app.Crittercism;
-
 
 public class TheActivity extends Activity {
 	// NFC test stuff
@@ -142,13 +140,6 @@ public class TheActivity extends Activity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        if(Build.VERSION.SDK_INT >= 10){
-        	setupNFC();
-        }
-        
-        //TESTING: enable crittercism
-        Crittercism.init(getApplicationContext(), SECRETS.CRITTERCISM_SECRET);
 
         if(Build.VERSION.SDK_INT < 11){
         	//If API 14+, The ActionBar will be hidden with this call
@@ -515,7 +506,7 @@ public class TheActivity extends Activity {
     	}
     	url += "&key="+BART.API_KEY;
     	Log.d("BART API",url);
-    	Crittercism.leaveBreadcrumb("BART API: "+ url);
+    	//Crittercism.leaveBreadcrumb("BART API: "+ url);
     	new RequestTask(request, updateUI).execute(url);
     	// Set loading indicator
     	// I find this jarring when network latency is low
@@ -1395,27 +1386,6 @@ public class TheActivity extends Activity {
                 }
             })
             .show();
-	}
-	
-	@SuppressLint("NewApi")
-	public void setupNFC(){
-		// NFC stuff
-        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
-
-        checkNfcEnabled();
-
-        Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_VIEW);
-        intent.setType("vnd.android.cursor.dir/com.codebutler.farebot.card");
-        //intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
-        mPendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
-        
-        mTechLists = new String[][] {
-            new String[] { IsoDep.class.getName() },
-            new String[] { MifareClassic.class.getName() },
-            new String[] { MifareUltralight.class.getName() },
-            new String[] { NfcF.class.getName() }
-        };
 	}
     
 }

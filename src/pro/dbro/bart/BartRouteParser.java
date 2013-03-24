@@ -27,7 +27,6 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import com.crittercism.app.Crittercism;
 import com.thebuzzmedia.sjxp.XMLParser;
 import com.thebuzzmedia.sjxp.XMLParserException;
 import com.thebuzzmedia.sjxp.rule.DefaultRule;
@@ -166,9 +165,9 @@ public class BartRouteParser extends AsyncTask<String, String, routeResponse> {
 							Log.d("BartRouteParserEndTrip","non-PST coerced parse failed");
 							Log.d("BartRouteParserEndTrip_DateString", "origin: " + originDateStr+" , destination: "+destinationDateStr);
 							Log.d("BartRouteParserEndTripException",e.getClass().toString() + ": " + e.getMessage());
-							Crittercism.leaveBreadcrumb(originDateStr+" , "+destinationDateStr);
-							Crittercism.leaveBreadcrumb(Log.getStackTraceString(e));
-							Crittercism.logHandledException(e);
+							//Crittercism.leaveBreadcrumb(originDateStr+" , "+destinationDateStr);
+							//Crittercism.leaveBreadcrumb(Log.getStackTraceString(e));
+							//Crittercism.logHandledException(e);
 							dateError = true;
 						//}
 					}
