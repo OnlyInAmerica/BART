@@ -11,7 +11,7 @@
         android:layout_width="fill_parent"
         android:layout_height="100dp" >
 
-        <ImageView
+        <ImageButton
             android:id="@+id/map"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -20,10 +20,12 @@
             android:layout_alignParentTop="true"
             android:layout_gravity="center"
             android:layout_marginRight="5dp"
+            android:layout_marginLeft="5dp"
             android:contentDescription="map"
-            android:src="@drawable/map" />
+            android:background="@android:color/transparent"
+            android:src="@drawable/map_selector" />
 
-        <ImageView
+        <ImageButton
             android:id="@+id/reverse"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -32,8 +34,10 @@
             android:layout_alignParentTop="true"
             android:layout_gravity="center"
             android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
             android:contentDescription="reverse"
-            android:src="@drawable/shuffle" />
+            android:background="@android:color/transparent"
+            android:src="@drawable/shuffle_selector" />
 
         <LinearLayout
             xmlns:android="http://schemas.android.com/apk/res/android"

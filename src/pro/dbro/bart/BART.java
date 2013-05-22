@@ -40,7 +40,7 @@ public class BART {
 		"Lake Merritt (Oakland)","MacArthur (Oakland)","Millbrae","Montgomery St. (SF)",
 		"North Berkeley","North Concord/Martinez","Orinda","Pittsburg/Bay Point","Pleasant Hill",
 		"Powell St. (SF)","Richmond","Rockridge (Oakland)","San Bruno","San Francisco Int'l Airport SFO",
-		"San Leandro","South Hayward","South San Francisco","Union City","Walnut Creek","West Oakland"
+		"San Leandro","South Hayward","South San Francisco","Union City","Walnut Creek", "West Dublin/Pleasanton", "West Oakland"
     };
 	
 	// String array of BART API station abbreviations
@@ -86,7 +86,8 @@ public class BART {
 			put("North Berkeley", "nbrk");put("North Concord/Martinez", "ncon");put("Orinda", "orin");put("Pittsburg/Bay Point", "pitt");
 			put("Pleasant Hill", "phil");put("Powell St. (SF)", "powl");put("Richmond", "rich");put("Rockridge (Oakland)", "rock");
 			put("San Bruno", "sbrn");put("San Francisco Int'l Airport SFO", "sfia");put("San Leandro", "sanl");put("South Hayward", "shay");
-			put("South San Francisco", "ssan");put("Union City", "ucty");put("Walnut Creek", "wcrk");put("West Oakland", "woak");
+			put("South San Francisco", "ssan");put("Union City", "ucty");put("Walnut Creek", "wcrk");put("West Dublin/Pleasanton","wdub");
+			put("West Oakland", "woak");
 		}
 	};
 	
@@ -105,7 +106,8 @@ public class BART {
 			put("nbrk", "North Berkeley");put("ncon", "North Concord/Martinez");put("orin", "Orinda");put("pitt", "Pittsburg/Bay Point");
 			put("phil", "Pleasant Hill");put("powl", "Powell St. (SF)");put("rich", "Richmond");put("rock", "Rockridge (Oakland)");
 			put("sbrn", "San Bruno");put("sfia", "SFO Airport");put("sanl", "San Leandro");put("shay", "South Hayward");
-			put("ssan", "South San Francisco");put("ucty", "Union City");put("wcrk", "Walnut Creek");put("woak", "West Oakland");
+			put("ssan", "South San Francisco");put("ucty", "Union City");put("wcrk", "Walnut Creek");put("wdub","West Dublin/Pleasanton");
+			put("woak", "West Oakland");
 		}
 	};
 	

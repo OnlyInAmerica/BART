@@ -19,39 +19,17 @@
 
 package pro.dbro.bart;
 
-import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-
-import pro.dbro.bart.DeviceLocation.LocationResult;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.content.res.Resources;
 import android.location.Location;
-import android.nfc.NfcAdapter;
-import android.nfc.tech.IsoDep;
-import android.nfc.tech.MifareClassic;
-import android.nfc.tech.MifareUltralight;
-import android.nfc.tech.NfcF;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.text.Editable;
@@ -59,40 +37,26 @@ import android.text.Html;
 import android.text.TextWatcher;
 import android.text.method.LinkMovementMethod;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
+import android.view.*;
 import android.view.View.OnClickListener;
 import android.view.View.OnFocusChangeListener;
-import android.view.View.OnKeyListener;
 import android.view.View.OnLongClickListener;
 import android.view.View.OnTouchListener;
-import android.view.Window;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.AdapterView;
+import android.widget.*;
 import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ScrollView;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
-
 import com.crittercism.app.Crittercism;
+import pro.dbro.bart.DeviceLocation.LocationResult;
+
+import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 
 
 public class TheActivity extends Activity {
-	// NFC test stuff
-	private NfcAdapter mNfcAdapter;
-    private PendingIntent mPendingIntent;
-    private String[][] mTechLists;
-    
+
 	static Context c;
 	TableLayout tableLayout;
 	LinearLayout tableContainerLayout;
@@ -103,7 +67,7 @@ public class TheActivity extends Activity {
 	TextView fareTv;
 	TextView stopServiceTv;
 	LinearLayout infoLayout;
-	
+
 	ArrayList timerViews = new ArrayList();
 	static ViewCountDownTimer timer;
 	long maxTimer = 0;
@@ -142,10 +106,6 @@ public class TheActivity extends Activity {
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        if(Build.VERSION.SDK_INT >= 10){
-        	setupNFC();
-        }
         
         //TESTING: enable crittercism
         Crittercism.init(getApplicationContext(), SECRETS.CRITTERCISM_SECRET);
@@ -237,7 +197,7 @@ public class TheActivity extends Activity {
         	// don't sweat it
         }
 
-        ImageView map = (ImageView) findViewById(R.id.map);
+        ImageButton map = (ImageButton) findViewById(R.id.map);
         map.setOnClickListener(new OnClickListener(){
 
 			@Override
@@ -248,8 +208,8 @@ public class TheActivity extends Activity {
 			}
         	
         });
-        
-        ImageView reverse = (ImageView) findViewById(R.id.reverse);
+
+        ImageButton reverse = (ImageButton) findViewById(R.id.reverse);
         reverse.setOnClickListener(new OnClickListener(){
 
 			@Override
@@ -1235,11 +1195,7 @@ public class TheActivity extends Activity {
 	@SuppressLint("NewApi")
 	@Override
 	protected void onResume() {
-		
-		if(Build.VERSION.SDK_INT >= 10)
-			mNfcAdapter.enableForegroundDispatch(this, mPendingIntent, null, mTechLists);
-		//Log.v("SERVICE_STATE",String.valueOf(usherServiceIsRunning()));
-		
+
 		// If a timer is active, force it to refresh all on-screen estimates
 		if(timer != null){
 			long msUntilTimerExpiry = timer.expiryTime - new Date().getTime();
@@ -1372,50 +1328,6 @@ public class TheActivity extends Activity {
         .setIcon(R.drawable.sad_mac)
         .setPositiveButton("Bummer", null)
         .show();
-	}
-	
-	@SuppressLint("NewApi")
-	private void checkNfcEnabled()
-    {
-		if (mNfcAdapter.isEnabled()) {
-            return;
-        }
-        new AlertDialog.Builder(TheActivity.this)
-            .setTitle("NFC Off")
-            .setMessage("If your phone supports NFC, turn it on to read your Clipper Card balance!")
-            .setCancelable(true)
-            .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    dialog.dismiss();
-                }
-            })
-            .setNeutralButton("Go to Settings", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
-                }
-            })
-            .show();
-	}
-	
-	@SuppressLint("NewApi")
-	public void setupNFC(){
-		// NFC stuff
-        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
-
-        checkNfcEnabled();
-
-        Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_VIEW);
-        intent.setType("vnd.android.cursor.dir/com.codebutler.farebot.card");
-        //intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NO_HISTORY);
-        mPendingIntent = PendingIntent.getActivity(this, 0, intent, 0);
-        
-        mTechLists = new String[][] {
-            new String[] { IsoDep.class.getName() },
-            new String[] { MifareClassic.class.getName() },
-            new String[] { MifareUltralight.class.getName() },
-            new String[] { NfcF.class.getName() }
-        };
 	}
     
 }
