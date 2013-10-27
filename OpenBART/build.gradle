@@ -23,9 +23,16 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:18.0.+'
-	compile 'com.google.android.gms:play-services:3.2+'
-	compile 'com.android.support:appcompat-v7:+'
+    // compiling as a library project produces error:
+    // java.lang.IllegalAccessError: tried to access class com.android.build.gradle.internal.tasks.PrepareLibraryTask$_prepare_closure1
+    // from class com.android.build.gradle.internal.tasks.PrepareLibraryTask
+    //compile project(':Submodules:android-map-utils:library')
+
+    // Compiling from maven package produces class not found runtime error...
+    //  java.lang.NoClassDefFoundError: com.google.maps.android.ui.BubbleIconFactory
     compile 'com.google.maps.android:android-maps-utils:0.1+'
+    compile 'com.android.support:support-v4:18.0.+'
+    compile 'com.google.android.gms:play-services:3.2+'
+	compile 'com.android.support:appcompat-v7:+'
     compile fileTree(dir: 'libs', include: '*.jar')
 }

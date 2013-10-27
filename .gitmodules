@@ -1,0 +1,3 @@
+[submodule "Submodules/android-map-utils"]
+	path = Submodules/android-map-utils
+	url = git@github.com:googlemaps/android-maps-utils.git
