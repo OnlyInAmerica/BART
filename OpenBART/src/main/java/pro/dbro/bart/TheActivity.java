@@ -202,7 +202,7 @@ public class TheActivity extends Activity {
 			@Override
 			public void onClick(View arg0) {
 				// TODO Auto-generated method stub
-				Intent intent = new Intent(c, MapActivity.class);
+				Intent intent = new Intent(c, ImageMapActivity.class);
 		        startActivity(intent);
 			}
         	

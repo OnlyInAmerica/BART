@@ -2,6 +2,7 @@
 <resources>
 
     <string name="app_name">Open BART</string>
+
     <string-array name="crashCatchDialog">
         <item>We\'re sorry!</item>
         <item>Open BART is misbehaving, and our developers have been notified. If you please, 
@@ -11,19 +12,19 @@
         <item>Network Error</item>
         <item>Check your network connection.</item>
     </string-array>
-    <string name="greeting">
-        Open BART is free and open-source software. All train estimates are displayed as minutes until departure.
-        &lt;h1>Happy Riding&lt;/h1>
-        </string>
+
+    <string name="greeting">        Open BART is free and open-source software. All train estimates are displayed as minutes until departure.
+        &lt;h1>Happy Riding&lt;/h1></string>
+
     <string-array name="aboutDialog">
         <item>About Open BART</item>
         <item>Open BART is open source software (GPLv3), so it belongs to all of us. Check out the code on &lt;a href="https://github.com/OnlyInAmerica/BART">github&lt;/a>.&lt;br/>&lt;br/>
               Write us! &lt;br/>&lt;a href="mailto:openbart@dbro.pro">openbart@dbro.pro&lt;/a>.
               &lt;h1>Thanks&lt;/h1>
               &lt;a href="https://github.com/thebuzzmedia/simple-java-xml-parser">thebuzzmedia&lt;/a>&lt;br/> for a slick xml parser!&lt;br/>&lt;br/>
-              &lt;a href="http://gun.io">Rich Jones of Gun.io&lt;/a>&lt;br/> for a smooth icon, and for breaking this app many times so you won\'t have to.&lt;br/>
-        </item>
+              &lt;a href="http://gun.io">Rich Jones of Gun.io&lt;/a>&lt;br/> for a smooth icon, and for breaking this app many times so you won\'t have to.&lt;br/></item>
     </string-array>
+
     <string name="local_service_started">trip usher at work</string>
     <string name="local_service_stopped">trip usher off</string>
     <string name="local_service_label">I\'ll vibrate when you need to move</string>
@@ -32,5 +33,7 @@
     <string name="service_prompt">Experimental Feature! &lt;br/>I can vibrate your phone when your stops are approaching! You can also check the notification bar at any time to see your next move.</string>
     <string name="service_start_button">Guide Me!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_the_activity2">MainActivity</string>
+    <string name="hello_world">Hello world!</string>
 
 </resources>
