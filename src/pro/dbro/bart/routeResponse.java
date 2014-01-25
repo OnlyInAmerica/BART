@@ -21,6 +21,7 @@ package pro.dbro.bart;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 
 public class routeResponse implements Serializable{
@@ -31,7 +32,7 @@ public class routeResponse implements Serializable{
 	public ArrayList<route> routes;
 	
 	public routeResponse(){
-		routes = new ArrayList(3);  // Typically three routes are returned. Let's save some trivial memory!
+		routes = new ArrayList<route>(3);  // Typically three routes are returned. Let's save some trivial memory!
 	}
 	
 	public route addRoute(){
@@ -49,6 +50,10 @@ public class routeResponse implements Serializable{
 		routes.remove(routes.size()-1);
 		return toRemove;
 	}
+
+    public void sortRoutes(){
+        Collections.sort(routes);
+    }
 	
 	public String toString(){
 		return originStation + " to " + destinationStation + " on " + date.toString() + " routes: " + routes.toString();

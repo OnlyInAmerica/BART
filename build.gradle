@@ -3,23 +3,24 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.4'
+        classpath 'com.android.tools.build:gradle:0.8+'
     }
 }
 apply plugin: 'android'
 
 dependencies {
-    compile files('../../../../../bart/libs/sjxp-2.2.jar')
-    compile files('../../../../../bart/libs/crittercism_v2_1_3_crashonly.jar')
+    compile 'com.android.support:support-v4:18.0.+'
+    compile files('libs/sjxp-2.2.jar')
+    compile files('libs/crittercism_v3_0_8_sdkonly.jar')
 }
 
 android {
-    compileSdkVersion 17
-    buildToolsVersion "17"
+    compileSdkVersion 19
+    buildToolsVersion "19"
 
     defaultConfig {
         minSdkVersion 8
-        targetSdkVersion 17
+        targetSdkVersion 19
     }
     sourceSets {
         main {

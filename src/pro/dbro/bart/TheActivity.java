@@ -891,6 +891,7 @@ public class TheActivity extends Activity {
 	    		((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(y)).disembarkTime.setTime(((leg)((route)input.routes.get(routesToUpdate[x])).legs.get(y)).disembarkTime.getTime() + timeCorrection);
     		}
     	}
+        input.sortRoutes();
     	return input;
     	
     		// OLD method of updating, for humor

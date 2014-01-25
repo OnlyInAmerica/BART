@@ -20,9 +20,10 @@
 package pro.dbro.bart;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 
-public class route {
+public class route implements Comparable<route>{
 	public String fare;
 	public Date departureDate;
 	public Date arrivalDate;
@@ -59,4 +60,8 @@ public class route {
 		
 	}
 
+    @Override
+    public int compareTo(route another) {
+        return departureDate.compareTo(another.departureDate);
+    }
 }
