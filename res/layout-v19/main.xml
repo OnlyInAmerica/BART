@@ -1,147 +1,149 @@
 <?xml version="1.0" encoding="utf-8"?>
-<pro.dbro.bart.BartLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:layout_marginTop="@dimen/screen_top_margin"
-    android:focusable="true"
-    android:focusableInTouchMode="true"
-    android:orientation="vertical" >
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <RelativeLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:layout_width="fill_parent"
-        android:layout_height="100dp" >
-
-        <ImageButton
-            android:id="@+id/map"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentTop="true"
-            android:layout_gravity="center"
-            android:layout_marginRight="5dp"
-            android:layout_marginLeft="5dp"
-            android:contentDescription="map"
-            android:background="@android:color/transparent"
-            android:src="@drawable/map_selector" />
-
-        <ImageButton
-            android:id="@+id/reverse"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true"
-            android:layout_gravity="center"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:contentDescription="reverse"
-            android:background="@android:color/transparent"
-            android:src="@drawable/shuffle_selector" />
-
-        <LinearLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/inputLinearLayout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toLeftOf="@id/reverse"
-            android:layout_toRightOf="@id/map"
-            android:orientation="vertical" >
-
-            <AutoCompleteTextView
-                android:id="@+id/originTv"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center|center_horizontal"
-                android:completionThreshold="1"
-                android:gravity="center"
-                android:hint="Departure Station"
-                android:inputType="textNoSuggestions"
-                android:selectAllOnFocus="false"
-                android:text=""
-                android:textSize="24dp" >
-            </AutoCompleteTextView>
-
-            <AutoCompleteTextView
-                android:id="@+id/destinationTv"
-                android:layout_width="fill_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center|center_horizontal"
-                android:completionThreshold="1"
-                android:gravity="center"
-                android:hint="Destination Station"
-                android:inputType="textNoSuggestions"
-                android:selectAllOnFocus="false"
-                android:text=""
-                android:textSize="24dp" >
-            </AutoCompleteTextView>
-        </LinearLayout>
-    </RelativeLayout>
-
-    <TextView
-        android:id="@+id/fareTv"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:textSize="25dp"
-        android:visibility="gone" >
-    </TextView>
-
-    <ScrollView
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/scrollView"
+    <pro.dbro.bart.BartLinearLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:layout_gravity="center_horizontal"
-        android:layout_weight="10"
-        android:scrollbars="vertical" >
+        android:layout_marginTop="@dimen/screen_top_margin"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:orientation="vertical">
 
-        <LinearLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/tableContainerLayout"
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:animateLayoutChanges="true"
-            android:gravity="center_horizontal"
-            android:orientation="vertical" >
+            android:layout_height="100dp">
 
-            <TableLayout
-                android:id="@+id/tableLayout"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent"
-                android:layout_gravity="center|center_horizontal"
-                android:layout_marginTop="30dp"
-                android:animateLayoutChanges="true"
-                android:gravity="center_horizontal" >
-            </TableLayout>
-        </LinearLayout>
-    </ScrollView>
+            <ImageButton
+                android:id="@+id/map"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:layout_gravity="center"
+                android:layout_marginRight="5dp"
+                android:layout_marginLeft="5dp"
+                android:contentDescription="map"
+                android:background="@android:color/transparent"
+                android:src="@drawable/map_selector" />
 
-    <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/infoLayout"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:orientation="vertical" >
+            <ImageButton
+                android:id="@+id/reverse"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_gravity="center"
+                android:layout_marginLeft="5dp"
+                android:layout_marginRight="5dp"
+                android:contentDescription="reverse"
+                android:background="@android:color/transparent"
+                android:src="@drawable/shuffle_selector" />
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/inputLinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@id/reverse"
+                android:layout_toRightOf="@id/map"
+                android:orientation="vertical">
+
+                <AutoCompleteTextView
+                    android:id="@+id/originTv"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center|center_horizontal"
+                    android:completionThreshold="1"
+                    android:gravity="center"
+                    android:hint="Departure Station"
+                    android:inputType="textNoSuggestions"
+                    android:selectAllOnFocus="false"
+                    android:text=""
+                    android:textSize="24dp"></AutoCompleteTextView>
+
+                <AutoCompleteTextView
+                    android:id="@+id/destinationTv"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center|center_horizontal"
+                    android:completionThreshold="1"
+                    android:gravity="center"
+                    android:hint="Destination Station"
+                    android:inputType="textNoSuggestions"
+                    android:selectAllOnFocus="false"
+                    android:text=""
+                    android:textSize="24dp"></AutoCompleteTextView>
+            </LinearLayout>
+        </RelativeLayout>
 
         <TextView
-            android:id="@+id/stopServiceTv"
+            android:id="@+id/fareTv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:text="stop service"
             android:textSize="25dp"
-            android:visibility="gone" />
-    </LinearLayout>
+            android:visibility="gone"></TextView>
+
+        <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/scrollView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="10"
+            android:scrollbars="vertical">
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/tableContainerLayout"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:animateLayoutChanges="true"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <TableLayout
+                    android:id="@+id/tableLayout"
+                    android:layout_width="fill_parent"
+                    android:layout_height="fill_parent"
+                    android:layout_gravity="center|center_horizontal"
+                    android:layout_marginTop="30dp"
+                    android:animateLayoutChanges="true"
+                    android:gravity="center_horizontal"></TableLayout>
+            </LinearLayout>
+        </ScrollView>
+
+        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/infoLayout"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/stopServiceTv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="stop service"
+                android:textSize="25dp"
+                android:paddingBottom="@dimen/screen_bottom_margin"
+                android:visibility="gone" />
+        </LinearLayout>
+
+    </pro.dbro.bart.BartLinearLayout>
 
     <ImageView
         android:id="@+id/infoButton"
         android:src="@drawable/about"
+        android:clickable="true"
+        android:onClick="onInfoClick"
+        android:paddingRight="5dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="right|bottom"/>
-
-</pro.dbro.bart.BartLinearLayout>
+        android:layout_marginBottom="@dimen/screen_bottom_margin"
+        android:layout_gravity="right|bottom" />
+</FrameLayout>

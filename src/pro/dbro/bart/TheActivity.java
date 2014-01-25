@@ -448,21 +448,30 @@ public class TheActivity extends Activity {
 @Override public boolean onOptionsItemSelected(MenuItem item) {
 		//settings context menu ID pre API 11 and action bar item post API 11
 		if(item.getItemId() == 0 || item.getItemId() == R.id.menu_about){
-			TextView aboutTv = (TextView) View.inflate(c, R.layout.tabletext, null);
-			aboutTv.setText(Html.fromHtml(res.getStringArray(R.array.aboutDialog)[1]));
-			aboutTv.setPadding(10, 0, 10, 0);
-			aboutTv.setTextSize(18);
-			aboutTv.setMovementMethod(LinkMovementMethod.getInstance());
-			new AlertDialog.Builder(c)
-	        .setTitle(res.getStringArray(R.array.aboutDialog)[0])
-	        .setIcon(R.drawable.ic_launcher)
-	        .setView(aboutTv)
-	        .setPositiveButton("Okay!", null)
-	        .show();
+            showInfoDialog();
 			return true;
 		}
 		return false;
     }
+
+    public void onInfoClick(View v){
+        showInfoDialog();
+    }
+
+    public void showInfoDialog(){
+        TextView aboutTv = (TextView) View.inflate(c, R.layout.tabletext, null);
+        aboutTv.setText(Html.fromHtml(res.getStringArray(R.array.aboutDialog)[1]));
+        aboutTv.setPadding(10, 0, 10, 0);
+        aboutTv.setTextSize(18);
+        aboutTv.setMovementMethod(LinkMovementMethod.getInstance());
+        new AlertDialog.Builder(c)
+                .setTitle(res.getStringArray(R.array.aboutDialog)[0])
+                .setIcon(R.drawable.ic_launcher)
+                .setView(aboutTv)
+                .setPositiveButton("Okay!", null)
+                .show();
+    }
+
     //CALLED-BY: originTextView and destinationTextView item-select listeners
     //CALLS: HTTP requester: RequestTask
     public void bartApiRequest(String request, boolean updateUI){
