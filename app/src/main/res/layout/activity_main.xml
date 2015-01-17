@@ -9,25 +9,32 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity">
 
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/departure_entry"
+        android:layout_alignParentTop="true" />
+
     <AutoCompleteTextView
-        android:id="@+id/destinationEntry"
+        android:id="@+id/destination_entry"
         android:layout_width="250dp"
         android:layout_height="wrap_content"
-        android:singleLine="true"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:drawableLeft="@drawable/poi"
-        android:hint="Destination Station" />
+        android:hint="Destination Station"
+        android:singleLine="true" />
 
     <AutoCompleteTextView
-        android:id="@+id/departureEntry"
+        android:id="@+id/departure_entry"
         android:layout_width="250dp"
         android:layout_height="wrap_content"
-        android:singleLine="true"
-        android:layout_above="@id/destinationEntry"
+        android:layout_above="@id/destination_entry"
         android:layout_centerHorizontal="true"
         android:drawableLeft="@drawable/circle"
-        android:hint="Departure Station" />
+        android:hint="Departure Station"
+        android:singleLine="true" />
 
 
 </RelativeLayout>

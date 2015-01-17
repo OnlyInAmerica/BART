@@ -31,6 +31,10 @@ public class BartApiResponseProcessor {
      * @param source
      */
     public static BartEtdResponse processEtdResponse(BartEtdResponse source) {
+        if (source.getEtds() == null || source.getEtds().size() == 0) {
+            Log.d(TAG, "BartEtdResponse has no etds");
+            return source;
+        }
         for (BartEtd etd : source.getEtds()) {
             for (BartEstimate estimate : etd.getEstimates()) {
                 if (estimate.getDeltaMinutesEstimate().equals("Leaving")) {
@@ -38,6 +42,7 @@ public class BartApiResponseProcessor {
                 }
             }
         }
+
         return source;
     }
 
