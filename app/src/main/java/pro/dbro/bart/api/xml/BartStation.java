@@ -19,7 +19,7 @@ public class BartStation {
     @Element(name = "abbr")
     private String abbreviation;
 
-    @ElementList(entry = "etd", inline = true)
+    @ElementList(entry = "etd", inline = true, required = false)
     private List<BartEtd> etds;
 
     public List<BartEtd> getEtds() {

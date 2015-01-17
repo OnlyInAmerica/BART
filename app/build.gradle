@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'me.tatarka.holdr'
 
 android {
     compileSdkVersion 21
@@ -7,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "pro.dbro.bart"
-        minSdkVersion 15
+        minSdkVersion 21
         targetSdkVersion 21
         versionCode 1
         versionName "1.0"
@@ -38,4 +39,5 @@ dependencies {
     compile 'com.squareup.retrofit:retrofit:1.9.0'
     compile 'org.simpleframework:simple-xml:2.7.1'
     compile 'com.mobprofs:retrofit-simplexmlconverter:1.0'
+    compile 'org.apache.commons:commons-collections4:4.0'
 }

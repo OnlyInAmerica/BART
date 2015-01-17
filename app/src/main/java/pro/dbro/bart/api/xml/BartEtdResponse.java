@@ -12,7 +12,7 @@ import java.util.List;
  * e.g: http://api.bart.gov/api/etd.aspx?cmd=etd&orig=12th&key=MW9S-E7SL-26DU-VV8V
  */
 @Root(strict = false, name = "root")
-public class BartEtdResponse {
+public class BartEtdResponse extends BartApiResponse{
 
     @Element(name = "date")
     private String requestDate;
