@@ -69,7 +69,7 @@
 //    }
 //
 //
-//    public static void getEtdResponse(Context context, String originAbbreviation) {
+//    public static void getEtd(Context context, String originAbbreviation) {
 //        checkArgument(BART.REVERSE_STATION_MAP.containsKey(originAbbreviation));
 //
 //        SimpleXmlRequest<BartEtdResponse> etdRequest
@@ -96,7 +96,7 @@
 //
 //    }
 //
-//    public static void getRouteResponse(Context context, String originAbbreviation, String destinationAbbreviation) {
+//    public static void getRoute(Context context, String originAbbreviation, String destinationAbbreviation) {
 //        checkArgument(BART.REVERSE_STATION_MAP.containsKey(originAbbreviation) && BART.REVERSE_STATION_MAP.containsKey(destinationAbbreviation));
 //        SimpleXmlRequest<BartRouteResponse> routeRequest
 //                = new SimpleXmlRequest<BartRouteResponse>(Request.Method.GET,

@@ -15,11 +15,9 @@ import java.util.ArrayList;
 
 import pro.dbro.bart.api.BartClient;
 import pro.dbro.bart.api.xml.BartApiResponse;
-import pro.dbro.bart.api.xml.BartEtd;
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.holdr.Holdr_ActivityMain;
 import rx.Observable;
-import rx.Observer;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.android.widget.WidgetObservable;
 import rx.schedulers.Schedulers;
@@ -107,10 +105,10 @@ public class MainActivity extends Activity {
 
         if (!TextUtils.isEmpty(departureInput)) {
             if (!TextUtils.isEmpty(destinationInput)) {
-                return client.getRouteResponse(departureInput.toString(),
-                                               destinationInput.toString());
+                return client.getRoute(departureInput.toString(),
+                        destinationInput.toString());
             } else {
-                return client.getEtdResponse(departureInput.toString());
+                return client.getEtd(departureInput.toString());
             }
         }
 

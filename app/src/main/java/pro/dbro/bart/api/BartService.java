@@ -1,6 +1,7 @@
 package pro.dbro.bart.api;
 
 import pro.dbro.bart.api.xml.BartEtdResponse;
+import pro.dbro.bart.api.xml.BartLoadResponse;
 import pro.dbro.bart.api.xml.BartRouteResponse;
 import pro.dbro.bart.api.xml.BartStationListResponse;
 import retrofit.http.GET;
@@ -15,6 +16,9 @@ public interface BartService {
 
     @GET("/stn.aspx?cmd=stns")
     Observable<BartStationListResponse> getStations();
+
+    @GET("/stn.aspx?cmd=load")
+    Observable<BartLoadResponse> getLegLoad(@Query("ld1") String legCode);
 
     @GET("/etd.aspx?cmd=etd")
     Observable<BartEtdResponse> getEtdResponse(@Query("orig") String originCode);

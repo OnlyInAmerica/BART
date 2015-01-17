@@ -1,15 +1,20 @@
 package pro.dbro.bart.api;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.mobprofs.retrofit.converters.SimpleXmlConverter;
 
 import org.apache.commons.collections4.BidiMap;
 
+import java.util.Formatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import pro.dbro.bart.api.xml.BartEtdResponse;
+import pro.dbro.bart.api.xml.BartLeg;
+import pro.dbro.bart.api.xml.BartLoadResponse;
 import pro.dbro.bart.api.xml.BartRouteResponse;
 import pro.dbro.bart.api.xml.BartStation;
 import pro.dbro.bart.api.xml.BartStationListResponse;
@@ -51,30 +56,29 @@ public class BartClient {
                 .build();
 
         service = restAdapter.create(BartService.class);
-
-//        service.getStations()
-//               .subscribeOn(Schedulers.io())
-//               .observeOn(AndroidSchedulers.mainThread())
-//               .subscribe(stations -> this.stations = stations);
-
-        // TODO Don't return until stations are fetched. Perhaps use static
-        // TODO getInstance() that returns Observable<BartClient>
-
     }
 
     public Set<String> getStationNames() {
         return stations.getStationNameToCodeMap().keySet();
     }
 
+    public Observable<BartLoadResponse> getLoad(@NonNull BartLeg leg) {
+        Formatter formatter = new Formatter(Locale.US);
+        String legCode = leg.getOriginAbbreviation() + formatter.format("%02d",
+                Integer.parseInt(leg.getLine().substring(leg.getLine().indexOf(" ")).trim())) + leg.getTrainIndex();
 
-    public Observable<BartRouteResponse> getRouteResponse(String departureName,
-                                                          String destinationName) {
+        return service.getLegLoad(legCode);
+    }
+
+
+    public Observable<BartRouteResponse> getRoute(@NonNull String departureName,
+                                                  @NonNull String destinationName) {
 
         String departureCode   = stations.getStationNameToCodeMap().get(departureName.toLowerCase());
         String destinationCode = stations.getStationNameToCodeMap().get(destinationName.toLowerCase());
 
         if (departureCode == null || destinationCode == null) {
-            String error = String.format("getEtdResponse given unknown station name: %s",
+            String error = String.format("getEtd given unknown station name: %s",
                                          departureCode == null ? departureName : destinationName);
             Log.e(TAG, error);
             throw new IllegalArgumentException(error);
@@ -93,11 +97,11 @@ public class BartClient {
         );
     }
 
-    public Observable<BartEtdResponse> getEtdResponse(String stationName) {
+    public Observable<BartEtdResponse> getEtd(@NonNull String stationName) {
 
         String stationCode = stations.getStationNameToCodeMap().get(stationName);
         if (stationCode == null) {
-            String error = String.format("getEtdResponse given unknown station name: %s", stationName);
+            String error = String.format("getEtd given unknown station name: %s", stationName);
             Log.e(TAG, error);
             throw new IllegalArgumentException(error);
             //return Observable.error(OnErrorThrowable.from(new IllegalArgumentException(error)));
