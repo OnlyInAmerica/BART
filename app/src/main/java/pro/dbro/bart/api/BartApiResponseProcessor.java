@@ -2,6 +2,8 @@ package pro.dbro.bart.api;
 
 import android.util.Log;
 
+import org.apache.commons.collections4.BidiMap;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +13,7 @@ import java.util.List;
 import pro.dbro.bart.api.xml.BartEstimate;
 import pro.dbro.bart.api.xml.BartEtd;
 import pro.dbro.bart.api.xml.BartEtdResponse;
+import pro.dbro.bart.api.xml.BartLeg;
 import pro.dbro.bart.api.xml.BartRouteResponse;
 import pro.dbro.bart.api.xml.BartTrip;
 
@@ -51,19 +54,20 @@ public class BartApiResponseProcessor {
      * <p/>
      *
      * Remove trips that have already begun.
-     * Update trip departures with cached BartEtdResponse
-     * if available
+     * Update trip departures with BartEtdResponse
      *
      * @param routeResponse
      */
     public static void processRouteResponse(BartRouteResponse routeResponse,
-                                            BartEtdResponse etdResponse) {
+                                            BartEtdResponse etdResponse,
+                                            BidiMap<String, String> stationNameToCode) {
 
         // Remove Trips that have already departed the origin station
         Date now = new Date();
         List<BartTrip> trips = routeResponse.getTrips();
         ArrayList<BartTrip> tripsToRemove = new ArrayList<>();
 
+        // Remove expired trips
         for (int x = 0; x < trips.size(); x++) {
             try {
                 if (trips.get(x).getOriginAsDate().compareTo(now) < 0) {
@@ -76,6 +80,7 @@ public class BartApiResponseProcessor {
         }
         trips.removeAll(tripsToRemove);
 
+        // Update Route departures with BartEtdResponse
         if (etdResponse != null && responsesLinked(etdResponse, routeResponse)) {
             // Update Route arrivals with Etd
             List<BartEtd> etds = etdResponse.getEtds();
@@ -84,16 +89,27 @@ public class BartApiResponseProcessor {
             for (int x = 0; x < etds.size(); x++) {
                 int estimatesMatched = 0;
                 for (int y = 0; y < trips.size(); y++) {
-                    if (trips.get(y).getLegs().get(0).getTrainHeadStation().compareTo(etds.get(x).getDestinationAbbreviation()) == 0) {
+                    if (trips.get(y).getLegs().get(0).getTrainHeadStationAbbreviation().compareTo(etds.get(x).getDestinationAbbreviation()) == 0) {
                         if (VERBOSE) Log.i(TAG, "Found etdResponse matching route");
                         Collections.sort(etds.get(x).getEstimates());
                         if (estimatesMatched < etds.get(x).getEstimates().size()) {
+                            trips.get(y).getLegs().get(0).setHexColor(etds.get(x).getEstimates().get(estimatesMatched).getHexColor());
                             Date etdBasedOriginDate = etds.get(x).getEstimates().get(estimatesMatched).getDateEstimate();
                             trips.get(y).getLegs().get(0).adjustWithEstimatedOriginDate(etdBasedOriginDate);
                             estimatesMatched++;
+                            // TODO : Adjust each leg by the offset between the etd and first leg departure schedule
                         }
                     }
                 }
+            }
+        }
+
+        // Add human station names for codes
+        for (BartTrip trip : routeResponse.getTrips()) {
+            for (BartLeg leg : trip.getLegs()) {
+                leg.setTrainHeadStation(stationNameToCode.getKey(leg.getTrainHeadStationAbbreviation()));
+                leg.setDestination(stationNameToCode.getKey(leg.getDestinationAbbreviation()));
+                leg.setOrigin(stationNameToCode.getKey(leg.getOriginAbbreviation()));
             }
         }
     }

@@ -74,11 +74,11 @@ public class BartClient {
     public Observable<BartRouteResponse> getRoute(@NonNull String departureName,
                                                   @NonNull String destinationName) {
 
-        String departureCode   = stations.getStationNameToCodeMap().get(departureName.toLowerCase());
-        String destinationCode = stations.getStationNameToCodeMap().get(destinationName.toLowerCase());
+        String departureCode   = stations.getStationNameToCodeMap().get(departureName);
+        String destinationCode = stations.getStationNameToCodeMap().get(destinationName);
 
         if (departureCode == null || destinationCode == null) {
-            String error = String.format("getEtd given unknown station name: %s",
+            String error = String.format("getRoute given unknown station name: %s",
                                          departureCode == null ? departureName : destinationName);
             Log.e(TAG, error);
             throw new IllegalArgumentException(error);
@@ -91,7 +91,9 @@ public class BartClient {
                               service.getRouteResponse(departureCode, destinationCode),
 
                               (etdResponse, routeResponse) -> {
-                                  BartApiResponseProcessor.processRouteResponse(routeResponse, etdResponse);
+                                  BartApiResponseProcessor.processRouteResponse(routeResponse,
+                                                                                etdResponse,
+                                                                                stations.getStationNameToCodeMap());
                                   return routeResponse;
                               }
         );

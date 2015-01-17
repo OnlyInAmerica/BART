@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import pro.dbro.bart.api.BartClient;
 import pro.dbro.bart.api.xml.BartApiResponse;
 import pro.dbro.bart.api.xml.BartEtdResponse;
+import pro.dbro.bart.api.xml.BartRouteResponse;
 import pro.dbro.bart.holdr.Holdr_ActivityMain;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
@@ -56,10 +57,23 @@ public class MainActivity extends Activity {
                   .subscribe(response -> {
                       Log.i(TAG, "onNext " + response.getClass());
                       if (response instanceof BartEtdResponse) {
-                          if (((BartEtdResponse) response).getEtds() != null && ((BartEtdResponse) response).getEtds().size() != 0)
-                              ((EtdAdapter) holdr.recyclerView.getAdapter()).swapEtds(((BartEtdResponse) response).getEtds());
-                          else
+                          BartEtdResponse etdResponse = (BartEtdResponse) response;
+                          if (etdResponse.getEtds() != null && etdResponse.getEtds().size() != 0) {
+                              if (holdr.recyclerView.getAdapter() instanceof EtdAdapter) {
+                                  ((EtdAdapter) holdr.recyclerView.getAdapter()).swapEtds(etdResponse.getEtds());
+                              } else {
+                                  holdr.recyclerView.setAdapter(new EtdAdapter(etdResponse.getEtds()));
+                              }
+                          } else
                               notifyNoTrips();
+                      }
+                      else if (response instanceof BartRouteResponse) {
+                          BartRouteResponse routeResponse = (BartRouteResponse) response;
+                          if (holdr.recyclerView.getAdapter() instanceof TripAdapter) {
+                              ((TripAdapter) holdr.recyclerView.getAdapter()).swapEtds(routeResponse.getTrips());
+                          } else {
+                              holdr.recyclerView.setAdapter(new TripAdapter(routeResponse.getTrips()));
+                          }
                       }
                   }, throwable -> Log.i(TAG, throwable.getMessage()));
     }

@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base object for Bart objects that include
@@ -56,6 +57,11 @@ public abstract class BartDateTimeObject implements Comparable<BartDateTimeObjec
             e.printStackTrace();
         }
         return 0;
+    }
+
+    public long getOriginAsRelativeSec() throws ParseException {
+        long diffInMs = getDestAsDate().getTime() - new Date().getTime();
+        return TimeUnit.MILLISECONDS.toSeconds(diffInMs);
     }
 
     public Date getOriginAsDate() throws ParseException {

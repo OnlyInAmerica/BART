@@ -19,8 +19,12 @@ public class BartLeg extends BartDateTimeObject {
     @Attribute(name = "origin")
     private String originAbbreviation;
 
+    private String origin;
+
     @Attribute(name = "destination")
     private String destinationAbbreviation;
+
+    private String destination;
 
     @Attribute(name = "line")
     private String line;
@@ -29,12 +33,16 @@ public class BartLeg extends BartDateTimeObject {
     private boolean bikesAllowed;
 
     @Attribute(name = "trainHeadStation")
+    private String trainHeadStationAbbreviation;
+
     private String trainHeadStation;
 
     @Attribute(name = "trainIdx")
     private int trainIndex;
 
     private int load;
+
+    private String hexColor;
 
     public BartLeg() {
         load = NO_LOAD_DATA;
@@ -72,11 +80,43 @@ public class BartLeg extends BartDateTimeObject {
         return bikesAllowed;
     }
 
-    public String getTrainHeadStation() {
-        return trainHeadStation;
+    public String getTrainHeadStationAbbreviation() {
+        return trainHeadStationAbbreviation;
     }
 
     public int getTrainIndex() {
         return trainIndex;
+    }
+
+    public void setTrainHeadStation(String name) {
+        trainHeadStation = name;
+    }
+
+    public String getTrainHeadStation() {
+        return trainHeadStation;
+    }
+
+    public void setDestination(String name) {
+        destination = name;
+    }
+
+    public String getDestination() {
+        return destination;
+    }
+
+    public void setHexColor(String hex) {
+        hexColor = hex;
+    }
+
+    public String getHexColor() {
+        return hexColor;
+    }
+
+    public void setOrigin(String name) {
+        origin = name;
+    }
+
+    public String getOrigin() {
+        return origin;
     }
 }
