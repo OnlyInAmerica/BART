@@ -14,7 +14,8 @@ import pro.dbro.bart.api.xml.BartEstimate;
 import pro.dbro.bart.api.xml.BartEtd;
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLeg;
-import pro.dbro.bart.api.xml.BartRouteResponse;
+import pro.dbro.bart.api.xml.BartRoute;
+import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartTrip;
 
 /**
@@ -58,9 +59,10 @@ public class BartApiResponseProcessor {
      *
      * @param routeResponse
      */
-    public static void processRouteResponse(BartRouteResponse routeResponse,
+    public static void processRouteResponse(BartScheduleResponse routeResponse,
                                             BartEtdResponse etdResponse,
-                                            BidiMap<String, String> stationNameToCode) {
+                                            BidiMap<String, String> stationNameToCode,
+                                            List<BartRoute> routes) {
 
         // Remove Trips that have already departed the origin station
         Date now = new Date();
@@ -93,7 +95,7 @@ public class BartApiResponseProcessor {
                         if (VERBOSE) Log.i(TAG, "Found etdResponse matching route");
                         Collections.sort(etds.get(x).getEstimates());
                         if (estimatesMatched < etds.get(x).getEstimates().size()) {
-                            trips.get(y).getLegs().get(0).setHexColor(etds.get(x).getEstimates().get(estimatesMatched).getHexColor());
+//                            trips.get(y).getLegs().get(0).setHexColor(etds.get(x).getEstimates().get(estimatesMatched).getHexColor());
                             Date etdBasedOriginDate = etds.get(x).getEstimates().get(estimatesMatched).getDateEstimate();
                             trips.get(y).getLegs().get(0).adjustWithEstimatedOriginDate(etdBasedOriginDate);
                             estimatesMatched++;
@@ -104,12 +106,19 @@ public class BartApiResponseProcessor {
             }
         }
 
-        // Add human station names for codes
+        // Add human station names for codes, as well as hex colors for all legs
         for (BartTrip trip : routeResponse.getTrips()) {
             for (BartLeg leg : trip.getLegs()) {
                 leg.setTrainHeadStation(stationNameToCode.getKey(leg.getTrainHeadStationAbbreviation()));
                 leg.setDestination(stationNameToCode.getKey(leg.getDestinationAbbreviation()));
                 leg.setOrigin(stationNameToCode.getKey(leg.getOriginAbbreviation()));
+
+                // TODO Bad algorithm!
+                for (BartRoute route : routes) {
+                    if (route.getRouteId().equals(leg.getLine()))
+                        leg.setHexColor(route.getHexColor());
+                }
+
             }
         }
     }
@@ -122,7 +131,7 @@ public class BartApiResponseProcessor {
      * @param routeResp
      * @return
      */
-    private static boolean responsesLinked(BartEtdResponse etdResp, BartRouteResponse routeResp) {
+    private static boolean responsesLinked(BartEtdResponse etdResp, BartScheduleResponse routeResp) {
         return (etdResp.getStation().getAbbreviation().compareTo(
                 routeResp.getOriginAbbreviation()) == 0);
     }

@@ -2,6 +2,7 @@ package pro.dbro.bart;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 import java.text.ParseException;
 import java.util.List;
 
+import pro.dbro.bart.api.xml.BartLeg;
 import pro.dbro.bart.api.xml.BartTrip;
 
 /**
@@ -67,9 +69,19 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
         holder.name.setText(name);
 
-        if (trip.getLegs().get(0).getHexColor() != null) {
-            int color = Color.parseColor(trip.getLegs().get(0).getHexColor());
-            holder.colorBand.setBackgroundColor(color);
+        if (trip.getLegs().size() == 1) {
+            if (trip.getLegs().get(0).getHexColor() != null) {
+                int color = Color.parseColor(trip.getLegs().get(0).getHexColor());
+                holder.colorBand.setBackgroundColor(color);
+            }
+        } else {
+            int[] colors = new int[trip.getLegs().size()];
+            for(int x = 0; x < trip.getLegs().size(); x++) {
+                colors[x] = Color.parseColor(trip.getLegs().get(x).getHexColor());
+            }
+            GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);
+            g.setGradientType(GradientDrawable.LINEAR_GRADIENT);
+            holder.colorBand.setBackground(g);
         }
 
         try {

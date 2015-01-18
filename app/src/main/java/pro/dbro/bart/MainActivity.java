@@ -1,6 +1,7 @@
 package pro.dbro.bart;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -8,7 +9,10 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -16,10 +20,11 @@ import java.util.ArrayList;
 import pro.dbro.bart.api.BartClient;
 import pro.dbro.bart.api.xml.BartApiResponse;
 import pro.dbro.bart.api.xml.BartEtdResponse;
-import pro.dbro.bart.api.xml.BartRouteResponse;
+import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.holdr.Holdr_ActivityMain;
 import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.android.widget.OnTextChangeEvent;
 import rx.android.widget.WidgetObservable;
 import rx.schedulers.Schedulers;
 
@@ -30,6 +35,18 @@ public class MainActivity extends Activity {
     private Holdr_ActivityMain holdr;
     private BartClient client;
 
+    private View.OnFocusChangeListener inputFocusListener = (inputTextView, hasFocus) -> {
+        if (inputTextView.getTag(R.id.textview_memory) != null &&
+            !hasFocus &&
+            TextUtils.isEmpty(((TextView) inputTextView).getText())) {
+                ((TextView)inputTextView).setText(inputTextView.getTag(R.id.textview_memory).toString());
+        }
+        else if (hasFocus && !TextUtils.isEmpty(((TextView) inputTextView).getText())) {
+            inputTextView.setTag(R.id.textview_memory, ((TextView) inputTextView).getText());
+            ((TextView) inputTextView).setText("");
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +55,9 @@ public class MainActivity extends Activity {
         holdr.recyclerView.setLayoutManager(new LinearLayoutManager(this));
         holdr.recyclerView.setAdapter(new EtdAdapter(new ArrayList<>()));
         holdr.recyclerView.setItemAnimator(new DefaultItemAnimator());
+
+        holdr.departureEntry.setOnFocusChangeListener(inputFocusListener);
+        holdr.destinationEntry.setOnFocusChangeListener(inputFocusListener);
 
         BartClient.getInstance()
                   .subscribeOn(Schedulers.io())
@@ -48,7 +68,8 @@ public class MainActivity extends Activity {
                   });
 
         Observable.merge(WidgetObservable.text(holdr.departureEntry),
-                WidgetObservable.text(holdr.destinationEntry))
+                         WidgetObservable.text(holdr.destinationEntry))
+                  .distinctUntilChanged(OnTextChangeEvent::text)
                   .flatMap(onTextChangeEvent -> doRequestForInputs(holdr.departureEntry.getText(),
                           holdr.destinationEntry.getText()))
                   .retry()
@@ -67,8 +88,9 @@ public class MainActivity extends Activity {
                           } else
                               notifyNoTrips();
                       }
-                      else if (response instanceof BartRouteResponse) {
-                          BartRouteResponse routeResponse = (BartRouteResponse) response;
+                      else if (response instanceof BartScheduleResponse) {
+                          hideSoftKeyboard(holdr.destinationEntry);
+                          BartScheduleResponse routeResponse = (BartScheduleResponse) response;
                           if (holdr.recyclerView.getAdapter() instanceof TripAdapter) {
                               ((TripAdapter) holdr.recyclerView.getAdapter()).swapEtds(routeResponse.getTrips());
                           } else {
@@ -112,6 +134,11 @@ public class MainActivity extends Activity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void hideSoftKeyboard (View view) {
+        InputMethodManager imm = (InputMethodManager)this.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getApplicationWindowToken(), 0);
     }
 
     private Observable<? extends BartApiResponse> doRequestForInputs(CharSequence departureInput,

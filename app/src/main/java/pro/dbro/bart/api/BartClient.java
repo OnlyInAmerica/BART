@@ -5,25 +5,19 @@ import android.util.Log;
 
 import com.mobprofs.retrofit.converters.SimpleXmlConverter;
 
-import org.apache.commons.collections4.BidiMap;
-
 import java.util.Formatter;
-import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLeg;
 import pro.dbro.bart.api.xml.BartLoadResponse;
-import pro.dbro.bart.api.xml.BartRouteResponse;
-import pro.dbro.bart.api.xml.BartStation;
+import pro.dbro.bart.api.xml.BartRoutesResponse;
+import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartStationListResponse;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import rx.Observable;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.exceptions.OnErrorThrowable;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by davidbrodsky on 1/14/15.
@@ -33,14 +27,19 @@ public class BartClient {
 
     private BartService service;
     private BartStationListResponse stations;
+    private BartRoutesResponse routes;
 
     public static Observable<BartClient> getInstance() {
         BartClient client = new BartClient();
 
         return client.service.getStations()
-                             .map(stationResponse -> {
+                             .flatMap(stationResponse -> {
                                  client.stations = stationResponse;
-                                 return client;
+                                 return client.service.getRoutes();
+                             })
+                             .map(routeResponse -> {
+                                client.routes = routeResponse;
+                                return client;
                              });
     }
 
@@ -71,8 +70,8 @@ public class BartClient {
     }
 
 
-    public Observable<BartRouteResponse> getRoute(@NonNull String departureName,
-                                                  @NonNull String destinationName) {
+    public Observable<BartScheduleResponse> getRoute(@NonNull String departureName,
+                                                     @NonNull String destinationName) {
 
         String departureCode   = stations.getStationNameToCodeMap().get(departureName);
         String destinationCode = stations.getStationNameToCodeMap().get(destinationName);
@@ -88,12 +87,13 @@ public class BartClient {
         return Observable.zip(service.getEtdResponse(departureCode)
                                      .map(BartApiResponseProcessor::processEtdResponse),
 
-                              service.getRouteResponse(departureCode, destinationCode),
+                              service.getScheduleResponse(departureCode, destinationCode),
 
                               (etdResponse, routeResponse) -> {
                                   BartApiResponseProcessor.processRouteResponse(routeResponse,
                                                                                 etdResponse,
-                                                                                stations.getStationNameToCodeMap());
+                                                                                stations.getStationNameToCodeMap(),
+                                                                                routes.getRoutes());
                                   return routeResponse;
                               }
         );

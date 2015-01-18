@@ -60,7 +60,7 @@ public abstract class BartDateTimeObject implements Comparable<BartDateTimeObjec
     }
 
     public long getOriginAsRelativeSec() throws ParseException {
-        long diffInMs = getDestAsDate().getTime() - new Date().getTime();
+        long diffInMs = getOriginAsDate().getTime() - new Date().getTime();
         return TimeUnit.MILLISECONDS.toSeconds(diffInMs);
     }
 
