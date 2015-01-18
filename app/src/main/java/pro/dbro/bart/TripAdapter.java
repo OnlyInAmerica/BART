@@ -5,6 +5,9 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.TextAppearanceSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -62,13 +65,29 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
     public void onBindViewHolder(TripViewHolder holder, int position) {
         BartTrip trip = trips.get(position);
 
+        int startTransferSpan = 0;
+        int endTransferSpan = 0;
+        int[][] transferSpans = new int[trip.getLegs().size()-1][2];
         String name = "Take ";
         for(int x = 0; x < trip.getLegs().size(); x++) {
-            if (x > 0) name += "\ntransfer at " + trip.getLegs().get(x).getOrigin() + "\nto ";
+            if (x > 0) {
+                startTransferSpan = name.length();
+                name += "\ntransfer at " + trip.getLegs().get(x).getOrigin() + "\n";
+                endTransferSpan = name.length();
+                name +="to ";
+                transferSpans[x-1] = new int[] {startTransferSpan, endTransferSpan};
+
+            }
             name += trip.getLegs().get(x).getTrainHeadStation();
         }
 
-        holder.name.setText(name);
+        Spannable nameSpannable = new SpannableString(name);
+        for(int[] span : transferSpans) {
+            TextAppearanceSpan tas = new TextAppearanceSpan(holder.name.getContext(), R.style.TransferText);
+            nameSpannable.setSpan(tas, span[0], span[1], Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        holder.name.setText(nameSpannable);
 
         if (trip.getLegs().size() == 1) {
             if (trip.getLegs().get(0).getHexColor() != null) {

@@ -5,4 +5,11 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="TransferText">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textColor">#dd2e2e2e</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
 </resources>
