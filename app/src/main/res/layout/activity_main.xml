@@ -9,32 +9,37 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_view"
-        android:layout_width="match_parent"
+    <AutoCompleteTextView
+        android:id="@+id/departure_entry"
+        android:layout_width="250dp"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/departure_entry"
-        android:layout_alignParentTop="true" />
+        android:textSize="20sp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:drawableLeft="@drawable/circle"
+        android:hint="Departure Station"
+        android:singleLine="true" />
 
     <AutoCompleteTextView
         android:id="@+id/destination_entry"
         android:layout_width="250dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:textSize="20sp"
+        android:layout_below="@id/departure_entry"
         android:layout_centerHorizontal="true"
         android:drawableLeft="@drawable/poi"
         android:hint="Destination Station"
         android:singleLine="true" />
 
-    <AutoCompleteTextView
-        android:id="@+id/departure_entry"
-        android:layout_width="250dp"
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/destination_entry"
-        android:layout_centerHorizontal="true"
-        android:drawableLeft="@drawable/circle"
-        android:hint="Departure Station"
-        android:singleLine="true" />
+        android:layout_below="@+id/destination_entry"
+        android:layout_marginTop="16dp"
+        android:layout_alignParentBottom="true" />
+
+
 
 
 </RelativeLayout>
