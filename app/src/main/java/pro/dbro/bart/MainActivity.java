@@ -29,7 +29,7 @@ import rx.android.widget.WidgetObservable;
 import rx.schedulers.Schedulers;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements ResponseRefreshListener {
     private String TAG = getClass().getSimpleName();
 
     private Holdr_ActivityMain holdr;
@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         holdr = new Holdr_ActivityMain(findViewById(R.id.container));
         holdr.recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        holdr.recyclerView.setAdapter(new EtdAdapter(new ArrayList<>()));
+//        holdr.recyclerView.setAdapter(new EtdAdapter());
         holdr.recyclerView.setItemAnimator(new DefaultItemAnimator());
 
         holdr.departureEntry.setOnFocusChangeListener(inputFocusListener);
@@ -77,26 +77,7 @@ public class MainActivity extends Activity {
                   .observeOn(AndroidSchedulers.mainThread())
                   .subscribe(response -> {
                       Log.i(TAG, "onNext " + response.getClass());
-                      if (response instanceof BartEtdResponse) {
-                          BartEtdResponse etdResponse = (BartEtdResponse) response;
-                          if (etdResponse.getEtds() != null && etdResponse.getEtds().size() != 0) {
-                              if (holdr.recyclerView.getAdapter() instanceof EtdAdapter) {
-                                  ((EtdAdapter) holdr.recyclerView.getAdapter()).swapEtds(etdResponse.getEtds());
-                              } else {
-                                  holdr.recyclerView.setAdapter(new EtdAdapter(etdResponse.getEtds()));
-                              }
-                          } else
-                              notifyNoTrips();
-                      }
-                      else if (response instanceof BartScheduleResponse) {
-                          hideSoftKeyboard(holdr.destinationEntry);
-                          BartScheduleResponse routeResponse = (BartScheduleResponse) response;
-                          if (holdr.recyclerView.getAdapter() instanceof TripAdapter) {
-                              ((TripAdapter) holdr.recyclerView.getAdapter()).swapEtds(routeResponse.getTrips());
-                          } else {
-                              holdr.recyclerView.setAdapter(new TripAdapter(routeResponse.getTrips()));
-                          }
-                      }
+                      displayResponse(response);
                   }, throwable -> Log.i(TAG, throwable.getMessage()));
     }
 
@@ -107,6 +88,29 @@ public class MainActivity extends Activity {
                 android.R.layout.simple_dropdown_item_1line, stationList);
         holdr.departureEntry.setAdapter(adapter);
         holdr.destinationEntry.setAdapter(adapter);
+    }
+
+    private void displayResponse(BartApiResponse response) {
+        if (response instanceof BartEtdResponse) {
+            BartEtdResponse etdResponse = (BartEtdResponse) response;
+            if (etdResponse.getEtds() != null && etdResponse.getEtds().size() != 0) {
+                if (holdr.recyclerView.getAdapter() instanceof EtdAdapter) {
+                    ((EtdAdapter) holdr.recyclerView.getAdapter()).updateResponse(etdResponse);
+                } else {
+                    holdr.recyclerView.setAdapter(new EtdAdapter(etdResponse, holdr.recyclerView, MainActivity.this));
+                }
+            } else
+                notifyNoTrips();
+        }
+        else if (response instanceof BartScheduleResponse) {
+            hideSoftKeyboard(holdr.destinationEntry);
+            BartScheduleResponse routeResponse = (BartScheduleResponse) response;
+            if (holdr.recyclerView.getAdapter() instanceof TripAdapter) {
+                ((TripAdapter) holdr.recyclerView.getAdapter()).swapEtds(routeResponse.getTrips());
+            } else {
+                holdr.recyclerView.setAdapter(new TripAdapter(routeResponse.getTrips()));
+            }
+        }
     }
 
     private void notifyNoTrips() {
@@ -155,5 +159,14 @@ public class MainActivity extends Activity {
 
         throw new IllegalStateException("No input values");
         //return Observable.error(OnErrorThrowable.from(new IllegalStateException(("No input values"))));
+    }
+
+    @Override
+    public void refreshRequested(BartApiResponse oldResponse) {
+        if (oldResponse instanceof BartEtdResponse) {
+            client.getEtd(((BartEtdResponse) oldResponse).getStation().getName())
+                  .subscribe(this::displayResponse);
+        }
+        // TODO : Does it make sense to auto-refresh other response types?
     }
 }

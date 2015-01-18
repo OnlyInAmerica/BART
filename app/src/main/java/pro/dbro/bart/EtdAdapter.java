@@ -4,22 +4,29 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import pro.dbro.bart.api.BartApiResponseProcessor;
 import pro.dbro.bart.api.xml.BartEstimate;
 import pro.dbro.bart.api.xml.BartEtd;
+import pro.dbro.bart.api.xml.BartEtdResponse;
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.android.view.ViewObservable;
 
 /**
  * Created by davidbrodsky on 1/16/15.
  */
 public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
 
-    private List<BartEtd> etds;
+    private BartEtdResponse response;
+    private ResponseRefreshListener listener;
 
     public static class EtdViewHolder extends RecyclerView.ViewHolder {
 
@@ -43,12 +50,28 @@ public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
         }
     }
 
-    public EtdAdapter(@NonNull List<BartEtd> etds) {
-        this.etds = etds;
+    public EtdAdapter(@NonNull BartEtdResponse response,
+                      @NonNull RecyclerView host,
+                      @NonNull ResponseRefreshListener listener) {
+
+        this.listener = listener;
+        this.response = response;
+
+        // Keep views up-to-date
+        ViewObservable.bindView(host, Observable.timer(30, 30, TimeUnit.SECONDS))
+                      .observeOn(AndroidSchedulers.mainThread())
+                      .subscribeOn(AndroidSchedulers.mainThread())
+                      .subscribe(time -> {
+                          if (!BartApiResponseProcessor.updateEtdResponse(response)) {
+                              listener.refreshRequested(this.response);
+                          }
+                          notifyDataSetChanged();
+                          Log.i("Update", "timer tick " + time);
+                      });
     }
 
-    public void swapEtds(@NonNull List<BartEtd> etds) {
-        this.etds = etds;
+    public void updateResponse(@NonNull BartEtdResponse newResponse) {
+        this.response = newResponse;
         notifyDataSetChanged();
     }
 
@@ -61,7 +84,7 @@ public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
 
     @Override
     public void onBindViewHolder(EtdViewHolder holder, int position) {
-        BartEtd etd = etds.get(position);
+        BartEtd etd = response.getEtds().get(position);
 
         holder.name.setText(etd.getDestination());
 
@@ -79,6 +102,6 @@ public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
 
     @Override
     public int getItemCount() {
-        return etds.size();
+        return response.getEtds().size();
     }
 }

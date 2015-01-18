@@ -8,6 +8,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import pro.dbro.bart.api.xml.BartEstimate;
@@ -40,6 +41,7 @@ public class BartApiResponseProcessor {
             return source;
         }
         for (BartEtd etd : source.getEtds()) {
+            ArrayList<BartEstimate> estimateToRemove = new ArrayList<>();
             for (BartEstimate estimate : etd.getEstimates()) {
                 if (estimate.minutes.equals("Leaving")) {
                     estimate.setDeltaMinutesEstimate("<1");
@@ -47,8 +49,30 @@ public class BartApiResponseProcessor {
                 estimate.setDateEstimate();
             }
         }
-
         return source;
+    }
+
+    /**
+     * Remove expired estimates from a BartEtdResponse
+     * @return false if the BartEtdResponse should be refreshed due to a significant
+     *         number of its estimates being expired.
+     */
+    public static boolean updateEtdResponse(BartEtdResponse source) {
+        boolean shouldRefresh = false;
+        Iterator<BartEtd> etds = source.getEtds().iterator();
+        while (etds.hasNext()) {
+            BartEtd etd = etds.next();
+            Iterator<BartEstimate> estimates = etd.getEstimates().iterator();
+            while (estimates.hasNext()) {
+                if (estimates.next().getDeltaSecondsEstimate() < 0)
+                    estimates.remove();
+            }
+            if (etd.getEstimates().size() == 0) {
+                etds.remove();
+                shouldRefresh = true;
+            }
+        }
+        return shouldRefresh;
     }
 
     /**
