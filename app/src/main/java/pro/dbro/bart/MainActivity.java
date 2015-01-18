@@ -92,6 +92,7 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
 
     private void displayResponse(BartApiResponse response) {
         if (response instanceof BartEtdResponse) {
+            hideSoftKeyboard(holdr.departureEntry);
             BartEtdResponse etdResponse = (BartEtdResponse) response;
             if (etdResponse.getEtds() != null && etdResponse.getEtds().size() != 0) {
                 if (holdr.recyclerView.getAdapter() instanceof EtdAdapter) {
