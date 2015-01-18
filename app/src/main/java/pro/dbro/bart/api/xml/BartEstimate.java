@@ -7,6 +7,7 @@ import org.simpleframework.xml.Root;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by davidbrodsky on 2/11/14.
@@ -15,7 +16,9 @@ import java.util.Date;
 public class BartEstimate implements Comparable<BartEstimate>{
 
     @Element(name = "minutes")
-    private String minutes;
+    public String minutes;
+
+    private Date date;
 
     @Element(name = "platform")
     private String platform;
@@ -35,16 +38,21 @@ public class BartEstimate implements Comparable<BartEstimate>{
     @Element(name = "bikeflag")
     private boolean bikesAllowed;
 
-    public String getDeltaMinutesEstimate() {
-        return minutes;
+    public long getDeltaSecondsEstimate() {
+        long diffInMs = getDateEstimate().getTime() - new Date().getTime();
+        return TimeUnit.MILLISECONDS.toSeconds(diffInMs);
     }
 
     public Date getDateEstimate(){
+        if (date == null) setDateEstimate();
+        return date;
+    }
 
+    public void setDateEstimate() {
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.MINUTE,
-                Integer.parseInt(((getDeltaMinutesEstimate().contains("<1")) ? "0" : getDeltaMinutesEstimate())));
-        return cal.getTime();
+        cal.add(Calendar.SECOND,
+                ((minutes.contains("<1")) ? 30 : Integer.parseInt(minutes) * 60));
+        date = cal.getTime();
     }
 
     public void setDeltaMinutesEstimate(String minutes) {
@@ -77,18 +85,6 @@ public class BartEstimate implements Comparable<BartEstimate>{
 
     @Override
     public int compareTo(@NonNull BartEstimate another) {
-        int thisMinutes;
-        if(getDeltaMinutesEstimate().contains("<1")){
-            thisMinutes = 0;
-        } else {
-            thisMinutes = Integer.parseInt(getDeltaMinutesEstimate());
-        }
-        int anotherMinutes;
-        if(another.getDeltaMinutesEstimate().contains("<1")){
-            anotherMinutes = 0;
-        } else {
-            anotherMinutes = Integer.parseInt(getDeltaMinutesEstimate());
-        }
-        return thisMinutes - anotherMinutes;
+        return getDateEstimate().compareTo(another.getDateEstimate());
     }
 }

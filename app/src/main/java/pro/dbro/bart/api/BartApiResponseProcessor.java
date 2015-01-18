@@ -41,9 +41,10 @@ public class BartApiResponseProcessor {
         }
         for (BartEtd etd : source.getEtds()) {
             for (BartEstimate estimate : etd.getEstimates()) {
-                if (estimate.getDeltaMinutesEstimate().equals("Leaving")) {
+                if (estimate.minutes.equals("Leaving")) {
                     estimate.setDeltaMinutesEstimate("<1");
                 }
+                estimate.setDateEstimate();
             }
         }
 

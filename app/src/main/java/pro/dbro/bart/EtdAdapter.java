@@ -1,10 +1,8 @@
 package pro.dbro.bart;
 
-import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -72,7 +70,7 @@ public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
 
         StringBuilder etdBuilder = new StringBuilder();
         for (BartEstimate estimate : etd.getEstimates()) {
-            etdBuilder.append(estimate.getDeltaMinutesEstimate());
+            etdBuilder.append(estimate.getDeltaSecondsEstimate() / 60);
             etdBuilder.append(", ");
         }
         etdBuilder.delete(etdBuilder.length()-2, etdBuilder.length());
