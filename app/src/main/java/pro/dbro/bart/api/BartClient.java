@@ -90,10 +90,10 @@ public class BartClient {
                               service.getScheduleResponse(departureCode, destinationCode),
 
                               (etdResponse, routeResponse) -> {
-                                  BartApiResponseProcessor.processRouteResponse(routeResponse,
-                                                                                etdResponse,
-                                                                                stations.getStationNameToCodeMap(),
-                                                                                routes.getRoutes());
+                                  BartApiResponseProcessor.processScheduleResponse(routeResponse,
+                                          etdResponse,
+                                          stations.getStationNameToCodeMap(),
+                                          routes.getRoutes());
                                   return routeResponse;
                               }
         );

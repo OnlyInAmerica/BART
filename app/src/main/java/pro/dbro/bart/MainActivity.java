@@ -106,9 +106,9 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
             hideSoftKeyboard(holdr.destinationEntry);
             BartScheduleResponse routeResponse = (BartScheduleResponse) response;
             if (holdr.recyclerView.getAdapter() instanceof TripAdapter) {
-                ((TripAdapter) holdr.recyclerView.getAdapter()).swapEtds(routeResponse.getTrips());
+                ((TripAdapter) holdr.recyclerView.getAdapter()).updateResponse(routeResponse);
             } else {
-                holdr.recyclerView.setAdapter(new TripAdapter(routeResponse.getTrips()));
+                holdr.recyclerView.setAdapter(new TripAdapter(routeResponse, holdr.recyclerView, this));
             }
         }
     }

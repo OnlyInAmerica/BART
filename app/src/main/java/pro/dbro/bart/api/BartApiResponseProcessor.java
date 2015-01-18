@@ -84,10 +84,10 @@ public class BartApiResponseProcessor {
      *
      * @param routeResponse
      */
-    public static void processRouteResponse(BartScheduleResponse routeResponse,
-                                            BartEtdResponse etdResponse,
-                                            BidiMap<String, String> stationNameToCode,
-                                            List<BartRoute> routes) {
+    public static void processScheduleResponse(BartScheduleResponse routeResponse,
+                                               BartEtdResponse etdResponse,
+                                               BidiMap<String, String> stationNameToCode,
+                                               List<BartRoute> routes) {
 
         // Remove Trips that have already departed the origin station
         Date now = new Date();
@@ -146,6 +146,26 @@ public class BartApiResponseProcessor {
 
             }
         }
+    }
+
+    public static boolean updateScheduleResponse(BartScheduleResponse source) {
+        boolean shouldRefresh = false;
+        Iterator<BartTrip> trips = source.getTrips().iterator();
+        while (trips.hasNext()) {
+            BartTrip trip = trips.next();
+            Iterator<BartLeg> legs = trip.getLegs().iterator();
+            while (legs.hasNext()) {
+                try {
+                    if (legs.next().getOriginAsRelativeSec() < 0) {
+                        trips.remove();
+                        shouldRefresh = true;
+                    }
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return shouldRefresh;
     }
 
     /**

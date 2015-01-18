@@ -16,17 +16,24 @@ import android.widget.TextView;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import pro.dbro.bart.api.BartApiResponseProcessor;
 import pro.dbro.bart.api.xml.BartLeg;
+import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartTrip;
 import pro.dbro.bart.drawable.StripeDrawable;
+import rx.Observable;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.android.view.ViewObservable;
 
 /**
  * Created by davidbrodsky on 1/16/15.
  */
 public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder> {
 
-    private List<BartTrip> trips;
+    private BartScheduleResponse response;
+    private ResponseRefreshListener listener;
 
     public static class TripViewHolder extends RecyclerView.ViewHolder {
 
@@ -45,12 +52,29 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         }
     }
 
-    public TripAdapter(@NonNull List<BartTrip> trips) {
-        this.trips = trips;
+    public TripAdapter(@NonNull BartScheduleResponse response,
+                       @NonNull RecyclerView host,
+                       @NonNull ResponseRefreshListener listener) {
+
+        this.listener = listener;
+        this.response = response;
+
+        // Keep views up-to-date
+        ViewObservable.bindView(host, Observable.timer(30, 30, TimeUnit.SECONDS))
+                      .observeOn(AndroidSchedulers.mainThread())
+                      .subscribeOn(AndroidSchedulers.mainThread())
+                      .subscribe(time -> {
+                          if (!BartApiResponseProcessor.updateScheduleResponse(response)) {
+                              listener.refreshRequested(this.response);
+                          }
+                          notifyDataSetChanged();
+                          Log.i("Update", "timer tick " + time);
+                      });
+
     }
 
-    public void swapEtds(@NonNull List<BartTrip> trips) {
-        this.trips = trips;
+    public void updateResponse(@NonNull BartScheduleResponse newResponse) {
+        this.response = newResponse;
         notifyDataSetChanged();
     }
 
@@ -63,7 +87,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
     @Override
     public void onBindViewHolder(TripViewHolder holder, int position) {
-        BartTrip trip = trips.get(position);
+        BartTrip trip = response.getTrips().get(position);
 
         int startTransferSpan = 0;
         int endTransferSpan = 0;
@@ -113,6 +137,6 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
     @Override
     public int getItemCount() {
-        return trips.size();
+        return response.getTrips().size();
     }
 }
