@@ -16,6 +16,7 @@ import java.util.List;
 
 import pro.dbro.bart.api.xml.BartLeg;
 import pro.dbro.bart.api.xml.BartTrip;
+import pro.dbro.bart.drawable.StripeDrawable;
 
 /**
  * Created by davidbrodsky on 1/16/15.
@@ -79,9 +80,8 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
             for(int x = 0; x < trip.getLegs().size(); x++) {
                 colors[x] = Color.parseColor(trip.getLegs().get(x).getHexColor());
             }
-            GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, colors);
-            g.setGradientType(GradientDrawable.LINEAR_GRADIENT);
-            holder.colorBand.setBackground(g);
+            StripeDrawable drawable = new StripeDrawable(colors);
+            holder.colorBand.setBackground(drawable);
         }
 
         try {
