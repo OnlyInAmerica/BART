@@ -65,6 +65,11 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         holdr.toolbar.setTitle("Title");
         holdr.toolbar.setSubtitle("Subtitle");
 
+        holdr.reverse.setOnClickListener(view -> {
+            if (holdr.recyclerView.getAdapter() instanceof EtdAdapter)
+                ((EtdAdapter)holdr.recyclerView.getAdapter()).testShuffleItems();
+        });
+
         setActionBar(holdr.toolbar);
 
         BartClient.getInstance()
@@ -81,7 +86,7 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
                                  WidgetObservable.text(holdr.destinationEntry)))
             .distinctUntilChanged(OnTextChangeEvent::text)
             .flatMap(onTextChangeEvent -> doRequestForInputs(holdr.departureEntry.getText(),
-                    holdr.destinationEntry.getText()))
+                                                             holdr.destinationEntry.getText()))
             .retry()
             .subscribeOn(AndroidSchedulers.mainThread())
             .observeOn(AndroidSchedulers.mainThread())
@@ -108,6 +113,7 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
                 if (holdr.recyclerView.getAdapter() instanceof EtdAdapter) {
                     ((EtdAdapter) holdr.recyclerView.getAdapter()).updateResponse(etdResponse);
                 } else {
+                    if (holdr.recyclerView.getAdapter() != null) ((TripAdapter) holdr.recyclerView.getAdapter()).destroy();
                     holdr.recyclerView.setAdapter(new EtdAdapter(etdResponse, holdr.recyclerView, MainActivity.this));
                 }
             } else
@@ -116,17 +122,21 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         else if (response instanceof BartScheduleResponse) {
             hideSoftKeyboard(holdr.destinationEntry);
             BartScheduleResponse routeResponse = (BartScheduleResponse) response;
-            if (holdr.recyclerView.getAdapter() instanceof TripAdapter) {
-                ((TripAdapter) holdr.recyclerView.getAdapter()).updateResponse(routeResponse);
-            } else {
-                holdr.recyclerView.setAdapter(new TripAdapter(routeResponse, holdr.recyclerView, this));
-            }
+            if (routeResponse.getTrips() != null && routeResponse.getTrips().size() != 0) {
+                if (holdr.recyclerView.getAdapter() instanceof TripAdapter) {
+                    ((TripAdapter) holdr.recyclerView.getAdapter()).updateResponse(routeResponse);
+                } else {
+                    if (holdr.recyclerView.getAdapter() != null) ((EtdAdapter) holdr.recyclerView.getAdapter()).destroy();
+                    holdr.recyclerView.setAdapter(new TripAdapter(routeResponse, holdr.recyclerView, this));
+                }
+            } else
+                notifyNoTrips();
         }
     }
 
     private void notifyNoTrips() {
         // TODO
-        Toast.makeText(this, "No trips available tonight :/", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "No more trains available tonight", Toast.LENGTH_LONG).show();
     }
 
     @Override

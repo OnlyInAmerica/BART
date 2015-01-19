@@ -37,4 +37,8 @@ public class BartEtd {
         return "Etd " + destination;
     }
 
+    public boolean sameStationAs(BartEtd other) {
+        return abbreviation.equals(other.abbreviation);
+    }
+
 }

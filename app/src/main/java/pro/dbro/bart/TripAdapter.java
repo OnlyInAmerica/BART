@@ -2,7 +2,6 @@ package pro.dbro.bart;
 
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
@@ -15,15 +14,16 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import pro.dbro.bart.api.BartApiResponseProcessor;
-import pro.dbro.bart.api.xml.BartLeg;
 import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartTrip;
 import pro.dbro.bart.drawable.StripeDrawable;
 import rx.Observable;
+import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.android.view.ViewObservable;
 
@@ -31,9 +31,12 @@ import rx.android.view.ViewObservable;
  * Created by davidbrodsky on 1/16/15.
  */
 public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder> {
+    private final String TAG = getClass().getSimpleName();
 
     private BartScheduleResponse response;
+    private List<BartTrip> items;
     private ResponseRefreshListener listener;
+    private static Subscription subscription;
 
     public static class TripViewHolder extends RecyclerView.ViewHolder {
 
@@ -58,23 +61,45 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
         this.listener = listener;
         this.response = response;
+        this.items = new ArrayList<>();
+
+        Observable.timer(0, 80, TimeUnit.MILLISECONDS)
+                .limit(response.getTrips().size())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribe(time -> {
+                    items.add(response.getTrips().get(time.intValue()));
+                    notifyItemInserted(time.intValue());
+                    Log.i(TAG, "Notifying initial add");
+                });
 
         // Keep views up-to-date
-        ViewObservable.bindView(host, Observable.timer(30, 30, TimeUnit.SECONDS))
+        final int updateViewIntervalS = 30;
+        unsubscribe();
+        subscription = ViewObservable.bindView(host, Observable.timer(updateViewIntervalS, updateViewIntervalS, TimeUnit.SECONDS))
                       .observeOn(AndroidSchedulers.mainThread())
                       .subscribeOn(AndroidSchedulers.mainThread())
                       .subscribe(time -> {
-                          if (!BartApiResponseProcessor.updateScheduleResponse(response)) {
-                              listener.refreshRequested(this.response);
+                          if (!BartApiResponseProcessor.pruneScheduleResponse(this.response)) {
+                              this.listener.refreshRequested(this.response);
                           }
                           notifyDataSetChanged();
-                          Log.i("Update", "timer tick " + time);
+                          Log.i(TAG, "timer tick " + time);
                       });
 
     }
 
+    public void destroy() {
+        unsubscribe();
+    }
+
+    private void unsubscribe() {
+        if (subscription != null && !subscription.isUnsubscribed()) subscription.unsubscribe();
+    }
+
     public void updateResponse(@NonNull BartScheduleResponse newResponse) {
         this.response = newResponse;
+        this.items = newResponse.getTrips();
         notifyDataSetChanged();
     }
 
@@ -87,7 +112,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
     @Override
     public void onBindViewHolder(TripViewHolder holder, int position) {
-        BartTrip trip = response.getTrips().get(position);
+        BartTrip trip = items.get(position);
 
         int startTransferSpan = 0;
         int endTransferSpan = 0;
@@ -128,7 +153,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         }
 
         try {
-            holder.etds.setText(String.valueOf(trip.getLegs().get(0).getOriginAsRelativeSec() / 60));
+            holder.etds.setText(String.valueOf(Math.round(trip.getLegs().get(0).getOriginAsRelativeSec() / 60f)));
         } catch (ParseException e) {
             holder.etds.setText("?");
             e.printStackTrace();
@@ -137,6 +162,6 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
     @Override
     public int getItemCount() {
-        return response.getTrips().size();
+        return items.size();
     }
 }

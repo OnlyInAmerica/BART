@@ -3,7 +3,12 @@ package pro.dbro.bart.api.xml;
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Response from BART Real-Time
@@ -12,7 +17,17 @@ import java.util.List;
  * e.g: http://api.bart.gov/api/etd.aspx?cmd=etd&orig=12th&key=MW9S-E7SL-26DU-VV8V
  */
 @Root(strict = false, name = "root")
-public class BartEtdResponse extends BartApiResponse{
+public class BartEtdResponse extends BartApiResponse {
+
+    private static final SimpleDateFormat BART_DATE_PARSER = new SimpleDateFormat("MM/dd/yyyy hh:mm:ss a z", Locale.US);
+
+    static {
+        BART_DATE_PARSER.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
+    }
+
+    private static Date getDateFromBartDateTime(String bartDate, String bartTime) throws ParseException {
+        return BART_DATE_PARSER.parse(String.format("%s %s", bartDate, bartTime));
+    }
 
     @Element(name = "date")
     private String requestDate;
@@ -27,12 +42,8 @@ public class BartEtdResponse extends BartApiResponse{
         return "date " + requestDate + " time: " + requestTime + " Station: " + station;
     }
 
-    public String getRequestDate() {
-        return requestDate;
-    }
-
-    public String getRequestTime() {
-        return requestTime;
+    public Date getRequestDate() throws ParseException {
+        return getDateFromBartDateTime(requestDate, requestTime);
     }
 
     public BartStation getStation() {
