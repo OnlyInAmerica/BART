@@ -57,14 +57,10 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         setContentView(R.layout.activity_main);
         holdr = new Holdr_ActivityMain(findViewById(R.id.container));
         holdr.recyclerView.setLayoutManager(new LinearLayoutManager(this));
-//        holdr.recyclerView.setAdapter(new EtdAdapter());
         holdr.recyclerView.setItemAnimator(new DefaultItemAnimator());
 
         holdr.departureEntry.setOnFocusChangeListener(inputFocusListener);
         holdr.destinationEntry.setOnFocusChangeListener(inputFocusListener);
-
-        holdr.toolbar.setTitle("Title");
-        holdr.toolbar.setSubtitle("Subtitle");
 
         holdr.reverse.setOnClickListener(view -> {
             String departureEntry = holdr.departureEntry.getText().toString();
