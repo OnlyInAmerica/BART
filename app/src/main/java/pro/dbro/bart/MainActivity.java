@@ -23,6 +23,8 @@ import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.holdr.Holdr_ActivityMain;
 import rx.Observable;
+import rx.Subscription;
+import rx.android.app.AppObservable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.android.widget.OnTextChangeEvent;
 import rx.android.widget.WidgetObservable;
@@ -34,6 +36,7 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
 
     private Holdr_ActivityMain holdr;
     private BartClient client;
+    private Subscription subscription;
 
     private View.OnFocusChangeListener inputFocusListener = (inputTextView, hasFocus) -> {
         if (inputTextView.getTag(R.id.textview_memory) != null &&
@@ -72,18 +75,20 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
                       setupAutocomplete(client);
                   });
 
-        Observable.merge(WidgetObservable.text(holdr.departureEntry),
-                         WidgetObservable.text(holdr.destinationEntry))
-                  .distinctUntilChanged(OnTextChangeEvent::text)
-                  .flatMap(onTextChangeEvent -> doRequestForInputs(holdr.departureEntry.getText(),
-                          holdr.destinationEntry.getText()))
-                  .retry()
-                  .subscribeOn(AndroidSchedulers.mainThread())
-                  .observeOn(AndroidSchedulers.mainThread())
-                  .subscribe(response -> {
-                      Log.i(TAG, "onNext " + response.getClass());
-                      displayResponse(response);
-                  }, throwable -> Log.i(TAG, throwable.getMessage()));
+
+        subscription = AppObservable.bindActivity(this,
+                Observable.merge(WidgetObservable.text(holdr.departureEntry),
+                                 WidgetObservable.text(holdr.destinationEntry)))
+            .distinctUntilChanged(OnTextChangeEvent::text)
+            .flatMap(onTextChangeEvent -> doRequestForInputs(holdr.departureEntry.getText(),
+                    holdr.destinationEntry.getText()))
+            .retry()
+            .subscribeOn(AndroidSchedulers.mainThread())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(response -> {
+                Log.i(TAG, "onNext " + response.getClass());
+                displayResponse(response);
+            }, throwable -> Log.i(TAG, throwable.getMessage()));
     }
 
     private void setupAutocomplete(BartClient client) {
@@ -146,6 +151,11 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         return super.onOptionsItemSelected(item);
     }
 
+    public void onDestroy() {
+        super.onDestroy();
+        subscription.unsubscribe();
+    }
+
     private void hideSoftKeyboard (View view) {
         InputMethodManager imm = (InputMethodManager)this.getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getApplicationWindowToken(), 0);
@@ -157,7 +167,7 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         if (!TextUtils.isEmpty(departureInput)) {
             if (!TextUtils.isEmpty(destinationInput)) {
                 return client.getRoute(departureInput.toString(),
-                        destinationInput.toString());
+                                       destinationInput.toString());
             } else {
                 return client.getEtd(departureInput.toString());
             }
@@ -175,7 +185,8 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         }
         else if (oldResponse instanceof BartScheduleResponse) {
             client.getRoute(((BartScheduleResponse) oldResponse).getOriginAbbreviation(),
-                            ((BartScheduleResponse) oldResponse).getDestinationAbbreviation());
+                            ((BartScheduleResponse) oldResponse).getDestinationAbbreviation())
+                  .subscribe(this::displayResponse);
         }
     }
 }
