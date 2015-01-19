@@ -118,7 +118,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         int endTransferSpan = 0;
         int[][] transferSpans = new int[trip.getLegs().size()-1][2];
         String name = "Take ";
-        for(int x = 0; x < trip.getLegs().size(); x++) {
+        for(int x = 0; x < trip.getLegs().size(); x++)   {
             if (x > 0) {
                 startTransferSpan = name.length();
                 name += "\ntransfer at " + trip.getLegs().get(x).getOrigin() + "\n";

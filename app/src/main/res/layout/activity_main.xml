@@ -46,6 +46,7 @@
             <ImageButton
                 android:id="@+id/reverse"
                 android:src="@drawable/arrows"
+                android:focusableInTouchMode="true"
                 android:background="@android:color/transparent"
                 android:padding="16dp"
                 android:layout_width="60dp"

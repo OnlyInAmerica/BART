@@ -1,5 +1,6 @@
 package pro.dbro.bart;
 
+import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -66,8 +67,14 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         holdr.toolbar.setSubtitle("Subtitle");
 
         holdr.reverse.setOnClickListener(view -> {
-            if (holdr.recyclerView.getAdapter() instanceof EtdAdapter)
-                ((EtdAdapter)holdr.recyclerView.getAdapter()).testShuffleItems();
+            String departureEntry = holdr.departureEntry.getText().toString();
+
+            holdr.departureEntry.setText(holdr.destinationEntry.getText());
+            holdr.destinationEntry.setText(departureEntry);
+
+            ObjectAnimator.ofFloat(holdr.reverse, "rotation", 0f, 180f).start();
+            holdr.recyclerView.requestFocus();
+
         });
 
         setActionBar(holdr.toolbar);
@@ -83,8 +90,8 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
 
         subscription = AppObservable.bindActivity(this,
                 Observable.merge(WidgetObservable.text(holdr.departureEntry),
-                                 WidgetObservable.text(holdr.destinationEntry)))
-            .distinctUntilChanged(OnTextChangeEvent::text)
+                        WidgetObservable.text(holdr.destinationEntry)))
+//            .distinctUntilChanged(OnTextChangeEvent::text)
             .flatMap(onTextChangeEvent -> doRequestForInputs(holdr.departureEntry.getText(),
                                                              holdr.destinationEntry.getText()))
             .retry()
