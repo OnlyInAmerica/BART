@@ -23,11 +23,12 @@
                 android:id="@+id/departure_entry"
                 android:layout_width="250dp"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
-                android:drawableLeft="@drawable/circle"
+                android:drawableStart="@drawable/circle"
                 android:hint="Departure Station"
+                android:inputType="textFilter"
                 android:singleLine="true"
                 android:textSize="20sp" />
 
@@ -35,26 +36,27 @@
                 android:id="@+id/destination_entry"
                 android:layout_width="250dp"
                 android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
                 android:layout_below="@id/departure_entry"
                 android:layout_centerHorizontal="true"
-                android:drawableLeft="@drawable/poi"
+                android:drawableStart="@drawable/poi"
                 android:hint="Destination Station"
+                android:inputType="textFilter"
                 android:singleLine="true"
                 android:textSize="20sp" />
 
             <ImageButton
                 android:id="@+id/reverse"
-                android:src="@drawable/arrows"
-                android:focusableInTouchMode="true"
-                android:background="@android:color/transparent"
-                android:padding="16dp"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
+                android:layout_alignBottom="@id/destination_entry"
+                android:layout_alignTop="@id/departure_entry"
                 android:layout_marginStart="16dp"
                 android:layout_toEndOf="@id/destination_entry"
-                android:layout_alignTop="@id/departure_entry"
-                android:layout_alignBottom="@id/destination_entry"/>
+                android:background="@android:color/transparent"
+                android:focusableInTouchMode="true"
+                android:padding="16dp"
+                android:src="@drawable/arrows" />
 
         </RelativeLayout>
 
