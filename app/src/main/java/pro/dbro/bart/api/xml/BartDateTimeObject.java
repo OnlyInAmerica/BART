@@ -21,6 +21,10 @@ public abstract class BartDateTimeObject implements Comparable<BartDateTimeObjec
         BART_DATE_PARSER.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
     }
 
+    private static Date getDateFromBartDateTime(String bartDate, String bartTime) throws ParseException {
+        return BART_DATE_PARSER.parse(String.format("%s %s", bartDate, bartTime));
+    }
+
     @Attribute(name = "origTimeMin")
     private String originTime;
 
@@ -65,11 +69,11 @@ public abstract class BartDateTimeObject implements Comparable<BartDateTimeObjec
     }
 
     public Date getOriginAsDate() throws ParseException {
-        return BART_DATE_PARSER.parse(String.format("%s %s", getOriginDate(), getOriginTime()));
+        return getDateFromBartDateTime(getOriginDate(), getOriginTime());
     }
 
     public Date getDestAsDate() throws ParseException {
-        return BART_DATE_PARSER.parse(String.format("%s %s", getDestDate(), getDestTime()));
+        return getDateFromBartDateTime(getDestDate(), getDestTime());
     }
 
     public void adjustWithEstimatedOriginDate(Date originDate){
