@@ -80,7 +80,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
                       .observeOn(AndroidSchedulers.mainThread())
                       .subscribeOn(AndroidSchedulers.mainThread())
                       .subscribe(time -> {
-                          if (!BartApiResponseProcessor.pruneScheduleResponse(this.response)) {
+                          if (BartApiResponseProcessor.pruneScheduleResponse(this.response)) {
                               this.listener.refreshRequested(this.response);
                           }
                           notifyDataSetChanged();
