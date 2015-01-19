@@ -140,6 +140,8 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
             } else
                 notifyNoTrips();
         }
+        if (holdr.recyclerView.getAdapter().getItemCount() > 0)
+            holdr.recyclerView.smoothScrollToPosition(0);
     }
 
     private void notifyNoTrips() {
