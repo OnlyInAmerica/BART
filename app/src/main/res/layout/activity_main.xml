@@ -51,7 +51,7 @@
                 android:layout_height="70dp"
                 android:layout_alignBottom="@id/destination_entry"
                 android:layout_alignTop="@id/departure_entry"
-                android:layout_marginStart="16dp"
+                android:layout_marginStart="0dp"
                 android:layout_toEndOf="@id/destination_entry"
                 android:background="@android:color/transparent"
                 android:focusableInTouchMode="true"
