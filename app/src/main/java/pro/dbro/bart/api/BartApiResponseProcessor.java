@@ -10,7 +10,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import pro.dbro.bart.api.xml.BartDateTimeObject;
 import pro.dbro.bart.api.xml.BartEstimate;
 import pro.dbro.bart.api.xml.BartEtd;
 import pro.dbro.bart.api.xml.BartEtdResponse;
@@ -54,11 +56,11 @@ public class BartApiResponseProcessor {
 
     /**
      * Remove expired estimates from a BartEtdResponse
-     * @return false if the BartEtdResponse should be refreshed due to a significant
-     *         number of its estimates being expired.
+     * @return true if at least one estimate ocurred in the past.
      */
-    public static boolean updateEtdResponse(BartEtdResponse source) {
-        boolean shouldRefresh = false;
+    public static boolean pruneEtdResponse(BartEtdResponse source) {
+        boolean prunedEstimate = false;
+
         Iterator<BartEtd> etds = source.getEtds().iterator();
         while (etds.hasNext()) {
             BartEtd etd = etds.next();
@@ -69,10 +71,10 @@ public class BartApiResponseProcessor {
             }
             if (etd.getEstimates().size() == 0) {
                 etds.remove();
-                shouldRefresh = true;
+                prunedEstimate = true;
             }
         }
-        return shouldRefresh;
+        return prunedEstimate;
     }
 
     /**
@@ -148,7 +150,7 @@ public class BartApiResponseProcessor {
         }
     }
 
-    public static boolean updateScheduleResponse(BartScheduleResponse source) {
+    public static boolean pruneScheduleResponse(BartScheduleResponse source) {
         boolean shouldRefresh = false;
         Iterator<BartTrip> trips = source.getTrips().iterator();
         while (trips.hasNext()) {
