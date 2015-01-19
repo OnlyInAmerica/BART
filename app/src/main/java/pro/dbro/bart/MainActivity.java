@@ -3,6 +3,7 @@ package pro.dbro.bart;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -17,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 import pro.dbro.bart.api.BartClient;
 import pro.dbro.bart.api.xml.BartApiResponse;
@@ -81,12 +83,14 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
                   .subscribe(client -> {
                       this.client = client;
                       setupAutocomplete(client);
+                      restorePreviousInput();
                   });
 
 
         subscription = AppObservable.bindActivity(this,
                 Observable.merge(WidgetObservable.text(holdr.departureEntry),
                         WidgetObservable.text(holdr.destinationEntry)))
+            .throttleLast(10, TimeUnit.MILLISECONDS)
             .distinctUntilChanged(textChangedEvent -> holdr.departureEntry.getText().hashCode() ^
                                                       holdr.destinationEntry.getText().hashCode())
             .flatMap(onTextChangeEvent -> doRequestForInputs(holdr.departureEntry.getText(),
@@ -98,6 +102,20 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
                 Log.i(TAG, "onNext " + response.getClass());
                 displayResponse(response);
             }, throwable -> Log.i(TAG, throwable.getMessage()));
+    }
+
+    private void restorePreviousInput() {
+        SharedPreferences prefs = getSharedPreferences("app", Context.MODE_PRIVATE);
+        holdr.departureEntry.setText(prefs.getString("orig", ""));
+        holdr.destinationEntry.setText(prefs.getString("dest", ""));
+        holdr.recyclerView.requestFocus();
+    }
+
+    private void saveInput() {
+        getSharedPreferences("app", Context.MODE_PRIVATE).edit()
+                .putString("orig", holdr.departureEntry.getText().toString())
+                .putString("dest", holdr.destinationEntry.getText().toString())
+                .apply();
     }
 
     private void setupAutocomplete(BartClient client) {
@@ -145,26 +163,31 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         Toast.makeText(this, "No more trains available tonight", Toast.LENGTH_LONG).show();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//        // Inflate the menu; this adds items to the action bar if it is present.
+//        getMenuInflater().inflate(R.menu.menu_main, menu);
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean onOptionsItemSelected(MenuItem item) {
+//        // Handle action bar item clicks here. The action bar will
+//        // automatically handle clicks on the Home/Up button, so long
+//        // as you specify a parent activity in AndroidManifest.xml.
+//        int id = item.getItemId();
+//
+//        //noinspection SimplifiableIfStatement
+//        if (id == R.id.action_settings) {
+//            return true;
+//        }
+//
+//        return super.onOptionsItemSelected(item);
+//    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    public void onStop() {
+        super.onStop();
+        saveInput();
     }
 
     public void onDestroy() {
