@@ -59,6 +59,11 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         holdr.departureEntry.setOnFocusChangeListener(inputFocusListener);
         holdr.destinationEntry.setOnFocusChangeListener(inputFocusListener);
 
+        holdr.toolbar.setTitle("Title");
+        holdr.toolbar.setSubtitle("Subtitle");
+
+        setActionBar(holdr.toolbar);
+
         BartClient.getInstance()
                   .subscribeOn(Schedulers.io())
                   .observeOn(AndroidSchedulers.mainThread())
@@ -170,8 +175,7 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         }
         else if (oldResponse instanceof BartScheduleResponse) {
             client.getRoute(((BartScheduleResponse) oldResponse).getOriginAbbreviation(),
-                            ((BartScheduleResponse) oldResponse).getDestinationAbbreviation())
+                            ((BartScheduleResponse) oldResponse).getDestinationAbbreviation());
         }
-        // TODO : Does it make sense to auto-refresh other response types?
     }
 }
