@@ -91,7 +91,8 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         subscription = AppObservable.bindActivity(this,
                 Observable.merge(WidgetObservable.text(holdr.departureEntry),
                         WidgetObservable.text(holdr.destinationEntry)))
-//            .distinctUntilChanged(OnTextChangeEvent::text)
+            .distinctUntilChanged(textChangedEvent -> holdr.departureEntry.getText().hashCode() ^
+                                                      holdr.destinationEntry.getText().hashCode())
             .flatMap(onTextChangeEvent -> doRequestForInputs(holdr.departureEntry.getText(),
                                                              holdr.destinationEntry.getText()))
             .retry()
