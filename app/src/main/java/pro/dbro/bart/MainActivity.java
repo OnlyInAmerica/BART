@@ -168,6 +168,10 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
             client.getEtd(((BartEtdResponse) oldResponse).getStation().getName())
                   .subscribe(this::displayResponse);
         }
+        else if (oldResponse instanceof BartScheduleResponse) {
+            client.getRoute(((BartScheduleResponse) oldResponse).getOriginAbbreviation(),
+                            ((BartScheduleResponse) oldResponse).getDestinationAbbreviation())
+        }
         // TODO : Does it make sense to auto-refresh other response types?
     }
 }
