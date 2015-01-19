@@ -70,15 +70,29 @@ public class BartClient {
     }
 
 
-    public Observable<BartScheduleResponse> getRoute(@NonNull String departureName,
-                                                     @NonNull String destinationName) {
+    /**
+     * Get a {@link pro.dbro.bart.api.xml.BartScheduleResponse} response for the given stations.
+     *
+     * Both parameters may be given as BART abbreviations or plain names.
+     * e.g: "DBRK" or "Downtown Berkeley"
+     *
+     * @param departureStation departureStation station name or abbreviation
+     * @param destinationStation destination station name or abbreviation
+     */
+    public Observable<BartScheduleResponse> getRoute(@NonNull String departureStation,
+                                                     @NonNull String destinationStation) {
 
-        String departureCode   = stations.getStationNameToCodeMap().get(departureName);
-        String destinationCode = stations.getStationNameToCodeMap().get(destinationName);
+        String departureCode   = stations.getStationNameToCodeMap().getKey(departureStation) != null ?
+                                 departureStation :
+                                 stations.getStationNameToCodeMap().get(departureStation);
+
+        String destinationCode = stations.getStationNameToCodeMap().getKey(destinationStation) != null ?
+                                 destinationStation :
+                                 stations.getStationNameToCodeMap().get(destinationStation);
 
         if (departureCode == null || destinationCode == null) {
             String error = String.format("getRoute given unknown station name: %s",
-                                         departureCode == null ? departureName : destinationName);
+                                         departureCode == null ? departureStation : destinationStation);
             Log.e(TAG, error);
             throw new IllegalArgumentException(error);
             //return Observable.error(new IllegalArgumentException(error));
@@ -99,11 +113,18 @@ public class BartClient {
         );
     }
 
-    public Observable<BartEtdResponse> getEtd(@NonNull String stationName) {
+    /**
+     * Get a {@link pro.dbro.bart.api.xml.BartEtdResponse} response for the given stations.
+     *
+     * @param station departureStation station name or abbreviation. e.g: "DBRK" or "Downtown Berkeley"
+     */
+    public Observable<BartEtdResponse> getEtd(@NonNull String station) {
 
-        String stationCode = stations.getStationNameToCodeMap().get(stationName);
+        String stationCode = stations.getStationNameToCodeMap().getKey(station) != null ?
+                             station :
+                             stations.getStationNameToCodeMap().get(station);
         if (stationCode == null) {
-            String error = String.format("getEtd given unknown station name: %s", stationName);
+            String error = String.format("getEtd given unknown station name: %s", station);
             Log.e(TAG, error);
             throw new IllegalArgumentException(error);
             //return Observable.error(OnErrorThrowable.from(new IllegalArgumentException(error)));
