@@ -11,7 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="120dp"
         android:background="@color/colorPrimary"
-        android:gravity="center">
+        android:gravity="center"
+        android:elevation="10dp">
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -19,13 +20,27 @@
             android:gravity="center_vertical"
             android:orientation="vertical">
 
+            <ImageButton
+                android:id="@+id/reverse"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_alignBottom="@+id/destination_entry"
+                android:layout_alignParentEnd="true"
+                android:layout_alignTop="@+id/departure_entry"
+                android:layout_marginStart="0dp"
+                android:background="@android:color/transparent"
+                android:focusableInTouchMode="true"
+                android:padding="16dp"
+                android:src="@drawable/arrows" />
+
             <AutoCompleteTextView
                 android:id="@+id/departure_entry"
-                android:layout_width="250dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
+                android:layout_toStartOf="@id/reverse"
                 android:drawableStart="@drawable/circle"
                 android:hint="Departure Station"
                 android:inputType="textFilter"
@@ -34,29 +49,17 @@
 
             <AutoCompleteTextView
                 android:id="@+id/destination_entry"
-                android:layout_width="250dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_below="@id/departure_entry"
                 android:layout_centerHorizontal="true"
+                android:layout_toStartOf="@id/reverse"
                 android:drawableStart="@drawable/poi"
                 android:hint="Destination Station"
                 android:inputType="textFilter"
                 android:singleLine="true"
                 android:textSize="20sp" />
-
-            <ImageButton
-                android:id="@+id/reverse"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:layout_alignBottom="@id/destination_entry"
-                android:layout_alignTop="@id/departure_entry"
-                android:layout_marginStart="0dp"
-                android:layout_toEndOf="@id/destination_entry"
-                android:background="@android:color/transparent"
-                android:focusableInTouchMode="true"
-                android:padding="16dp"
-                android:src="@drawable/arrows" />
 
         </RelativeLayout>
 
