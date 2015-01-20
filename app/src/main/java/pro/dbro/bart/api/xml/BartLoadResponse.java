@@ -1,8 +1,11 @@
 package pro.dbro.bart.api.xml;
 
 import org.simpleframework.xml.Attribute;
+import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Path;
 import org.simpleframework.xml.Root;
+
+import java.util.List;
 
 /**
  * BART Load Response
@@ -12,42 +15,16 @@ import org.simpleframework.xml.Root;
 @Root(strict = false, name = "root")
 public class BartLoadResponse {
 
-    @Path("load/request/leg")
-    @Attribute(name = "load")
-    private int load;
-
-    @Path("load/request/leg")
-    @Attribute(name = "station")
-    private String stationAbbreviation;
-
-    @Path("load/request/leg")
-    @Attribute(name = "trainId")
-    private int trainId;
-
-    private String loadString;
-
-    public String getLoadString() {
-        return loadString;
-    }
-
-    public void setLoadString(String load) {
-        loadString = load;
-    }
+    @Path("load")
+    @ElementList(name = "request", entry="leg")
+    private List<BartLoad> loads;
 
     public String toString() {
-        return "station: " + stationAbbreviation + " load: " + load;
+        return "load";
     }
 
-    public String getStationAbbreviation() {
-        return stationAbbreviation;
-    }
-
-    public int getLoad() {
-        return load;
-    }
-
-    public int getTrainId() {
-        return trainId;
+    public List<BartLoad> getLoads() {
+        return loads;
     }
 
 }

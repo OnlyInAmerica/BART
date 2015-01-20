@@ -35,7 +35,7 @@ public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
 
     private BartEtdResponse response;
     private List<BartEtd> items;
-    private ResponseRefreshListener listener;
+    private BartApiDelegate listener;
     private static Subscription subscription;
 
     public static class EtdViewHolder extends RecyclerView.ViewHolder {
@@ -62,7 +62,7 @@ public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
 
     public EtdAdapter(@NonNull BartEtdResponse response,
                       @NonNull RecyclerView host,
-                      @NonNull ResponseRefreshListener listener) {
+                      @NonNull BartApiDelegate listener) {
 
         this.listener = listener;
         this.response = response;

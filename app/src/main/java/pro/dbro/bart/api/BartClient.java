@@ -6,6 +6,7 @@ import android.util.Log;
 import com.mobprofs.retrofit.converters.SimpleXmlConverter;
 
 import java.util.Formatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -61,12 +62,16 @@ public class BartClient {
         return stations.getStationNameToCodeMap().keySet();
     }
 
-    public Observable<BartLoadResponse> getLoad(@NonNull BartLeg leg) {
+    public Observable<BartLoadResponse> getLoad(@NonNull List<BartLeg> legs) {
         Formatter formatter = new Formatter(Locale.US);
-        String legCode = leg.getOriginAbbreviation() + formatter.format("%02d",
-                Integer.parseInt(leg.getLine().substring(leg.getLine().indexOf(" ")).trim())) + leg.getTrainIndex();
-
-        return service.getLegLoad(legCode);
+        formatter.flush();
+        String[] legCodes = new String[3];
+        for (BartLeg leg : legs) {
+            legCodes[legs.indexOf(leg)] = leg.getOriginAbbreviation() + formatter.format("%02d%02d",
+                                          Integer.parseInt(leg.getLine().substring(leg.getLine().indexOf(" ")).trim()),
+                                          leg.getTrainIndex());
+        }
+        return service.getLegLoad(legCodes[0], legCodes[1], legCodes[2], "w"); // "w" weekday only active mode
     }
 
 

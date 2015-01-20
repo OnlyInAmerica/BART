@@ -27,6 +27,8 @@ public class BartTrip extends BartDateTimeObject{
     @ElementList(entry = "leg", inline = true)
     private List<BartLeg> legs;
 
+    private int maxLoad;
+
     public List<BartLeg> getLegs() {
         return legs;
     }
@@ -45,5 +47,13 @@ public class BartTrip extends BartDateTimeObject{
 
     public String getOriginAbbreviation() {
         return originAbbreviation;
+    }
+
+    public int getMaxLoad() {
+        return maxLoad;
+    }
+
+    public void setMaxLoad(int maxLoad) {
+        this.maxLoad = maxLoad;
     }
 }

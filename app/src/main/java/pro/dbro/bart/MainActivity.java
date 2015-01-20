@@ -9,8 +9,6 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -18,23 +16,24 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import pro.dbro.bart.api.BartClient;
 import pro.dbro.bart.api.xml.BartApiResponse;
 import pro.dbro.bart.api.xml.BartEtdResponse;
+import pro.dbro.bart.api.xml.BartLeg;
 import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.holdr.Holdr_ActivityMain;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.app.AppObservable;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.android.widget.OnTextChangeEvent;
 import rx.android.widget.WidgetObservable;
 import rx.schedulers.Schedulers;
 
 
-public class MainActivity extends Activity implements ResponseRefreshListener {
+public class MainActivity extends Activity implements BartApiDelegate {
     private String TAG = getClass().getSimpleName();
 
     private Holdr_ActivityMain holdr;
@@ -231,5 +230,24 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
                             ((BartScheduleResponse) oldResponse).getDestinationAbbreviation())
                   .subscribe(this::displayResponse);
         }
+    }
+
+    @Override
+    public void loadRequested(List<BartLeg> legs) {
+        Log.i(TAG, "Getting load");
+        client.getLoad(legs)
+              .observeOn(AndroidSchedulers.mainThread()) // Get WrongThreadException is this is Schedlers.io()
+              .subscribeOn(AndroidSchedulers.mainThread())
+              .subscribe(response -> {
+                  Log.i(TAG, "Got load");
+                  if (holdr.recyclerView.getAdapter() != null &&
+                      holdr.recyclerView.getAdapter() instanceof TripAdapter) {
+
+                      ((TripAdapter) holdr.recyclerView.getAdapter()).setLoadResponse(response);
+                  }
+              }, throwable -> {
+                  Log.e(TAG, "Got error");
+                  throwable.printStackTrace();
+              });
     }
 }

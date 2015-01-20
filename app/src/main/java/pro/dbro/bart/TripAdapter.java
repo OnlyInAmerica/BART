@@ -1,7 +1,6 @@
 package pro.dbro.bart;
 
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
@@ -22,6 +21,8 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import pro.dbro.bart.api.BartApiResponseProcessor;
+import pro.dbro.bart.api.xml.BartLoad;
+import pro.dbro.bart.api.xml.BartLoadResponse;
 import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartTrip;
 import pro.dbro.bart.drawable.StripeDrawable;
@@ -44,7 +45,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
     private BartScheduleResponse response;
     private List<BartTrip> items;
-    private ResponseRefreshListener listener;
+    private BartApiDelegate listener;
     private static Subscription subscription;
 
     public static class TripViewHolder extends RecyclerView.ViewHolder {
@@ -53,6 +54,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         public TextView name;
         public TextView etds;
         public TextView arrival;
+        public ViewGroup container;
 
         public TripViewHolder(View itemView) {
             super(itemView);
@@ -60,12 +62,13 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
             name      = (TextView) itemView.findViewById(R.id.name);
             etds      = (TextView) itemView.findViewById(R.id.etds);
             arrival   = (TextView) itemView.findViewById(R.id.arrival);
+            container = (ViewGroup) itemView.findViewById(R.id.container);
         }
     }
 
     public TripAdapter(@NonNull BartScheduleResponse response,
                        @NonNull RecyclerView host,
-                       @NonNull ResponseRefreshListener listener) {
+                       @NonNull BartApiDelegate listener) {
 
         this.listener = listener;
         this.response = response;
@@ -94,6 +97,30 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
                           notifyDataSetChanged();
                           Log.i(TAG, "timer tick " + time);
                       });
+
+    }
+
+    public void setLoadResponse(BartLoadResponse response) {
+        List<BartLoad> loads = response.getLoads();
+        if (loads == null) {
+            Log.d(TAG, "Load response had no loads");
+            return;
+        }
+        int maxLoad = -1;
+        int leadLoadTrainId = -100;
+        for (BartLoad load : loads) {
+            if (leadLoadTrainId == -100) leadLoadTrainId = load.getTrainId();
+            maxLoad = Math.max(maxLoad, load.getLoad());
+        }
+
+        for (BartTrip trip : items) {
+            if (trip.getLegs().get(0).getTrainIndex() == leadLoadTrainId) {
+                trip.setMaxLoad(maxLoad);
+                Log.d(TAG, String.format("Attached %s load to trip", BartLoad.getLoadDescription(maxLoad)));
+                notifyItemChanged(items.indexOf(trip));
+                break;
+            }
+        }
 
     }
 
@@ -162,13 +189,22 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
         try {
             holder.etds.setText(String.valueOf(Math.round(trip.getLegs().get(0).getOriginAsRelativeSec() / 60f)));
-            holder.arrival.setText("Arrives " + HUMAN_DATE_PRINTER.format(trip.getDestAsDate()));
+            StringBuilder arrivalText = new StringBuilder();
+            arrivalText.append("Arrives ");
+            arrivalText.append(HUMAN_DATE_PRINTER.format(trip.getDestAsDate()));
+            if (trip.getMaxLoad() != 0) {
+                arrivalText.append(" | ");
+                arrivalText.append(BartLoad.getLoadDescription(trip.getMaxLoad()));
+                arrivalText.append(" loading");
+            }
+            holder.arrival.setText(arrivalText.toString());
         } catch (ParseException e) {
             holder.etds.setText("?");
             holder.arrival.setText("");
             e.printStackTrace();
         }
 
+        holder.container.setOnClickListener(view -> listener.loadRequested(trip.getLegs()));
     }
 
     @Override
