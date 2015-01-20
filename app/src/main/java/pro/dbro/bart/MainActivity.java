@@ -64,16 +64,7 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
         holdr.departureEntry.setOnFocusChangeListener(inputFocusListener);
         holdr.destinationEntry.setOnFocusChangeListener(inputFocusListener);
 
-        holdr.reverse.setOnClickListener(view -> {
-            String departureEntry = holdr.departureEntry.getText().toString();
-
-            holdr.departureEntry.setText(holdr.destinationEntry.getText());
-            holdr.destinationEntry.setText(departureEntry);
-
-            ObjectAnimator.ofFloat(holdr.reverse, "rotation", 0f, 180f).start();
-            holdr.recyclerView.requestFocus();
-
-        });
+        holdr.reverse.setOnClickListener(view -> swapInputs());
 
         setActionBar(holdr.toolbar);
 
@@ -102,13 +93,25 @@ public class MainActivity extends Activity implements ResponseRefreshListener {
                 Log.i(TAG, "onNext " + response.getClass());
                 displayResponse(response);
             }, throwable -> Log.i(TAG, throwable.getMessage()));
+
+    }
+
+    private void swapInputs() {
+        String departureEntry = holdr.departureEntry.getText().toString();
+
+        holdr.departureEntry.setText(holdr.destinationEntry.getText());
+        holdr.destinationEntry.setText(departureEntry);
+
+        ObjectAnimator.ofFloat(holdr.reverse, "rotation", 0f, 180f).start();
+        holdr.recyclerView.requestFocus();
     }
 
     private void restorePreviousInput() {
         SharedPreferences prefs = getSharedPreferences("app", Context.MODE_PRIVATE);
         holdr.departureEntry.setText(prefs.getString("orig", ""));
         holdr.destinationEntry.setText(prefs.getString("dest", ""));
-        holdr.recyclerView.requestFocus();
+        holdr.departureEntry.dismissDropDown();
+        holdr.destinationEntry.dismissDropDown();
     }
 
     private void saveInput() {

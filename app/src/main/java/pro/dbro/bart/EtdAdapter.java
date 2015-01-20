@@ -151,18 +151,6 @@ public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
         }
     }
 
-    public void testShuffleItems() {
-        BartEtd firstEtd = response.getEtds().get(0);
-        response.getEtds().remove(0);
-//        response.getEtds().add(firstEtd);
-//        notifyItemMoved(0,1);
-//        notifyItemChanged(0);
-//        notifyItemChanged(1);
-        notifyItemRemoved(0);
-        response.getEtds().add(firstEtd);
-        notifyItemInserted(0);
-    }
-
     @Override
     public EtdViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View v = LayoutInflater.from(parent.getContext())
