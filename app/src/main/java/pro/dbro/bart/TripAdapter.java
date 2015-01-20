@@ -14,8 +14,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import pro.dbro.bart.api.BartApiResponseProcessor;
@@ -33,6 +36,12 @@ import rx.android.view.ViewObservable;
 public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder> {
     private final String TAG = getClass().getSimpleName();
 
+    private static final SimpleDateFormat HUMAN_DATE_PRINTER = new SimpleDateFormat("hh:mm", Locale.US);
+
+    static {
+        HUMAN_DATE_PRINTER.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
+    }
+
     private BartScheduleResponse response;
     private List<BartTrip> items;
     private ResponseRefreshListener listener;
@@ -43,15 +52,14 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         public View colorBand;
         public TextView name;
         public TextView etds;
-
-        private static Typeface typeface;
+        public TextView arrival;
 
         public TripViewHolder(View itemView) {
             super(itemView);
             colorBand = itemView.findViewById(R.id.color_band);
             name      = (TextView) itemView.findViewById(R.id.name);
             etds      = (TextView) itemView.findViewById(R.id.etds);
-
+            arrival   = (TextView) itemView.findViewById(R.id.arrival);
         }
     }
 
@@ -114,8 +122,8 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
     public void onBindViewHolder(TripViewHolder holder, int position) {
         BartTrip trip = items.get(position);
 
-        int startTransferSpan = 0;
-        int endTransferSpan = 0;
+        int startTransferSpan;
+        int endTransferSpan;
         int[][] transferSpans = new int[trip.getLegs().size()-1][2];
         String name = "Take ";
         for(int x = 0; x < trip.getLegs().size(); x++)   {
@@ -154,10 +162,13 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
         try {
             holder.etds.setText(String.valueOf(Math.round(trip.getLegs().get(0).getOriginAsRelativeSec() / 60f)));
+            holder.arrival.setText("Arrives " + HUMAN_DATE_PRINTER.format(trip.getDestAsDate()));
         } catch (ParseException e) {
             holder.etds.setText("?");
+            holder.arrival.setText("");
             e.printStackTrace();
         }
+
     }
 
     @Override
