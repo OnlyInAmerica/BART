@@ -12,7 +12,7 @@ import java.util.List;
  * e.g: http://api.bart.gov/api/sched.aspx?cmd=depart&orig=24th&dest=rock&key=MW9S-E7SL-26DU-VV8V
  */
 @Root(strict = false, name = "root")
-public class BartScheduleResponse extends BartApiResponse {
+public class BartQuickPlannerResponse extends BartApiResponse {
 
     @Element(name = "origin")
     private String originAbbreviation;

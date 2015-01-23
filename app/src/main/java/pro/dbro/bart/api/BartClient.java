@@ -7,25 +7,21 @@ import android.util.SparseIntArray;
 import com.mobprofs.retrofit.converters.SimpleXmlConverter;
 
 import java.util.Formatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLeg;
-import pro.dbro.bart.api.xml.BartLoad;
 import pro.dbro.bart.api.xml.BartLoadResponse;
+import pro.dbro.bart.api.xml.BartQuickPlannerResponse;
 import pro.dbro.bart.api.xml.BartRoute;
-import pro.dbro.bart.api.xml.BartRouteScheduleResponse;
 import pro.dbro.bart.api.xml.BartRoutesResponse;
-import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartStationListResponse;
 import pro.dbro.bart.api.xml.BartTrain;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import rx.Observable;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by davidbrodsky on 1/14/15.
@@ -83,7 +79,7 @@ public class BartClient {
 
 
     /**
-     * Get a {@link pro.dbro.bart.api.xml.BartScheduleResponse} response for the given stations.
+     * Get a {@link pro.dbro.bart.api.xml.BartQuickPlannerResponse} response for the given stations.
      *
      * Both parameters may be given as BART abbreviations or plain names.
      * e.g: "DBRK" or "Downtown Berkeley"
@@ -91,7 +87,7 @@ public class BartClient {
      * @param departureStation departureStation station name or abbreviation
      * @param destinationStation destination station name or abbreviation
      */
-    public Observable<BartScheduleResponse> getRoute(@NonNull String departureStation,
+    public Observable<BartQuickPlannerResponse> getRoute(@NonNull String departureStation,
                                                      @NonNull String destinationStation) {
 
         String departureCode   = stations.getStationNameToCodeMap().getKey(departureStation) != null ?

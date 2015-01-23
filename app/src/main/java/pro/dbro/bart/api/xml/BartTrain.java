@@ -4,6 +4,8 @@ import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 
+import java.util.List;
+
 /**
  * Created by davidbrodsky on 1/22/15.
  */
@@ -12,6 +14,9 @@ public class BartTrain {
 
     @Attribute(name = "index")
     private int index;
+
+    @ElementList(entry = "stop", inline=true)
+    private List<BartStop> stops;
 
     public int getIndex() {
         return index;

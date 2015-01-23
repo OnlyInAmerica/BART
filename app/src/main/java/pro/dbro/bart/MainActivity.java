@@ -3,11 +3,8 @@ package pro.dbro.bart;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -17,6 +14,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -32,8 +30,7 @@ import pro.dbro.bart.api.BartClient;
 import pro.dbro.bart.api.xml.BartApiResponse;
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLeg;
-import pro.dbro.bart.api.xml.BartSchedule;
-import pro.dbro.bart.api.xml.BartScheduleResponse;
+import pro.dbro.bart.api.xml.BartQuickPlannerResponse;
 import pro.dbro.bart.holdr.Holdr_ActivityMain;
 import rx.Observable;
 import rx.Subscription;
@@ -181,9 +178,9 @@ public class MainActivity extends Activity implements BartApiDelegate, ServiceCo
             } else
                 notifyNoTrips();
         }
-        else if (response instanceof BartScheduleResponse) {
+        else if (response instanceof BartQuickPlannerResponse) {
             hideSoftKeyboard(holdr.destinationEntry);
-            BartScheduleResponse routeResponse = (BartScheduleResponse) response;
+            BartQuickPlannerResponse routeResponse = (BartQuickPlannerResponse) response;
             if (routeResponse.getTrips() != null && routeResponse.getTrips().size() != 0) {
                 if (holdr.recyclerView.getAdapter() instanceof TripAdapter) {
                     ((TripAdapter) holdr.recyclerView.getAdapter()).updateResponse(routeResponse);
@@ -260,10 +257,10 @@ public class MainActivity extends Activity implements BartApiDelegate, ServiceCo
                   .flatMap(client -> client.getEtd(((BartEtdResponse) oldResponse).getStation().getName()))
                   .subscribe(this::displayResponse);
         }
-        else if (oldResponse instanceof BartScheduleResponse) {
+        else if (oldResponse instanceof BartQuickPlannerResponse) {
             binder.getClient()
-                  .flatMap(client -> client.getRoute(((BartScheduleResponse) oldResponse).getOriginAbbreviation(),
-                          ((BartScheduleResponse) oldResponse).getDestinationAbbreviation()))
+                  .flatMap(client -> client.getRoute(((BartQuickPlannerResponse) oldResponse).getOriginAbbreviation(),
+                          ((BartQuickPlannerResponse) oldResponse).getDestinationAbbreviation()))
                   .subscribe(this::displayResponse);
         }
     }
@@ -271,21 +268,34 @@ public class MainActivity extends Activity implements BartApiDelegate, ServiceCo
     @Override
     public void loadRequested(List<BartLeg> legs) {
         Log.i(TAG, "Getting load");
+//        binder.getClient()
+//              .flatMap(client -> client.getLoad(legs))
+//              .observeOn(AndroidSchedulers.mainThread()) // Get WrongThreadException is this is Schedlers.io()
+//              .subscribeOn(AndroidSchedulers.mainThread())
+//              .subscribe(response -> {
+//                  Log.i(TAG, "Got load");
+//                  if (holdr.recyclerView.getAdapter() != null &&
+//                      holdr.recyclerView.getAdapter() instanceof TripAdapter) {
+//
+//                      ((TripAdapter) holdr.recyclerView.getAdapter()).setLoadResponse(response);
+//                  }
+//              }, throwable -> {
+//                  Log.e(TAG, "Got error");
+//                  throwable.printStackTrace();
+//              });
         binder.getClient()
-              .flatMap(client -> client.getLoad(legs))
-              .observeOn(AndroidSchedulers.mainThread()) // Get WrongThreadException is this is Schedlers.io()
+              .flatMap(client -> client.getRouteLoad("dbrk", "ROUTE 4"))
+              .observeOn(Schedulers.io()) // Get WrongThreadException is this is Schedlers.io()
               .subscribeOn(AndroidSchedulers.mainThread())
-              .subscribe(response -> {
-                  Log.i(TAG, "Got load");
-                  if (holdr.recyclerView.getAdapter() != null &&
-                      holdr.recyclerView.getAdapter() instanceof TripAdapter) {
+              .subscribe(result -> {
+                  Log.d(TAG, "Got load! Can it be?");
+                  SparseIntArray map = (SparseIntArray) result;
 
-                      ((TripAdapter) holdr.recyclerView.getAdapter()).setLoadResponse(response);
+                  for (int x = 0; x < map.size(); x++) {
+                      Log.d("LOAD", String.format("train %d load %d", map.keyAt(x), map.valueAt(x)));
                   }
-              }, throwable -> {
-                  Log.e(TAG, "Got error");
-                  throwable.printStackTrace();
               });
+
     }
 
     @Override

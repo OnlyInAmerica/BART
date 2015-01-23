@@ -10,15 +10,13 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import pro.dbro.bart.api.xml.BartDateTimeObject;
 import pro.dbro.bart.api.xml.BartEstimate;
 import pro.dbro.bart.api.xml.BartEtd;
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLeg;
+import pro.dbro.bart.api.xml.BartQuickPlannerResponse;
 import pro.dbro.bart.api.xml.BartRoute;
-import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartTrip;
 
 /**
@@ -86,7 +84,7 @@ public class BartApiResponseProcessor {
      *
      * @param routeResponse
      */
-    public static void processScheduleResponse(BartScheduleResponse routeResponse,
+    public static void processScheduleResponse(BartQuickPlannerResponse routeResponse,
                                                BartEtdResponse etdResponse,
                                                BidiMap<String, String> stationNameToCode,
                                                List<BartRoute> routes) {
@@ -150,7 +148,7 @@ public class BartApiResponseProcessor {
         }
     }
 
-    public static boolean pruneScheduleResponse(BartScheduleResponse source) {
+    public static boolean pruneScheduleResponse(BartQuickPlannerResponse source) {
         boolean shouldRefresh = false;
         Iterator<BartTrip> trips = source.getTrips().iterator();
         while (trips.hasNext()) {
@@ -178,7 +176,7 @@ public class BartApiResponseProcessor {
      * @param routeResp
      * @return
      */
-    private static boolean responsesLinked(BartEtdResponse etdResp, BartScheduleResponse routeResp) {
+    private static boolean responsesLinked(BartEtdResponse etdResp, BartQuickPlannerResponse routeResp) {
         return (etdResp.getStation().getAbbreviation().compareTo(
                 routeResp.getOriginAbbreviation()) == 0);
     }

@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 import pro.dbro.bart.api.BartApiResponseProcessor;
 import pro.dbro.bart.api.xml.BartLoad;
 import pro.dbro.bart.api.xml.BartLoadResponse;
-import pro.dbro.bart.api.xml.BartScheduleResponse;
+import pro.dbro.bart.api.xml.BartQuickPlannerResponse;
 import pro.dbro.bart.api.xml.BartTrip;
 import pro.dbro.bart.drawable.StripeDrawable;
 import rx.Observable;
@@ -43,7 +43,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         HUMAN_DATE_PRINTER.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
     }
 
-    private BartScheduleResponse response;
+    private BartQuickPlannerResponse response;
     private List<BartTrip> items;
     private BartApiDelegate listener;
     private static Subscription subscription;
@@ -66,7 +66,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         }
     }
 
-    public TripAdapter(@NonNull BartScheduleResponse response,
+    public TripAdapter(@NonNull BartQuickPlannerResponse response,
                        @NonNull RecyclerView host,
                        @NonNull BartApiDelegate listener) {
 
@@ -79,9 +79,9 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(AndroidSchedulers.mainThread())
                 .subscribe(time -> {
+                    Log.i(TAG, "Adding trip " + time + "  of " + response.getTrips().size());
                     items.add(response.getTrips().get(time.intValue()));
                     notifyItemInserted(time.intValue());
-                    Log.i(TAG, "Notifying initial add");
                 });
 
         // Keep views up-to-date
@@ -94,7 +94,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
                           if (BartApiResponseProcessor.pruneScheduleResponse(this.response)) {
                               this.listener.refreshRequested(this.response);
                           }
-                          notifyItemRangeChanged(0, items.size()-1);
+                          notifyItemRangeChanged(0, items.size() - 1);
                           Log.i(TAG, "timer tick " + time);
                       });
 
@@ -135,7 +135,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         if (subscription != null && !subscription.isUnsubscribed()) subscription.unsubscribe();
     }
 
-    public void updateResponse(@NonNull BartScheduleResponse newResponse) {
+    public void updateResponse(@NonNull BartQuickPlannerResponse newResponse) {
         this.response = newResponse;
         this.items = newResponse.getTrips();
         notifyDataSetChanged();

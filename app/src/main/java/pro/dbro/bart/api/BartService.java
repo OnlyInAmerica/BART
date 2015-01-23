@@ -5,9 +5,9 @@ import android.support.annotation.Nullable;
 
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLoadResponse;
+import pro.dbro.bart.api.xml.BartQuickPlannerResponse;
 import pro.dbro.bart.api.xml.BartRouteScheduleResponse;
 import pro.dbro.bart.api.xml.BartRoutesResponse;
-import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartStationListResponse;
 import retrofit.http.GET;
 import retrofit.http.Query;
@@ -38,6 +38,6 @@ public interface BartService {
     Observable<BartEtdResponse> getEtdResponse(@NonNull @Query("orig") String originCode);
 
     @GET("/sched.aspx?cmd=depart")
-    Observable<BartScheduleResponse> getScheduleResponse(@NonNull @Query("orig") String originCode,
+    Observable<BartQuickPlannerResponse> getScheduleResponse(@NonNull @Query("orig") String originCode,
                                                          @NonNull @Query("dest") String destCode);
 }
