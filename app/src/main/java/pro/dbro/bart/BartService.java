@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 import pro.dbro.bart.api.BartApiResponseProcessor;
 import pro.dbro.bart.api.BartClient;
-import pro.dbro.bart.api.xml.BartEstimate;
 import pro.dbro.bart.api.xml.BartEtd;
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import rx.Observable;
@@ -50,8 +49,8 @@ public class BartService extends Service {
     private int usherTimeAlert;
     private boolean usherDidAlert;
 
-    private final int usherNotificationId = 2357;
-    private final int STOP_USHER = 1468;
+    private final int NOTIFICATION_ID = 2357;
+    private final int INTENT_STOP_USHER = 1468;
 
     @Override
     public void onCreate() {
@@ -94,7 +93,7 @@ public class BartService extends Service {
     private void stopUsher() {
         NotificationManager mNotifyMgr =
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        mNotifyMgr.cancel(usherNotificationId);
+        mNotifyMgr.cancel(NOTIFICATION_ID);
         unsubscribe();
         ushering = false;
 
@@ -113,7 +112,7 @@ public class BartService extends Service {
         int nextDepartureS = Math.max(0, (int) etd.getEstimates().get(0).getDeltaSecondsEstimate());
 
         Intent closeIntent = new Intent(this, BartService.class);
-        closeIntent.putExtra("type", STOP_USHER);
+        closeIntent.putExtra("type", INTENT_STOP_USHER);
         PendingIntent closePendingIntent =
                 PendingIntent.getService(
                         this,
@@ -156,14 +155,14 @@ public class BartService extends Service {
                 );
         builder.setContentIntent(clickPendingIntent);
 
-        if (nextDepartureS < usherTimeAlert * 60 && !usherDidAlert) {
+        if (nextDepartureS < usherTimeAlert * 60 && nextDepartureS > 0 && !usherDidAlert) {
             Vibrator v = (Vibrator) this.getSystemService(Context.VIBRATOR_SERVICE);
             // Three 100ms buzzes
             v.vibrate(new long[] { 250, 100, 250, 100, 250, 100 }, -1);
             usherDidAlert = true;
         } else if (nextDepartureS == 0) usherDidAlert = false;
 
-        mNotifyMgr.notify(usherNotificationId, builder.build());
+        mNotifyMgr.notify(NOTIFICATION_ID, builder.build());
     }
 
     @Override
@@ -185,7 +184,7 @@ public class BartService extends Service {
     public int onStartCommand(@Nullable Intent intent, int flags, int startId) {
         int startResult = super.onStartCommand(intent, flags, startId);
         Log.d(TAG, "got start command with startId " + startId);
-        if (intent != null && intent.getIntExtra("type", 0) == STOP_USHER) {
+        if (intent != null && intent.getIntExtra("type", 0) == INTENT_STOP_USHER) {
             Log.d(TAG, "stopping service");
             stopUsher();
         }
