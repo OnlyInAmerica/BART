@@ -27,6 +27,9 @@ public class BartRoute extends BartApiResponse {
     @Element(name = "routeID")
     private String routeId;
 
+    @Element(name = "number")
+    private int routeNum;
+
     public String toString() {
         return name;
     }
@@ -45,5 +48,9 @@ public class BartRoute extends BartApiResponse {
 
     public String getRouteId() {
         return routeId;
+    }
+
+    public int getRouteNum() {
+        return routeNum;
     }
 }

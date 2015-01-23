@@ -2,23 +2,30 @@ package pro.dbro.bart.api;
 
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.util.SparseIntArray;
 
 import com.mobprofs.retrofit.converters.SimpleXmlConverter;
 
 import java.util.Formatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLeg;
+import pro.dbro.bart.api.xml.BartLoad;
 import pro.dbro.bart.api.xml.BartLoadResponse;
+import pro.dbro.bart.api.xml.BartRoute;
+import pro.dbro.bart.api.xml.BartRouteScheduleResponse;
 import pro.dbro.bart.api.xml.BartRoutesResponse;
 import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartStationListResponse;
+import pro.dbro.bart.api.xml.BartTrain;
 import retrofit.RequestInterceptor;
 import retrofit.RestAdapter;
 import rx.Observable;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by davidbrodsky on 1/14/15.
@@ -137,6 +144,37 @@ public class BartClient {
 
         return service.getEtdResponse(stationCode)
                       .map(BartApiResponseProcessor::processEtdResponse);
+    }
+
+    /**
+     * Get projected load for a route during the current day of Bart Service.
+     *
+     * @param routeID the 'line' attribute in a trip leg. e.g "ROUTE 2"
+     */
+    public Observable<Object> getRouteLoad(String stationCode, String routeID) {
+
+        int routeNum = Observable.from(routes.getRoutes())
+                                 .filter(route -> route.getRouteId().equals(routeID))
+                                 .map(BartRoute::getRouteNum)
+                                 .toBlocking()
+                                 .single();
+
+        return service.getRouteSchedule(routeNum)
+               .flatMap(schedule -> Observable.from(schedule.getTrains()))
+               .buffer(3)
+               .flatMap(trains -> {
+                   String[] loadCodes = new String[3];
+                   for (BartTrain train : trains) {
+                       loadCodes[trains.indexOf(train)] = String.format("%s%02d%02d", stationCode, routeNum, train.getIndex());
+                   }
+                   return service.getLegLoad(loadCodes[0], loadCodes[1], loadCodes[2], "w");
+               })
+               .flatMap(response -> Observable.from(response.getLoads()))
+               .reduce(new SparseIntArray(), (map, load) -> {
+                   ((SparseIntArray) map).put(load.getTrainId(), load.getLoad());
+                   return map;
+               });
+
     }
 
 }

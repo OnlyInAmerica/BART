@@ -1,16 +1,15 @@
 package pro.dbro.bart.api.xml;
 
-import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
 
 import java.util.List;
 
 /**
- * Response from BART QuickPlanner
+ * Response from BART Route list
  * Api Response
  * <p/>
- * e.g: http://api.bart.gov/api/sched.aspx?cmd=depart&orig=24th&dest=rock&key=MW9S-E7SL-26DU-VV8V
+ * e.g: http://api.bart.gov/api/route.aspx?cmd=routes&key=MW9S-E7SL-26DU-VV8V
  */
 @Root(strict = false, name = "root")
 public class BartRoutesResponse extends BartApiResponse {

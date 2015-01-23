@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLoadResponse;
+import pro.dbro.bart.api.xml.BartRouteScheduleResponse;
 import pro.dbro.bart.api.xml.BartRoutesResponse;
 import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.api.xml.BartStationListResponse;
@@ -23,6 +24,9 @@ public interface BartService {
 
     @GET("/route.aspx?cmd=routes")
     Observable<BartRoutesResponse> getRoutes();
+
+    @GET("/sched.aspx?cmd=routesched")
+    Observable<BartRouteScheduleResponse> getRouteSchedule(@Query("route") int route);
 
     @GET("/sched.aspx?cmd=load")
     Observable<BartLoadResponse> getLegLoad(@NonNull  @Query("ld1") String leg1Code,
