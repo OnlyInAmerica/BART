@@ -40,23 +40,17 @@ public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
 
     public static class EtdViewHolder extends RecyclerView.ViewHolder {
 
+        public ViewGroup container;
         public View colorBand;
         public TextView name;
         public TextView etds;
-
-        private static Typeface typeface;
 
         public EtdViewHolder(View itemView) {
             super(itemView);
             colorBand = itemView.findViewById(R.id.color_band);
             name      = (TextView) itemView.findViewById(R.id.name);
             etds      = (TextView) itemView.findViewById(R.id.etds);
-
-//            if (typeface == null)
-//                typeface = Typeface.createFromAsset(itemView.getContext().getAssets(), "Dotmatrx.ttf");
-//
-//            name.setTypeface(typeface);
-//            etds.setTypeface(typeface);
+            container = (ViewGroup) itemView.findViewById(R.id.container);
         }
     }
 
@@ -174,6 +168,12 @@ public class EtdAdapter extends RecyclerView.Adapter<EtdAdapter.EtdViewHolder> {
         }
         etdBuilder.delete(etdBuilder.length()-2, etdBuilder.length());
         holder.etds.setText(etdBuilder.toString());
+
+        holder.container.setOnClickListener(view -> {
+            Log.d(TAG, "got usher btn click");
+            listener.usherRequested(response.getStation().getAbbreviation(),
+                                    etd.getDestinationAbbreviation());
+        });
     }
 
     @Override

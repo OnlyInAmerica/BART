@@ -56,7 +56,7 @@ public class BartApiResponseProcessor {
 
     /**
      * Remove expired estimates from a BartEtdResponse
-     * @return true if at least one estimate ocurred in the past.
+     * @return true if at least one estimate occurred in the past.
      */
     public static boolean pruneEtdResponse(BartEtdResponse source) {
         boolean prunedEstimate = false;

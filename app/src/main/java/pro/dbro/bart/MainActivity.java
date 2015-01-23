@@ -2,9 +2,17 @@ package pro.dbro.bart;
 
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
@@ -12,6 +20,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
+import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -23,6 +32,7 @@ import pro.dbro.bart.api.BartClient;
 import pro.dbro.bart.api.xml.BartApiResponse;
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLeg;
+import pro.dbro.bart.api.xml.BartSchedule;
 import pro.dbro.bart.api.xml.BartScheduleResponse;
 import pro.dbro.bart.holdr.Holdr_ActivityMain;
 import rx.Observable;
@@ -33,12 +43,15 @@ import rx.android.widget.WidgetObservable;
 import rx.schedulers.Schedulers;
 
 
-public class MainActivity extends Activity implements BartApiDelegate {
+public class MainActivity extends Activity implements BartApiDelegate, ServiceConnection {
     private String TAG = getClass().getSimpleName();
 
     private Holdr_ActivityMain holdr;
-    private BartClient client;
+    private BartService.BartServiceBinder binder;
+//    private BartClient client;
     private Subscription subscription;
+
+    private boolean mServiceBound = false;  // Are we bound to the ChatService?
 
     private View.OnFocusChangeListener inputFocusListener = (inputTextView, hasFocus) -> {
         if (inputTextView.getTag(R.id.textview_memory) != null &&
@@ -67,32 +80,56 @@ public class MainActivity extends Activity implements BartApiDelegate {
 
         setActionBar(holdr.toolbar);
 
-        BartClient.getInstance()
-                  .subscribeOn(Schedulers.io())
-                  .observeOn(AndroidSchedulers.mainThread())
-                  .subscribe(client -> {
-                      this.client = client;
-                      setupAutocomplete(client);
-                      restorePreviousInput();
-                  });
-
-
         subscription = AppObservable.bindActivity(this,
                 Observable.merge(WidgetObservable.text(holdr.departureEntry),
-                        WidgetObservable.text(holdr.destinationEntry)))
-            .throttleLast(10, TimeUnit.MILLISECONDS)
-            .distinctUntilChanged(textChangedEvent -> holdr.departureEntry.getText().hashCode() ^
-                                                      holdr.destinationEntry.getText().hashCode())
-            .flatMap(onTextChangeEvent -> doRequestForInputs(holdr.departureEntry.getText(),
-                                                             holdr.destinationEntry.getText()))
-            .retry()
-            .subscribeOn(AndroidSchedulers.mainThread())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(response -> {
-                Log.i(TAG, "onNext " + response.getClass());
-                displayResponse(response);
-            }, throwable -> Log.i(TAG, throwable.getMessage()));
+                                 WidgetObservable.text(holdr.destinationEntry)))
 
+                .throttleLast(10, TimeUnit.MILLISECONDS)
+
+                .distinctUntilChanged(textChangedEvent ->
+                        holdr.departureEntry.getText().hashCode() ^
+                                holdr.destinationEntry.getText().hashCode())
+
+                .flatMap(onTextChangeEvent ->
+                        doRequestForInputs(holdr.departureEntry.getText(),
+                                holdr.destinationEntry.getText()))
+
+                .retry()
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(response -> {
+                    Log.i(TAG, "onNext " + response.getClass());
+                    displayResponse(response);
+                }, throwable -> Log.i(TAG, throwable.getMessage()));
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (!mServiceBound) {
+            startAndBindToService();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        saveInput();
+        if (!mServiceBound) {
+            unBindService();
+        }
+    }
+
+    private void startAndBindToService() {
+        Log.i(TAG, "Starting service");
+        Intent intent = new Intent(this, BartService.class);
+        startService(intent);
+        bindService(intent, this, 0);
+    }
+
+    private void unBindService() {
+        unbindService(this);
     }
 
     private void swapInputs() {
@@ -188,11 +225,6 @@ public class MainActivity extends Activity implements BartApiDelegate {
 //        return super.onOptionsItemSelected(item);
 //    }
 
-    public void onStop() {
-        super.onStop();
-        saveInput();
-    }
-
     public void onDestroy() {
         super.onDestroy();
         subscription.unsubscribe();
@@ -208,10 +240,12 @@ public class MainActivity extends Activity implements BartApiDelegate {
 
         if (!TextUtils.isEmpty(departureInput)) {
             if (!TextUtils.isEmpty(destinationInput)) {
-                return client.getRoute(departureInput.toString(),
-                                       destinationInput.toString());
+                return binder.getClient()
+                             .flatMap(client -> client.getRoute(departureInput.toString(),
+                                     destinationInput.toString()));
             } else {
-                return client.getEtd(departureInput.toString());
+                return binder.getClient()
+                             .flatMap(client -> client.getEtd(departureInput.toString()));
             }
         }
 
@@ -222,12 +256,14 @@ public class MainActivity extends Activity implements BartApiDelegate {
     @Override
     public void refreshRequested(BartApiResponse oldResponse) {
         if (oldResponse instanceof BartEtdResponse) {
-            client.getEtd(((BartEtdResponse) oldResponse).getStation().getName())
+            binder.getClient()
+                  .flatMap(client -> client.getEtd(((BartEtdResponse) oldResponse).getStation().getName()))
                   .subscribe(this::displayResponse);
         }
         else if (oldResponse instanceof BartScheduleResponse) {
-            client.getRoute(((BartScheduleResponse) oldResponse).getOriginAbbreviation(),
-                            ((BartScheduleResponse) oldResponse).getDestinationAbbreviation())
+            binder.getClient()
+                  .flatMap(client -> client.getRoute(((BartScheduleResponse) oldResponse).getOriginAbbreviation(),
+                          ((BartScheduleResponse) oldResponse).getDestinationAbbreviation()))
                   .subscribe(this::displayResponse);
         }
     }
@@ -235,7 +271,8 @@ public class MainActivity extends Activity implements BartApiDelegate {
     @Override
     public void loadRequested(List<BartLeg> legs) {
         Log.i(TAG, "Getting load");
-        client.getLoad(legs)
+        binder.getClient()
+              .flatMap(client -> client.getLoad(legs))
               .observeOn(AndroidSchedulers.mainThread()) // Get WrongThreadException is this is Schedlers.io()
               .subscribeOn(AndroidSchedulers.mainThread())
               .subscribe(response -> {
@@ -249,5 +286,45 @@ public class MainActivity extends Activity implements BartApiDelegate {
                   Log.e(TAG, "Got error");
                   throwable.printStackTrace();
               });
+    }
+
+    @Override
+    public void usherRequested(String departureStation, String trainHeadStation) {
+        showUsherDialog(departureStation, trainHeadStation);
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        Log.i(TAG, "onServiceConnected");
+        binder = (BartService.BartServiceBinder) service;
+        mServiceBound = true;
+
+        binder.getClient()
+              .observeOn(AndroidSchedulers.mainThread())
+              .subscribeOn(AndroidSchedulers.mainThread())
+              .subscribe(client -> {
+                  Log.d(TAG, "Got bart client");
+                  setupAutocomplete(client);
+                  restorePreviousInput();
+              }, throwable -> {Log.e(TAG, "Fucckkk"); throwable.printStackTrace();});
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        Log.i(TAG, "onServiceDisconnected");
+        mServiceBound = false;
+        binder = null;
+    }
+
+    private void showUsherDialog(String departureStation, String trainHeadStation) {
+
+            final NumberPicker picker = new NumberPicker(this);
+            picker.setMaxValue(120);
+            picker.setMinValue(2);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setView(picker)
+                    .setTitle("Watch " + departureStation)
+                    .setPositiveButton("Ok", (dialog, which) -> binder.startUsher(departureStation, trainHeadStation, picker.getValue()))
+                    .show();
     }
 }

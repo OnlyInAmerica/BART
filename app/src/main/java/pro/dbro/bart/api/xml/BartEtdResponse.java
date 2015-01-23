@@ -1,5 +1,7 @@
 package pro.dbro.bart.api.xml;
 
+import android.util.Log;
+
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
@@ -52,5 +54,16 @@ public class BartEtdResponse extends BartApiResponse {
 
     public List<BartEtd> getEtds() {
         return station.getEtds();
+    }
+
+    public BartEtd getEtdByDestination(String station) {
+        for (BartEtd etd : getEtds()) {
+            if (etd.getDestinationAbbreviation().equals(station)) {
+                Log.d("BartEtdResonse", "Found etd for " + station);
+                return etd;
+            }
+        }
+        Log.d("BartEtdResonse", "Could not find etd for " + station);
+        return null;
     }
 }

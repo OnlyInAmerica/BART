@@ -37,7 +37,7 @@ import rx.android.view.ViewObservable;
 public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder> {
     private final String TAG = getClass().getSimpleName();
 
-    private static final SimpleDateFormat HUMAN_DATE_PRINTER = new SimpleDateFormat("hh:mm", Locale.US);
+    private static final SimpleDateFormat HUMAN_DATE_PRINTER = new SimpleDateFormat("h:mm", Locale.US);
 
     static {
         HUMAN_DATE_PRINTER.setTimeZone(TimeZone.getTimeZone("America/Los_Angeles"));
@@ -94,7 +94,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
                           if (BartApiResponseProcessor.pruneScheduleResponse(this.response)) {
                               this.listener.refreshRequested(this.response);
                           }
-                          notifyDataSetChanged();
+                          notifyItemRangeChanged(0, items.size()-1);
                           Log.i(TAG, "timer tick " + time);
                       });
 
@@ -116,7 +116,10 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         for (BartTrip trip : items) {
             if (trip.getLegs().get(0).getTrainIndex() == leadLoadTrainId) {
                 trip.setMaxLoad(maxLoad);
-                Log.d(TAG, String.format("Attached %s load to trip", BartLoad.getLoadDescription(maxLoad)));
+                Log.d(TAG, String.format("Attached %s load to trip %d with train id %d",
+                        BartLoad.getLoadDescription(maxLoad),
+                        items.indexOf(trip),
+                        leadLoadTrainId));
                 notifyItemChanged(items.indexOf(trip));
                 break;
             }
@@ -148,6 +151,8 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
     @Override
     public void onBindViewHolder(TripViewHolder holder, int position) {
         BartTrip trip = items.get(position);
+        Log.i(TAG, String.format("Train %d bound to pos %d", trip.getLegs().get(0).getTrainIndex(),
+                                                             position));
 
         int startTransferSpan;
         int endTransferSpan;
@@ -188,14 +193,15 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         }
 
         try {
-            holder.etds.setText(String.valueOf(Math.round(trip.getLegs().get(0).getOriginAsRelativeSec() / 60f)));
+            holder.etds.setText(String.valueOf(
+                    Math.max(0, Math.round(trip.getLegs().get(0).getOriginAsRelativeSec() / 60f))));
             StringBuilder arrivalText = new StringBuilder();
             arrivalText.append("Arrives ");
             arrivalText.append(HUMAN_DATE_PRINTER.format(trip.getDestAsDate()));
             if (trip.getMaxLoad() != 0) {
                 arrivalText.append(" | ");
                 arrivalText.append(BartLoad.getLoadDescription(trip.getMaxLoad()));
-                arrivalText.append(" loading");
+                arrivalText.append(" crowd");
             }
             holder.arrival.setText(arrivalText.toString());
         } catch (ParseException e) {
@@ -203,8 +209,8 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
             holder.arrival.setText("");
             e.printStackTrace();
         }
-
-        holder.container.setOnClickListener(view -> listener.loadRequested(trip.getLegs()));
+        holder.container.setTag(position);
+        holder.container.setOnClickListener(view -> listener.loadRequested(items.get((int)view.getTag()).getLegs()));
     }
 
     @Override
