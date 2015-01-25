@@ -7,6 +7,8 @@ import org.simpleframework.xml.Root;
 
 import java.util.List;
 
+import rx.Observable;
+
 /**
  * BART Load Response
  * <p>
@@ -25,6 +27,17 @@ public class BartLoadResponse {
 
     public List<BartLoad> getLoads() {
         return loads;
+    }
+
+    public void attachTimeToLoads(List<BartTrain> trains) {
+        for (BartTrain train : trains) {
+            for (BartLoad load : loads) {
+                if (load.getTrainId() == train.getIndex()) {
+                    load.setTime(train.getStop(load.getStationAbbreviation()).getOrigTime());
+                    break;
+                }
+            }
+        }
     }
 
 }

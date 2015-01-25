@@ -12,7 +12,7 @@ public class BartStop {
     @Attribute(name = "station")
     private String station;
 
-    @Attribute(name = "origTime")
+    @Attribute(name = "origTime", required = false)
     private String origTime;
 
     public String getStation() {

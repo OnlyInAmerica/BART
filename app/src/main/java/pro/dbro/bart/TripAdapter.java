@@ -12,6 +12,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.github.mikephil.charting.charts.Chart;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,6 +51,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
     private BartQuickPlannerResponse response;
     private List<BartTrip> items;
+    private ArrayList<LineData> plotItems = new ArrayList<>();
     private BartApiDelegate listener;
     private static Subscription subscription;
 
@@ -55,6 +62,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
         public TextView etds;
         public TextView arrival;
         public ViewGroup container;
+        public LineChart chart;
 
         public TripViewHolder(View itemView) {
             super(itemView);
@@ -63,6 +71,7 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
             etds      = (TextView) itemView.findViewById(R.id.etds);
             arrival   = (TextView) itemView.findViewById(R.id.arrival);
             container = (ViewGroup) itemView.findViewById(R.id.container);
+            chart     = (LineChart) itemView.findViewById(R.id.chart);
         }
     }
 
@@ -100,32 +109,37 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
 
     }
 
-    public void setLoadResponse(BartLoadResponse response) {
-        List<BartLoad> loads = response.getLoads();
-        if (loads == null) {
-            Log.d(TAG, "Load response had no loads");
-            return;
-        }
-        int maxLoad = -1;
-        int leadLoadTrainId = -100;
-        for (BartLoad load : loads) {
-            if (leadLoadTrainId == -100) leadLoadTrainId = load.getTrainId();
-            maxLoad = Math.max(maxLoad, load.getLoad());
-        }
-
-        for (BartTrip trip : items) {
-            if (trip.getLegs().get(0).getTrainIndex() == leadLoadTrainId) {
-                trip.setMaxLoad(maxLoad);
-                Log.d(TAG, String.format("Attached %s load to trip %d with train id %d",
-                        BartLoad.getLoadDescription(maxLoad),
-                        items.indexOf(trip),
-                        leadLoadTrainId));
-                notifyItemChanged(items.indexOf(trip));
-                break;
-            }
-        }
-
+    public void setLoadData(LineData lineData) {
+        plotItems.add(0, lineData);
+        notifyItemChanged(0);
     }
+
+//    public void setLoadData(BartLoadResponse response) {
+//        List<BartLoad> loads = response.getLoads();
+//        if (loads == null) {
+//            Log.d(TAG, "Load response had no loads");
+//            return;
+//        }
+//        int maxLoad = -1;
+//        int leadLoadTrainId = -100;
+//        for (BartLoad load : loads) {
+//            if (leadLoadTrainId == -100) leadLoadTrainId = load.getTrainId();
+//            maxLoad = Math.max(maxLoad, load.getLoad());
+//        }
+//
+//        for (BartTrip trip : items) {
+//            if (trip.getLegs().get(0).getTrainIndex() == leadLoadTrainId) {
+//                trip.setMaxLoad(maxLoad);
+//                Log.d(TAG, String.format("Attached %s load to trip %d with train id %d",
+//                        BartLoad.getLoadDescription(maxLoad),
+//                        items.indexOf(trip),
+//                        leadLoadTrainId));
+//                notifyItemChanged(items.indexOf(trip));
+//                break;
+//            }
+//        }
+//
+//    }
 
     public void destroy() {
         unsubscribe();
@@ -198,11 +212,29 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
             StringBuilder arrivalText = new StringBuilder();
             arrivalText.append("Arrives ");
             arrivalText.append(HUMAN_DATE_PRINTER.format(trip.getDestAsDate()));
-            if (trip.getMaxLoad() != 0) {
-                arrivalText.append(" | ");
-                arrivalText.append(BartLoad.getLoadDescription(trip.getMaxLoad()));
-                arrivalText.append(" crowd");
+            if (position < plotItems.size()) {
+                holder.chart.getXLabels().setSpaceBetweenLabels(4);
+                holder.chart.setPadding(0, 0, 0, 0);
+                holder.chart.setDrawGridBackground(false);
+                holder.chart.setDescription("Historical Train Crowding");
+                //holder.chart.getXLabels().setSpaceBetweenLabels();
+                holder.chart.setData(plotItems.get(position));
+                holder.chart.setDrawBorder(false);
+                holder.chart.setDrawMarkerViews(false);
+                holder.chart.setDrawVerticalGrid(false);
+                holder.chart.setDrawHorizontalGrid(false);
+                holder.chart.setDrawXLabels(true);
+                holder.chart.setBorderWidth(0);
+                holder.chart.setDrawYLabels(false);
+                holder.chart.setDrawYValues(false);
+                holder.chart.setDrawLegend(false);
+                holder.chart.setVisibility(View.VISIBLE);
             }
+//            if (trip.getMaxLoad() != 0) {
+//                arrivalText.append(" | ");
+//                arrivalText.append(BartLoad.getLoadDescription(trip.getMaxLoad()));
+//                arrivalText.append(" crowd");
+//            }
             holder.arrival.setText(arrivalText.toString());
         } catch (ParseException e) {
             holder.etds.setText("?");
@@ -210,7 +242,9 @@ public class TripAdapter extends RecyclerView.Adapter<TripAdapter.TripViewHolder
             e.printStackTrace();
         }
         holder.container.setTag(position);
-        holder.container.setOnClickListener(view -> listener.loadRequested(items.get((int)view.getTag()).getLegs()));
+        holder.container.setOnClickListener(view ->
+                listener.loadRequested(items.get((int)view.getTag()).getOriginAbbreviation(),
+                                       items.get((int)view.getTag()).getLegs().get(0).getLine()));
     }
 
     @Override

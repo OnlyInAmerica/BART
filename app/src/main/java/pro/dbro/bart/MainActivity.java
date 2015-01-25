@@ -14,7 +14,6 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.SparseIntArray;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
@@ -22,15 +21,27 @@ import android.widget.NumberPicker;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import pro.dbro.bart.api.BartClient;
 import pro.dbro.bart.api.xml.BartApiResponse;
 import pro.dbro.bart.api.xml.BartEtdResponse;
-import pro.dbro.bart.api.xml.BartLeg;
+import pro.dbro.bart.api.xml.BartLoad;
 import pro.dbro.bart.api.xml.BartQuickPlannerResponse;
+import pro.dbro.bart.db.LoadColumns;
 import pro.dbro.bart.holdr.Holdr_ActivityMain;
 import rx.Observable;
 import rx.Subscription;
@@ -252,6 +263,8 @@ public class MainActivity extends Activity implements BartApiDelegate, ServiceCo
 
     @Override
     public void refreshRequested(BartApiResponse oldResponse) {
+        if (!mServiceBound) return;
+
         if (oldResponse instanceof BartEtdResponse) {
             binder.getClient()
                   .flatMap(client -> client.getEtd(((BartEtdResponse) oldResponse).getStation().getName()))
@@ -266,8 +279,9 @@ public class MainActivity extends Activity implements BartApiDelegate, ServiceCo
     }
 
     @Override
-    public void loadRequested(List<BartLeg> legs) {
-        Log.i(TAG, "Getting load");
+    public void loadRequested(String departureStation, String routeId) {
+        if (!mServiceBound) return;
+//        Log.i(TAG, "Getting load");
 //        binder.getClient()
 //              .flatMap(client -> client.getLoad(legs))
 //              .observeOn(AndroidSchedulers.mainThread()) // Get WrongThreadException is this is Schedlers.io()
@@ -277,25 +291,56 @@ public class MainActivity extends Activity implements BartApiDelegate, ServiceCo
 //                  if (holdr.recyclerView.getAdapter() != null &&
 //                      holdr.recyclerView.getAdapter() instanceof TripAdapter) {
 //
-//                      ((TripAdapter) holdr.recyclerView.getAdapter()).setLoadResponse(response);
+//                      ((TripAdapter) holdr.recyclerView.getAdapter()).setLoadData(response);
 //                  }
 //              }, throwable -> {
 //                  Log.e(TAG, "Got error");
 //                  throwable.printStackTrace();
 //              });
+        // TODO : For each station, For each route
+//        binder.getClient()
+//              .flatMap(client -> client.getRouteLoad(this, departureStation, routeId, true))
+//              .map(cursor -> {
+//                  if (cursor == null) {
+//                      Log.d(TAG, "Got null cursor from getLoad");
+//                      throw new IllegalStateException("Could not lookup getLoad");
+//                  }
+//                  ArrayList<Entry> entryList = new ArrayList<>(cursor.getCount());
+//                  ArrayList<String> xVals = new ArrayList<>();
+//                  int idx = 0;
+//                  while (cursor.moveToNext()) {
+//                      entryList.add(new Entry((float) cursor.getInt(cursor.getColumnIndex(LoadColumns.load)), idx));
+//                      xVals.add(cursor.getString(cursor.getColumnIndex(LoadColumns.time)));
+//                      idx++;
+//                  }
+//                  LineDataSet loadSet = new LineDataSet(entryList, "data");
+//                  loadSet.setDrawCircles(false);
+//                  loadSet.setDrawCubic(true);
+//                  loadSet.setDrawFilled(true);
+//                  loadSet.setColor(ColorTemplate.JOYFUL_COLORS[4]);
+//                  loadSet.setLineWidth(5);
+//                  LineData data = new LineData(xVals, loadSet);
+//
+//                  return data;
+//              })
+//              .observeOn(AndroidSchedulers.mainThread()) // Get WrongThreadException is this is Schedlers.io()
+//              .subscribeOn(AndroidSchedulers.mainThread())
+//              .subscribe(lineData -> {
+//                  Log.d(TAG, "Got load! Can it be?");
+//                  ((TripAdapter) holdr.recyclerView.getAdapter()).setLoadData(lineData);
+//              });
+        Log.d(TAG, "Beginning database bootstrap");
         binder.getClient()
-              .flatMap(client -> client.getRouteLoad("dbrk", "ROUTE 4"))
               .observeOn(Schedulers.io()) // Get WrongThreadException is this is Schedlers.io()
-              .subscribeOn(AndroidSchedulers.mainThread())
-              .subscribe(result -> {
-                  Log.d(TAG, "Got load! Can it be?");
-                  SparseIntArray map = (SparseIntArray) result;
-
-                  for (int x = 0; x < map.size(); x++) {
-                      Log.d("LOAD", String.format("train %d load %d", map.keyAt(x), map.valueAt(x)));
+              .subscribeOn(Schedulers.io())
+              .subscribe(client -> {
+                  try {
+                      Bootstrap.bootstrapLoadDatabase(this, client);
+                  } catch (InterruptedException e) {
+                      Log.d(TAG, "Interrupted exception while bootstraping db");
+                      e.printStackTrace();
                   }
-              });
-
+              }, throwable -> throwable.printStackTrace());
     }
 
     @Override

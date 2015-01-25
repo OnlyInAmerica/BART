@@ -7,6 +7,8 @@ import org.simpleframework.xml.Root;
 
 import java.util.List;
 
+import rx.Observable;
+
 /**
  * Response from BART Route Schedule. e.g: A list of all trains for a given Route
  * Api Response
@@ -35,5 +37,12 @@ public class BartRouteScheduleResponse extends BartApiResponse {
 
     public List<BartTrain> getTrains() {
         return trains;
+    }
+
+    public BartTrain getTrainById(int trainId) {
+        return Observable.from(trains)
+                         .filter(train -> train.getIndex() == trainId)
+                         .toBlocking()
+                         .single();
     }
 }

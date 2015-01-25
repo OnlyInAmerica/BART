@@ -6,6 +6,8 @@ import org.simpleframework.xml.Root;
 
 import java.util.List;
 
+import rx.Observable;
+
 /**
  * Created by davidbrodsky on 1/22/15.
  */
@@ -20,6 +22,17 @@ public class BartTrain {
 
     public int getIndex() {
         return index;
+    }
+
+    public List<BartStop> getStops() {
+        return stops;
+    }
+
+    public BartStop getStop(String station) {
+        return Observable.from(stops)
+                         .filter(stop -> stop.getStation().equals(station))
+                         .toBlocking()
+                         .single();
     }
 
 //    @ElementList(name = "stop")

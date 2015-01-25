@@ -10,7 +10,8 @@ import pro.dbro.bart.api.xml.BartLeg;
  */
 public interface BartApiDelegate {
     public void refreshRequested(BartApiResponse oldResponse);
-    public void loadRequested(List<BartLeg> legs);
+    public void loadRequested(String departureStation,
+                              String routeId);
     public void usherRequested(String departureStation,
                                String trainHeadStation);
 }

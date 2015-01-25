@@ -10,6 +10,13 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+
+        <provider
+            android:name=".db.generated.BartProvider"
+            android:authorities="pro.dbro.bart.BartProvider"
+            android:exported="false" >
+        </provider>
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name" >
