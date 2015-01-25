@@ -124,7 +124,7 @@ public class MainActivity extends Activity implements BartApiDelegate, ServiceCo
     public void onStop() {
         super.onStop();
         saveInput();
-        if (!mServiceBound) {
+        if (mServiceBound) {
             unBindService();
         }
     }
