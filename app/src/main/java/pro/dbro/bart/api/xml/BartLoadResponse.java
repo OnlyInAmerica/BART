@@ -1,5 +1,7 @@
 package pro.dbro.bart.api.xml;
 
+import android.util.Log;
+
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Path;
@@ -16,6 +18,7 @@ import rx.Observable;
  */
 @Root(strict = false, name = "root")
 public class BartLoadResponse {
+    private final String TAG = getClass().getSimpleName();
 
     @Path("load")
     @ElementList(name = "request", entry="leg")
@@ -29,15 +32,14 @@ public class BartLoadResponse {
         return loads;
     }
 
-    public void attachTimeToLoads(List<BartTrain> trains) {
-        for (BartTrain train : trains) {
-            for (BartLoad load : loads) {
-                if (load.getTrainId() == train.getIndex()) {
-                    load.setTime(train.getStop(load.getStationAbbreviation()).getOrigTime());
-                    break;
-                }
-            }
+    private String printStops(BartTrain train) {
+        StringBuilder builder = new StringBuilder();
+        for(BartStop stop : train.getStops()) {
+            builder.append(stop.getStation());
+            builder.append(", ");
         }
+        builder.delete(builder.length()-2, builder.length());
+        return builder.toString();
     }
 
 }

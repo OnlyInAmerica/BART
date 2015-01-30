@@ -1,5 +1,7 @@
 package pro.dbro.bart.api.xml;
 
+import android.support.annotation.Nullable;
+
 import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Root;
@@ -28,11 +30,11 @@ public class BartTrain {
         return stops;
     }
 
-    public BartStop getStop(String station) {
+    public @Nullable BartStop getStop(String station) {
         return Observable.from(stops)
                          .filter(stop -> stop.getStation().equals(station))
                          .toBlocking()
-                         .single();
+                         .singleOrDefault(null);
     }
 
 //    @ElementList(name = "stop")

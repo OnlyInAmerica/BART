@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
 
@@ -23,9 +24,9 @@ import pro.dbro.bart.api.xml.BartLoad;
 import pro.dbro.bart.api.xml.BartLoadResponse;
 import pro.dbro.bart.api.xml.BartQuickPlannerResponse;
 import pro.dbro.bart.api.xml.BartRoute;
-import pro.dbro.bart.api.xml.BartRouteScheduleResponse;
 import pro.dbro.bart.api.xml.BartRoutesResponse;
 import pro.dbro.bart.api.xml.BartStationListResponse;
+import pro.dbro.bart.api.xml.BartStop;
 import pro.dbro.bart.api.xml.BartTrain;
 import pro.dbro.bart.db.BartProvider;
 import pro.dbro.bart.db.LoadColumns;
@@ -69,6 +70,10 @@ public class BartClient {
                 .build();
 
         service = restAdapter.create(BartService.class);
+    }
+
+    public List<BartRoute> getRoutes() {
+        return routes.getRoutes();
     }
 
     public Set<Integer> getRoutesNumbers() {
@@ -167,12 +172,13 @@ public class BartClient {
     }
 
     /**
-     * Get projected load for a route during the current day of Bart Service.
+     * Get projected load for a complete route during the current day of Bart Service.
+     * This will fetch and cache load for every station along the route.
      *
-     * @param routeNum the 'line' attribute in a trip leg. e.g "ROUTE 2"
+     * @param routeNum Bart route number. Valid routes are 1-8, 11-12 and 19-20
+     * @param returnQuery whether to return a Cursor pointing to the retrieved load items
      */
-    public Observable<Cursor> getRouteLoad(final Context context,
-                                           final String stationCode,
+    public Observable<Cursor> getRouteLoad(@NonNull final Context context,
                                            final int routeNum,
                                            final boolean returnQuery) {
 
@@ -180,48 +186,79 @@ public class BartClient {
 
         return service.getRouteSchedule(routeNum)
                .flatMap(schedule -> Observable.from(schedule.getTrains()))
-               .buffer(3)
-               .flatMap(trains -> getLegLoad(stationCode, routeNum, trains))
+               .flatMap(train -> Observable.zip(
+                       Observable.from(train.getStops()),
+                       Observable.just(train).repeat(train.getStops().size()),
+                       (stop, _train) -> new Pair<BartTrain, BartStop>(_train, stop)))
+               .filter(trainStop -> !TextUtils.isEmpty(trainStop.second.getOrigTime()))
+               .buffer(3)   // Confirm all stations and trains present here
+               .flatMap(trainStops -> getTrainStopLoad(trainStops, routeNum))
                .flatMap(response -> Observable.from(response.getLoads()))
                .reduce(new ArrayList<>(), (list, load) -> {
-                   try {
-                       ContentValues values = new ContentValues(5);
-                       values.put(LoadColumns.station, load.getStationAbbreviation());
-                       values.put(LoadColumns.route, load.getRouteId());
-                       values.put(LoadColumns.train, load.getTrainId());
-                       values.put(LoadColumns.load, load.getLoad());
-                       values.put(LoadColumns.time, load.getTime());
-                       list.add(values);
-                   } catch (Exception e) {
-                       e.printStackTrace();
+
+                   if (TextUtils.isEmpty(load.getTime())) {
+                       Log.wtf(TAG, String.format("No Time Matched for route %d train %d station %s", load.getRouteId(),
+                               load.getTrainId(), load.getStationAbbreviation()));
                    }
+                   //Log.d(TAG, String.format("Got load for %s route %d train %d", load.getStationAbbreviation(), load.getRouteId(), load.getTrainId()));
+
+                   ContentValues values = new ContentValues(5);
+                   values.put(LoadColumns.station, load.getStationAbbreviation());
+                   values.put(LoadColumns.route, load.getRouteId());
+                   values.put(LoadColumns.train, load.getTrainId());
+                   values.put(LoadColumns.load, load.getLoad());
+                   values.put(LoadColumns.time, load.getTime());
+
+                   list.add(values);
                    return list;
                })
                .map(list -> {
+                   Log.d(TAG, "Got reduced load list");
                    ContentValues[] values = new ContentValues[list.size()];
                    int inserted = context.getContentResolver().bulkInsert(BartProvider.Load.LOAD, list.toArray(values));
                    //Log.d(TAG, String.format("Inserted %d loads for %s %s", inserted, stationCode, routeNum));
                    if (!returnQuery) return null; // TODO Is this kosher?
                    return context.getContentResolver().query(BartProvider.Load.LOAD,
                            null,
-                           LoadColumns.station + " = ? AND " + LoadColumns.route + " = ?",
-                           new String[]{stationCode, String.valueOf(routeNum)},
+                           LoadColumns.route + " = ?",
+                           new String[]{String.valueOf(routeNum)},
                            LoadColumns.train + " ASC");
                });
 
     }
 
-    private Observable<BartLoadResponse> getLegLoad(final String station,
-                                                    int route,
-                                                    final List<BartTrain> trains) {
+    public static final HashSet<String> loadItems = new HashSet<>();
+
+    /**
+     * Get loading data for up to three Train / Stop pairs along a given route.
+     *
+     * @param trainStops a Pair describing the desired stop and train
+     * @param route Bart route number. Valid routes are 1-8, 11-12 and 19-20
+     */
+    private Observable<BartLoadResponse> getTrainStopLoad(@NonNull final List<Pair<BartTrain, BartStop>> trainStops,
+                                                          final int route) {
         String[] loadCodes = new String[3];
-        for(int x = 0; x < loadCodes.length; x++) {
-            loadCodes[x] = String.format("%s%02d%02d", station, route, trains.get(x).getIndex());
+        for(int x = 0; x < Math.min(loadCodes.length, trainStops.size()); x++) {
+            loadCodes[x] = String.format("%s%02d%02d",
+                                         trainStops.get(x).second.getStation(),
+                                         route,
+                                         trainStops.get(x).first.getIndex());
+            boolean success = loadItems.add(loadCodes[x]);
+            if (!success) Log.wtf(TAG, String.format("Set already contained load for %s", loadCodes[x]));
+
         }
         Log.d(TAG, String.format("Getting load for %s %s %s", loadCodes[0], loadCodes[1], loadCodes[2]));
         return service.getLegLoad(loadCodes[0], loadCodes[1], loadCodes[2], "w")
                       .map(loadResponse -> {
-                          loadResponse.attachTimeToLoads(trains);
+                          for (BartLoad load : loadResponse.getLoads()) {
+                              for (Pair<BartTrain, BartStop> trainStop : trainStops) {
+                                  if (load.getStationAbbreviation().equals(trainStop.second.getStation()) &&
+                                      trainStop.first.getIndex() == load.getTrainId()) {
+                                        load.setTime(trainStop.second.getOrigTime());
+                                  }
+                              }
+                          }
+//                          Log.d(TAG, "Got load for " + loadStations.toString() + " alongside " + trainString.toString());
                           return loadResponse;
                       });
     }
