@@ -5,4 +5,6 @@
     <color name="colorPrimaryDark">#ff121312</color>
     <color name="colorAccent">#ffffffff</color>
     <color name="colorWindowbackground">#ff090909</color>
+
+    <color name="bartBlue">#0098dc</color>
 </resources>

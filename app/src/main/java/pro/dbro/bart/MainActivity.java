@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -41,6 +42,7 @@ import pro.dbro.bart.api.xml.BartApiResponse;
 import pro.dbro.bart.api.xml.BartEtdResponse;
 import pro.dbro.bart.api.xml.BartLoad;
 import pro.dbro.bart.api.xml.BartQuickPlannerResponse;
+import pro.dbro.bart.db.BartProvider;
 import pro.dbro.bart.db.LoadColumns;
 import pro.dbro.bart.holdr.Holdr_ActivityMain;
 import rx.Observable;
@@ -56,7 +58,6 @@ public class MainActivity extends Activity implements BartApiDelegate, ServiceCo
 
     private Holdr_ActivityMain holdr;
     private BartService.BartServiceBinder binder;
-//    private BartClient client;
     private Subscription subscription;
 
     private boolean mServiceBound = false;  // Are we bound to the ChatService?
@@ -281,66 +282,37 @@ public class MainActivity extends Activity implements BartApiDelegate, ServiceCo
     @Override
     public void loadRequested(String departureStation, String routeId) {
         if (!mServiceBound) return;
-//        Log.i(TAG, "Getting load");
-//        binder.getClient()
-//              .flatMap(client -> client.getLoad(legs))
-//              .observeOn(AndroidSchedulers.mainThread()) // Get WrongThreadException is this is Schedlers.io()
-//              .subscribeOn(AndroidSchedulers.mainThread())
-//              .subscribe(response -> {
-//                  Log.i(TAG, "Got load");
-//                  if (holdr.recyclerView.getAdapter() != null &&
-//                      holdr.recyclerView.getAdapter() instanceof TripAdapter) {
-//
-//                      ((TripAdapter) holdr.recyclerView.getAdapter()).setLoadData(response);
-//                  }
-//              }, throwable -> {
-//                  Log.e(TAG, "Got error");
-//                  throwable.printStackTrace();
-//              });
-        // TODO : For each station, For each route
-//        binder.getClient()
-//              .flatMap(client -> client.getRouteLoad(this, departureStation, routeId, true))
-//              .map(cursor -> {
-//                  if (cursor == null) {
-//                      Log.d(TAG, "Got null cursor from getLoad");
-//                      throw new IllegalStateException("Could not lookup getLoad");
-//                  }
-//                  ArrayList<Entry> entryList = new ArrayList<>(cursor.getCount());
-//                  ArrayList<String> xVals = new ArrayList<>();
-//                  int idx = 0;
-//                  while (cursor.moveToNext()) {
-//                      entryList.add(new Entry((float) cursor.getInt(cursor.getColumnIndex(LoadColumns.load)), idx));
-//                      xVals.add(cursor.getString(cursor.getColumnIndex(LoadColumns.time)));
-//                      idx++;
-//                  }
-//                  LineDataSet loadSet = new LineDataSet(entryList, "data");
-//                  loadSet.setDrawCircles(false);
-//                  loadSet.setDrawCubic(true);
-//                  loadSet.setDrawFilled(true);
-//                  loadSet.setColor(ColorTemplate.JOYFUL_COLORS[4]);
-//                  loadSet.setLineWidth(5);
-//                  LineData data = new LineData(xVals, loadSet);
-//
-//                  return data;
-//              })
-//              .observeOn(AndroidSchedulers.mainThread()) // Get WrongThreadException is this is Schedlers.io()
-//              .subscribeOn(AndroidSchedulers.mainThread())
-//              .subscribe(lineData -> {
-//                  Log.d(TAG, "Got load! Can it be?");
-//                  ((TripAdapter) holdr.recyclerView.getAdapter()).setLoadData(lineData);
-//              });
-        Log.d(TAG, "Beginning database bootstrap");
-        binder.getClient()
-              .observeOn(Schedulers.io()) // Get WrongThreadException is this is Schedlers.io()
-              .subscribeOn(Schedulers.io())
-              .subscribe(client -> {
-                  try {
-                      Bootstrap.bootstrapLoadDatabase(this, client);
-                  } catch (InterruptedException e) {
-                      Log.d(TAG, "Interrupted exception while bootstraping db");
-                      e.printStackTrace();
-                  }
-              }, throwable -> throwable.printStackTrace());
+
+        Cursor cursor = getContentResolver().query(BartProvider.Load.LOAD,
+                                   null,
+                                   LoadColumns.route + " = ? AND " + LoadColumns.station + " = ?",
+                                   new String[] {routeId.split(" ")[1], departureStation},
+                                   LoadColumns.train + " ASC");
+
+        if (cursor != null && cursor.getCount() > 0) {
+            ArrayList<Entry> entryList = new ArrayList<>(cursor.getCount());
+            ArrayList<String> xVals = new ArrayList<>();
+            int idx = 0;
+            while (cursor.moveToNext()) {
+                entryList.add(new Entry((float) cursor.getInt(cursor.getColumnIndex(LoadColumns.load)), idx));
+                xVals.add(cursor.getString(cursor.getColumnIndex(LoadColumns.time)));
+                idx++;
+            }
+            cursor.close();
+
+            LineDataSet loadSet = new LineDataSet(entryList, "data");
+            loadSet.setDrawCircles(false);
+            loadSet.setDrawCubic(true);
+            loadSet.setDrawFilled(true);
+            loadSet.setColor(getResources().getColor(R.color.bartBlue));
+            loadSet.setLineWidth(5);
+            LineData data = new LineData(xVals, loadSet);
+
+            if (holdr.recyclerView.getAdapter() instanceof TripAdapter)
+                ((TripAdapter) holdr.recyclerView.getAdapter()).setLoadData(data);
+            else
+                Log.w(TAG, "Load data ready but current adapter not TripAdapter");
+        }
     }
 
     @Override

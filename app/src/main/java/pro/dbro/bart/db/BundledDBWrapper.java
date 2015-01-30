@@ -21,7 +21,7 @@ import com.readystatesoftware.sqliteasset.SQLiteAssetHelper;
 public class BundledDBWrapper extends SQLiteAssetHelper {
 
     private static final String DATABASE_NAME = "bartDatabase.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 1;
 
     public BundledDBWrapper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);

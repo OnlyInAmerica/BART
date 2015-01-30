@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import pro.dbro.bart.api.BartClient;
 import pro.dbro.bart.api.xml.BartLoadResponse;
@@ -32,8 +34,12 @@ public class Bootstrap {
         // 1.29.2015 : Seems resolved
         //final Set<Integer> unavailableRoutes = new HashSet<Integer>() {{ add(5); add(6); add(7); add(8);}};
 
+        final AtomicInteger delayMultiplier = new AtomicInteger(0);
+
         Log.d(TAG, "Bootstrapping route load data");
-        Observable.from(client.getRoutesNumbers())
+        // NOTE : Too excited to figure out variable delay, manually pulled routes one by one :)
+        Observable.just(20)
+        //Observable.from(client.getRoutesNumbers())
                 .subscribeOn(Schedulers.io())
                 //.filter(routeNum -> !unavailableRoutes.contains(routeNum))
                   //.limit(1)
@@ -42,10 +48,10 @@ public class Bootstrap {
                       return client.getRouteLoad(context, routeNum, false);
                   })
                   .subscribe(nullCursor -> {
-                      Log.d(TAG, String.format("%d loads fetched.",BartClient.loadItems.size()));
+                      Log.d(TAG, String.format("%d loads fetched.", BartClient.loadItems.size()));
                   }, throwable -> {
-                        Log.d(TAG, "onError: " );
-                        throwable.printStackTrace();
+                      Log.d(TAG, "onError: ");
+                      throwable.printStackTrace();
                   });
     }
 }
